@@ -28,6 +28,12 @@
         <%= structuredData %>
       </script>
     <% } %>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
     <link rel="stylesheet" href="/css/styles.css" />
   </head>
   <body>
@@ -64,12 +70,6 @@
             <% } %>
           </div>
         </details>
-      <div class="brand">
-        <span class="brand-mark">MH</span>
-        <div class="brand-text">
-          <span class="brand-name">Monetize Hub</span>
-          <span class="brand-tagline">Launch, host, and grow your webapps</span>
-        </div>
       </div>
       <nav class="main-nav">
         <a href="/" class="nav-link">Home</a>
@@ -80,7 +80,6 @@
             <a href="/excel-to-json" class="dropdown-link">Excel → JSON</a>
           </div>
         </details>
-        <a href="/excel-to-json" class="nav-link">Excel → JSON</a>
         <% if (currentUser) { %>
           <% if (currentUser.role === 'admin') { %>
             <a href="/admin" class="nav-link">Admin</a>

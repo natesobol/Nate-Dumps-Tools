@@ -18,7 +18,7 @@
       <label for="excelFile">Choose an Excel file</label>
       <input id="excelFile" name="excelFile" type="file" accept=".xls,.xlsx" required />
       <p class="help-text">We never persist uploads. Files stay in memory for conversion only.</p>
-      <button type="submit" class="button primary full-width">Convert to JSON</button>
+      <button type="submit" class="button primary btn btn-primary btn-modern full-width">Convert to JSON</button>
     </form>
     <% if (error) { %>
       <div class="flash flash-error" role="alert"><%= error %></div>
@@ -37,7 +37,7 @@
         <form action="/excel-to-json/download" method="POST">
           <input type="hidden" name="payload" value="<%= result.downloadPayload %>" />
           <input type="hidden" name="fileName" value="<%= result.fileName %>" />
-          <button type="submit" class="button primary">Download JSON file</button>
+          <button type="submit" class="button primary btn btn-primary btn-modern">Download JSON file</button>
         </form>
         <p class="help-text">Or select the text above and copy it directly into your API client.</p>
       </div>

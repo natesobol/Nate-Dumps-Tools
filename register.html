@@ -10,6 +10,12 @@
     <meta property="og:description" content="Secure signup with hashed passwords when the backend is running locally." />
     <meta property="og:url" content="https://natesobol.github.io/Nates-Free-Tools/register.html" />
     <meta property="og:type" content="website" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
     <link rel="stylesheet" href="./public/css/styles.css" />
   </head>
   <body>
@@ -60,7 +66,7 @@
           <label class="input-label" for="password">Password</label>
           <input id="password" type="password" name="password" required placeholder="••••••••" />
 
-          <button class="button primary" type="submit">Create Account</button>
+          <button class="button primary btn btn-primary btn-modern" type="submit">Create Account</button>
         </form>
         <p class="helper-text">Passwords are hashed and stored in SQLite when running locally.</p>
       </section>
