@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>About | Monetize Hub</title>
+    <meta name="description" content="Learn how the Monetize Hub starter helps you launch, host, and grow monetized webapps." />
+    <link rel="canonical" href="https://natesobol.github.io/Nates-Free-Tools/about.html" />
+    <meta property="og:title" content="About Monetize Hub" />
+    <meta property="og:description" content="A modern starter with authentication, admin tooling, and monetization-ready patterns." />
+    <meta property="og:url" content="https://natesobol.github.io/Nates-Free-Tools/about.html" />
+    <meta property="og:type" content="website" />
+    <link rel="stylesheet" href="./public/css/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-top">
+        <a class="brand" href="./index.html">
+          <img src="./public/logo.png" alt="Monetize Hub" class="brand-logo" />
+          <div class="brand-text">
+            <span class="brand-name">Monetize Hub</span>
+            <span class="brand-tagline">Launch, host, and grow your webapps</span>
+          </div>
+        </a>
+        <details class="nav-dropdown user-dropdown" open>
+          <summary class="nav-link nav-dropdown-toggle">
+            <span class="user-label">Account</span>
+            <span aria-hidden="true">▾</span>
+          </summary>
+          <div class="nav-dropdown-menu">
+            <a href="./login.html" class="dropdown-link">Login</a>
+            <a href="./register.html" class="dropdown-link">Create Account</a>
+            <a href="./admin.html" class="dropdown-link">Admin Dashboard</a>
+          </div>
+        </details>
+      </div>
+      <nav class="main-nav">
+        <a href="./index.html" class="nav-link">Home</a>
+        <a href="./about.html" class="nav-link active">About</a>
+        <details class="nav-dropdown" open>
+          <summary class="nav-link nav-dropdown-toggle">Webapps <span aria-hidden="true">▾</span></summary>
+          <div class="nav-dropdown-menu">
+            <a href="./excel-to-json.html" class="dropdown-link">Excel → JSON</a>
+          </div>
+        </details>
+      </nav>
+    </header>
+
+    <main class="page-body">
+      <section class="hero">
+        <div class="hero-text">
+          <p class="eyebrow">About the starter</p>
+          <h1>Everything you need to validate and scale monetized tools.</h1>
+          <p class="lede">
+            The Monetize Hub starter combines authentication, admin oversight, and monetization-friendly account
+            data so you can ship webapps faster. GitHub Pages hosts this static preview while the Node.js backend
+            powers full login, admin, and Excel to JSON features when run locally.
+          </p>
+          <div class="hero-actions">
+            <a class="button primary" href="./index.html">Explore the home page</a>
+            <a class="button ghost" href="./excel-to-json.html">Try the converter UI</a>
+          </div>
+        </div>
+        <div class="hero-panel">
+          <div class="panel-card">
+            <h3>Built-in auth</h3>
+            <p>Session-backed login and registration with hashed passwords and validation.</p>
+          </div>
+          <div class="panel-card">
+            <h3>Admin controls</h3>
+            <p>Role-based dashboards for inspecting user records and managing data exports.</p>
+          </div>
+          <div class="panel-card">
+            <h3>Monetization patterns</h3>
+            <p>Ready for ads or subscriptions with upgrade prompts and profile preferences.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="feature-grid">
+        <div class="feature">
+          <h3>Local-first experience</h3>
+          <p>Run <code>node server.js</code> to enable full authentication, admin views, and data conversion.</p>
+        </div>
+        <div class="feature">
+          <h3>Portable design system</h3>
+          <p>Shared typography, navigation, and call-to-action patterns across the starter pages.</p>
+        </div>
+        <div class="feature">
+          <h3>SEO-ready metadata</h3>
+          <p>Open Graph and keyword tags included to help test search previews.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>Static preview powered by GitHub Pages. Connect the Node.js backend locally for full functionality.</p>
+    </footer>
+  </body>
+</html>

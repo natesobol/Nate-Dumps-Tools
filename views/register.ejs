@@ -1,0 +1,24 @@
+<%- include('partials/page-top') %>
+<section class="auth-card">
+  <div>
+    <h1>Create your account</h1>
+    <p class="lede">Start hosting your webapps with secure authentication and configurable monetization.</p>
+    <form method="POST" action="/register" class="form-grid">
+      <label>
+        <span>Full name</span>
+        <input type="text" name="fullName" autocomplete="name" required />
+      </label>
+      <label>
+        <span>Email</span>
+        <input type="email" name="email" autocomplete="email" required />
+      </label>
+      <label>
+        <span>Password</span>
+        <input type="password" name="password" autocomplete="new-password" minlength="8" required />
+      </label>
+      <button type="submit" class="button primary">Create account</button>
+    </form>
+    <p class="help-text">Already have an account? <a href="/login">Log in</a>.</p>
+  </div>
+</section>
+<%- include('partials/page-bottom') %>

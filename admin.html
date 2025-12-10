@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard | Monetize Hub</title>
+    <meta name="description" content="Review user accounts and roles. Run locally to enable authenticated admin access." />
+    <link rel="canonical" href="https://natesobol.github.io/Nates-Free-Tools/admin.html" />
+    <meta property="og:title" content="Admin Dashboard" />
+    <meta property="og:description" content="Role-based dashboard for inspecting users once the backend is running locally." />
+    <meta property="og:url" content="https://natesobol.github.io/Nates-Free-Tools/admin.html" />
+    <meta property="og:type" content="website" />
+    <link rel="stylesheet" href="./public/css/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-top">
+        <a class="brand" href="./index.html">
+          <img src="./public/logo.png" alt="Monetize Hub" class="brand-logo" />
+          <div class="brand-text">
+            <span class="brand-name">Monetize Hub</span>
+            <span class="brand-tagline">Launch, host, and grow your webapps</span>
+          </div>
+        </a>
+        <details class="nav-dropdown user-dropdown" open>
+          <summary class="nav-link nav-dropdown-toggle">
+            <span class="user-label">Account</span>
+            <span aria-hidden="true">▾</span>
+          </summary>
+          <div class="nav-dropdown-menu">
+            <a href="./login.html" class="dropdown-link">Login</a>
+            <a href="./register.html" class="dropdown-link">Create Account</a>
+            <a href="./admin.html" class="dropdown-link">Admin Dashboard</a>
+          </div>
+        </details>
+      </div>
+      <nav class="main-nav">
+        <a href="./index.html" class="nav-link">Home</a>
+        <a href="./about.html" class="nav-link">About</a>
+        <details class="nav-dropdown" open>
+          <summary class="nav-link nav-dropdown-toggle">Webapps <span aria-hidden="true">▾</span></summary>
+          <div class="nav-dropdown-menu">
+            <a href="./excel-to-json.html" class="dropdown-link">Excel → JSON</a>
+          </div>
+        </details>
+      </nav>
+    </header>
+
+    <main class="page-body">
+      <section class="hero">
+        <div class="hero-text">
+          <p class="eyebrow">Admin preview</p>
+          <h1>Run locally to manage accounts securely.</h1>
+          <p class="lede">
+            GitHub Pages cannot process authentication, but the Node.js app ships with an admin role and seeded
+            credentials. Start the backend to view a live user table.
+          </p>
+          <div class="hero-actions">
+            <a class="button primary" href="./login.html">Login</a>
+            <a class="button ghost" href="./index.html">Back to home</a>
+          </div>
+          <p class="helper-text">Default local admin: <strong>admin@example.com</strong> / <strong>admin</strong></p>
+        </div>
+        <div class="hero-panel">
+          <div class="panel-card">
+            <h3>What you'll see locally</h3>
+            <ul>
+              <li>User names, emails, roles, and marketing preferences</li>
+              <li>Database-backed storage using SQLite</li>
+              <li>Authenticated session protection</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="feature-grid">
+        <div class="feature">
+          <h3>How to enable admin</h3>
+          <ol>
+            <li>Run <code>npm install</code> if you haven't already.</li>
+            <li>Start the server: <code>node server.js</code>.</li>
+            <li>Visit <code>http://localhost:3000/admin</code> and log in with the seeded admin account.</li>
+          </ol>
+        </div>
+        <div class="feature">
+          <h3>Security reminders</h3>
+          <p>Change the default admin password immediately and keep your session secret keys private.</p>
+        </div>
+        <div class="feature">
+          <h3>Data visibility</h3>
+          <p>The local dashboard renders the latest rows from SQLite with pagination-ready markup.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>Static preview only. Start the backend to access the protected admin dashboard.</p>
+    </footer>
+  </body>
+</html>

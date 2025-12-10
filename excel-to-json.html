@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Excel to JSON Converter | Monetize Hub</title>
+    <meta
+      name="description"
+      content="Convert Excel files to JSON text or download-ready files with the Monetize Hub starter's converter UI."
+    />
+    <link rel="canonical" href="https://natesobol.github.io/Nates-Free-Tools/excel-to-json.html" />
+    <meta property="og:title" content="Excel to JSON Converter" />
+    <meta property="og:description" content="Upload Excel files and preview JSON output. Run locally for server-backed exports." />
+    <meta property="og:url" content="https://natesobol.github.io/Nates-Free-Tools/excel-to-json.html" />
+    <meta property="og:type" content="website" />
+    <link rel="stylesheet" href="./public/css/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-top">
+        <a class="brand" href="./index.html">
+          <img src="./public/logo.png" alt="Monetize Hub" class="brand-logo" />
+          <div class="brand-text">
+            <span class="brand-name">Monetize Hub</span>
+            <span class="brand-tagline">Launch, host, and grow your webapps</span>
+          </div>
+        </a>
+        <details class="nav-dropdown user-dropdown" open>
+          <summary class="nav-link nav-dropdown-toggle">
+            <span class="user-label">Account</span>
+            <span aria-hidden="true">▾</span>
+          </summary>
+          <div class="nav-dropdown-menu">
+            <a href="./login.html" class="dropdown-link">Login</a>
+            <a href="./register.html" class="dropdown-link">Create Account</a>
+            <a href="./admin.html" class="dropdown-link">Admin Dashboard</a>
+          </div>
+        </details>
+      </div>
+      <nav class="main-nav">
+        <a href="./index.html" class="nav-link">Home</a>
+        <a href="./about.html" class="nav-link">About</a>
+        <details class="nav-dropdown" open>
+          <summary class="nav-link nav-dropdown-toggle">Webapps <span aria-hidden="true">▾</span></summary>
+          <div class="nav-dropdown-menu">
+            <a href="./excel-to-json.html" class="dropdown-link active">Excel → JSON</a>
+          </div>
+        </details>
+      </nav>
+    </header>
+
+    <main class="page-body">
+      <section class="hero">
+        <div class="hero-text">
+          <p class="eyebrow">File conversion utility</p>
+          <h1>Excel to JSON converter</h1>
+          <p class="lede">
+            Upload an .xlsx or .xls file to preview the JSON representation. Download support and server-backed
+            processing are available when you run the full Node.js app locally.
+          </p>
+        </div>
+        <div class="hero-panel">
+          <div class="panel-card">
+            <h3>SEO-friendly content</h3>
+            <p>Structured data, FAQ-style copy, and targeted keywords help test organic previews.</p>
+          </div>
+          <div class="panel-card">
+            <h3>Modern UX</h3>
+            <p>Drag-and-drop inspired upload, syntax-highlighted preview, and responsive controls.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="converter-card">
+        <div class="converter-actions">
+          <label class="input-label" for="excelUpload">Upload Excel file</label>
+          <input type="file" id="excelUpload" accept=".xls,.xlsx" />
+          <p class="helper-text">Files stay in your browser during this static preview.</p>
+        </div>
+        <div class="converter-output">
+          <div class="output-header">
+            <h3>JSON Preview</h3>
+            <div class="output-actions">
+              <button class="button ghost" id="copyJson" disabled>Copy</button>
+              <button class="button secondary" id="downloadJson" disabled>Download JSON</button>
+            </div>
+          </div>
+          <pre id="jsonPreview" class="code-block">Upload a spreadsheet to see its JSON.</pre>
+        </div>
+      </section>
+
+      <section class="feature-grid">
+        <div class="feature">
+          <h3>FAQ</h3>
+          <ul>
+            <li>Does this run server-side? Yes when you run <code>node server.js</code> locally.</li>
+            <li>What about large files? The local backend streams larger sheets and supports downloads.</li>
+            <li>Can I customize fields? Yes—adjust parsing options in <code>src/routes/excel.js</code>.</li>
+          </ul>
+        </div>
+        <div class="feature">
+          <h3>SEO text</h3>
+          <p>
+            Convert Excel to JSON fast with a modern web converter. Export spreadsheets to JSON for APIs, NoSQL
+            databases, and JavaScript apps without manual rework.
+          </p>
+        </div>
+        <div class="feature">
+          <h3>Local instructions</h3>
+          <p>Clone the repo, install dependencies, and run <code>node server.js</code> to enable server-backed uploads.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>Static preview powered by GitHub Pages. Run the backend locally for authenticated downloads.</p>
+    </footer>
+
+    <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script>
+      const fileInput = document.getElementById('excelUpload');
+      const preview = document.getElementById('jsonPreview');
+      const copyBtn = document.getElementById('copyJson');
+      const downloadBtn = document.getElementById('downloadJson');
+
+      function renderJSON(data) {
+        const text = JSON.stringify(data, null, 2);
+        preview.textContent = text;
+        copyBtn.disabled = false;
+        downloadBtn.disabled = false;
+      }
+
+      fileInput?.addEventListener('change', (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.SheetNames[0];
+          const json = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { defval: '' });
+          renderJSON(json);
+        };
+        reader.readAsArrayBuffer(file);
+      });
+
+      copyBtn?.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(preview.textContent || '');
+          copyBtn.textContent = 'Copied!';
+          setTimeout(() => (copyBtn.textContent = 'Copy'), 1500);
+        } catch (err) {
+          copyBtn.textContent = 'Copy failed';
+          setTimeout(() => (copyBtn.textContent = 'Copy'), 1500);
+        }
+      });
+
+      downloadBtn?.addEventListener('click', () => {
+        const blob = new Blob([preview.textContent || '[]'], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'excel-to-json.json';
+        link.click();
+        URL.revokeObjectURL(url);
+      });
+    </script>
+  </body>
+</html>

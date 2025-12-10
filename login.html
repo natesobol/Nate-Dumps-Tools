@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login | Monetize Hub</title>
+    <meta name="description" content="Sign in to the Monetize Hub starter. Run locally to enable session-backed login." />
+    <link rel="canonical" href="https://natesobol.github.io/Nates-Free-Tools/login.html" />
+    <meta property="og:title" content="Login to Monetize Hub" />
+    <meta property="og:description" content="Secure authentication with hashed passwords when running the Node.js backend locally." />
+    <meta property="og:url" content="https://natesobol.github.io/Nates-Free-Tools/login.html" />
+    <meta property="og:type" content="website" />
+    <link rel="stylesheet" href="./public/css/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-top">
+        <a class="brand" href="./index.html">
+          <img src="./public/logo.png" alt="Monetize Hub" class="brand-logo" />
+          <div class="brand-text">
+            <span class="brand-name">Monetize Hub</span>
+            <span class="brand-tagline">Launch, host, and grow your webapps</span>
+          </div>
+        </a>
+        <details class="nav-dropdown user-dropdown" open>
+          <summary class="nav-link nav-dropdown-toggle">
+            <span class="user-label">Account</span>
+            <span aria-hidden="true">▾</span>
+          </summary>
+          <div class="nav-dropdown-menu">
+            <a href="./login.html" class="dropdown-link">Login</a>
+            <a href="./register.html" class="dropdown-link">Create Account</a>
+            <a href="./admin.html" class="dropdown-link">Admin Dashboard</a>
+          </div>
+        </details>
+      </div>
+      <nav class="main-nav">
+        <a href="./index.html" class="nav-link">Home</a>
+        <a href="./about.html" class="nav-link">About</a>
+        <details class="nav-dropdown" open>
+          <summary class="nav-link nav-dropdown-toggle">Webapps <span aria-hidden="true">▾</span></summary>
+          <div class="nav-dropdown-menu">
+            <a href="./excel-to-json.html" class="dropdown-link">Excel → JSON</a>
+          </div>
+        </details>
+      </nav>
+    </header>
+
+    <main class="page-body">
+      <section class="form-card">
+        <h1>Login</h1>
+        <p class="lede">Static preview: form submission requires running the Node.js backend locally.</p>
+        <form onsubmit="event.preventDefault(); alert('Run `node server.js` locally to process logins.');">
+          <label class="input-label" for="email">Email</label>
+          <input id="email" type="email" name="email" required placeholder="you@example.com" />
+
+          <label class="input-label" for="password">Password</label>
+          <input id="password" type="password" name="password" required placeholder="••••••••" />
+
+          <button class="button primary" type="submit">Login</button>
+        </form>
+        <p class="helper-text">Default admin when running locally: admin@example.com / admin</p>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>Static preview only. Start the local backend to enable authentication.</p>
+    </footer>
+  </body>
+</html>

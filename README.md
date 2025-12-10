@@ -1,0 +1,48 @@
+# Monetize Hub Starter
+
+A starter website for hosting webapps with monetization in mind. It provides a home page, about page, navigation menu, and a robust login/account system backed by SQLite.
+
+## Static preview
+- View the static landing page on GitHub Pages: https://natesobol.github.io/Nates-Free-Tools/
+- The preview uses `index.html` plus companion static pages (`about.html`, `excel-to-json.html`, `login.html`, `register.html`, `admin.html`) so navigation works on GitHub Pages.
+- Dynamic features (login, admin, Excel → JSON downloads) require running the Node.js server locally or on a host that supports server-side rendering.
+
+## Features
+- Home and About pages with modern UI and navigation menu
+- Registration and login with hashed passwords and persistent sessions
+- Account dashboard for updating profile, subscription plan, and marketing preferences
+- Admin-only dashboard for reviewing all accounts (seeded with `admin@example.com` / `admin` — change immediately)
+- Excel-to-JSON converter webapp with upload, preview, and JSON download
+- SQLite database for user data and session storage
+- EJS templating with responsive styling
+
+## Getting started
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Copy the environment template and update secrets as needed:
+   ```bash
+   cp .env.example .env
+   ```
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
+4. Visit `http://localhost:3000` to view the site.
+
+## Excel to JSON converter
+- Navigate to `/excel-to-json` from the top navigation or hero CTA.
+- Upload `.xls` or `.xlsx` files up to 5 MB for in-memory conversion.
+- Preview the JSON payload per worksheet and download a ready-to-use `.json` file.
+
+## Tech stack
+- Node.js + Express
+- SQLite for data and session storage
+- EJS for server-rendered views
+- Helmet and secure session defaults for baseline security
+
+## Notes
+- User passwords are stored as bcrypt hashes.
+- Profile updates persist to the database and refresh the session payload.
+- Replace placeholder links in the footer and pricing sections with production resources when ready.

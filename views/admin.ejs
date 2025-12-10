@@ -1,0 +1,54 @@
+<%- include('partials/page-top', { title }) %>
+
+<section class="hero">
+  <div>
+    <p class="eyebrow">Admin only</p>
+    <h1>Admin dashboard</h1>
+    <p>Review user accounts, plans, and marketing preferences. The seeded admin user is <code>admin@example.com</code> with password <code>admin</code>; change this immediately.</p>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">User directory</p>
+      <h2>Accounts overview</h2>
+    </div>
+    <p class="muted">Showing <%= users.length %> account(s)</p>
+  </div>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th>Name</th>
+          <th>Plan</th>
+          <th>Marketing</th>
+          <th>Role</th>
+          <th>Created</th>
+          <th>Updated</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!users.length) { %>
+          <tr>
+            <td colspan="7" class="muted">No users found.</td>
+          </tr>
+        <% } %>
+        <% users.forEach((user) => { %>
+          <tr>
+            <td><%= user.email %></td>
+            <td><%= user.full_name || '—' %></td>
+            <td><%= user.subscription_plan %></td>
+            <td><%= user.marketing_opt_in ? 'Opted in' : 'Opted out' %></td>
+            <td><%= user.role %></td>
+            <td><%= user.created_at %></td>
+            <td><%= user.updated_at %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<%- include('partials/page-bottom') %>

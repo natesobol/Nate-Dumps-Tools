@@ -1,0 +1,96 @@
+<%- include('partials/page-top') %>
+<section class="tool-hero">
+  <div>
+    <p class="eyebrow">Data automation utility</p>
+    <h1>Excel to JSON converter for APIs, imports, and automation.</h1>
+    <p class="lede">
+      Upload your Excel workbook, preview clean JSON immediately, and download the serialized file for APIs, low-code workflows,
+      or analytics stacks. No tracking pixels or surprise storage — just a straightforward conversion pipeline you can trust.
+    </p>
+    <ul class="trust-points">
+      <li>Supports .xls and .xlsx uploads up to 5 MB</li>
+      <li>Preserves sheet-by-sheet structure with null-safe values</li>
+      <li>Download a ready-to-use JSON file or copy the text payload</li>
+    </ul>
+  </div>
+  <div class="converter-card">
+    <form action="/excel-to-json" method="POST" enctype="multipart/form-data">
+      <label for="excelFile">Choose an Excel file</label>
+      <input id="excelFile" name="excelFile" type="file" accept=".xls,.xlsx" required />
+      <p class="help-text">We never persist uploads. Files stay in memory for conversion only.</p>
+      <button type="submit" class="button primary full-width">Convert to JSON</button>
+    </form>
+    <% if (error) { %>
+      <div class="flash flash-error" role="alert"><%= error %></div>
+    <% } %>
+  </div>
+</section>
+
+<section class="result-panel">
+  <div class="result-card">
+    <h2>JSON preview</h2>
+    <p class="help-text">Each worksheet is preserved as a JSON array keyed by its sheet name.</p>
+    <% if (result) { %>
+      <p class="success-text">Successfully parsed <%= result.sheetCount %> worksheet(s). Review or download below.</p>
+      <textarea readonly class="code-block" rows="14"><%= result.jsonString %></textarea>
+      <div class="download-row">
+        <form action="/excel-to-json/download" method="POST">
+          <input type="hidden" name="payload" value="<%= result.downloadPayload %>" />
+          <input type="hidden" name="fileName" value="<%= result.fileName %>" />
+          <button type="submit" class="button primary">Download JSON file</button>
+        </form>
+        <p class="help-text">Or select the text above and copy it directly into your API client.</p>
+      </div>
+    <% } else { %>
+      <textarea readonly class="code-block" rows="14">{"SampleSheet":[{"column":"value"}]}</textarea>
+      <p class="help-text">Upload a spreadsheet to replace this sample output with your data.</p>
+    <% } %>
+  </div>
+  <div class="result-card">
+    <h2>How the converter cleans your data</h2>
+    <ul class="checklist">
+      <li>Trims leading and trailing whitespace for predictable JSON keys.</li>
+      <li>Sets empty cells to <code>null</code> so downstream systems can validate missing values.</li>
+      <li>Processes every sheet independently, keeping multi-tab workbooks intact.</li>
+      <li>Runs entirely in memory — nothing is saved to disk or transmitted elsewhere.</li>
+    </ul>
+    <p class="help-text">
+      Need more structure? Pair the JSON output with your favorite validation library or schema registry to enforce data
+      contracts across imports.
+    </p>
+  </div>
+</section>
+
+<section class="seo-content">
+  <h2>Why teams ship data faster with Excel to JSON automation</h2>
+  <p>
+    Manual spreadsheet cleanup delays integrations, BI dashboards, and internal tooling. This converter bridges the gap between
+    how teams collect information (Excel) and how modern platforms ingest it (JSON). Common use cases include migrating CRM
+    exports into RESTful services, feeding customer success notes into product analytics, and bulk-loading catalog data into
+    headless commerce stacks.
+  </p>
+  <p>
+    Because the transformation runs on the server, you can integrate it behind authentication, layer in rate limits, or extend
+    it with custom validation. Keep the default experience simple for SEO and discoverability while layering advanced rules for
+    production customers.
+  </p>
+  <h3>Deployment-ready talking points for search engines and buyers</h3>
+  <ul>
+    <li>Free Excel to JSON converter optimized for API pipelines and webhooks.</li>
+    <li>Secure, session-backed foundation that fits subscription or ad-supported monetization.</li>
+    <li>High-signal content and structured data markup to rank for spreadsheet-to-JSON workflows.</li>
+  </ul>
+  <h3>Frequently asked questions</h3>
+  <dl class="faq">
+    <dt>What happens to my file after upload?</dt>
+    <dd>Your spreadsheet is processed in memory only for conversion. Nothing is written to disk or stored after the request.</dd>
+    <dt>Does the converter keep multiple sheets?</dt>
+    <dd>Yes. Each worksheet is turned into its own array in the JSON payload and keyed by sheet name.</dd>
+    <dt>Can I automate this?</dt>
+    <dd>
+      Absolutely. The endpoint runs on Express, so you can protect it with authentication, rate limiting, or your preferred
+      monetization strategy, then reuse the JSON output in any downstream service.
+    </dd>
+  </dl>
+</section>
+<%- include('partials/page-bottom') %>
