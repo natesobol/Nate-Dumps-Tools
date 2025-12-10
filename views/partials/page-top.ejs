@@ -32,6 +32,38 @@
   </head>
   <body>
     <header class="site-header">
+      <div class="header-top">
+        <a class="brand" href="/">
+          <img src="/logo.png" alt="Monetize Hub" class="brand-logo" />
+          <div class="brand-text">
+            <span class="brand-name">Monetize Hub</span>
+            <span class="brand-tagline">Launch, host, and grow your webapps</span>
+          </div>
+        </a>
+        <details class="nav-dropdown user-dropdown">
+          <summary class="nav-link nav-dropdown-toggle">
+            <% if (currentUser) { %>
+              <span class="user-label"><%= currentUser.email %></span>
+            <% } else { %>
+              <span class="user-label">Account</span>
+            <% } %>
+            <span aria-hidden="true">▾</span>
+          </summary>
+          <div class="nav-dropdown-menu">
+            <% if (currentUser) { %>
+              <a href="/account" class="dropdown-link">Account Settings</a>
+              <% if (currentUser.role === 'admin') { %>
+                <a href="/admin" class="dropdown-link">Admin Dashboard</a>
+              <% } %>
+              <form action="/logout" method="POST" class="dropdown-form">
+                <button type="submit">Logout</button>
+              </form>
+            <% } else { %>
+              <a href="/login" class="dropdown-link">Login</a>
+              <a href="/register" class="dropdown-link">Create Account</a>
+            <% } %>
+          </div>
+        </details>
       <div class="brand">
         <span class="brand-mark">MH</span>
         <div class="brand-text">
@@ -42,6 +74,12 @@
       <nav class="main-nav">
         <a href="/" class="nav-link">Home</a>
         <a href="/about" class="nav-link">About</a>
+        <details class="nav-dropdown">
+          <summary class="nav-link nav-dropdown-toggle">Webapps <span aria-hidden="true">▾</span></summary>
+          <div class="nav-dropdown-menu">
+            <a href="/excel-to-json" class="dropdown-link">Excel → JSON</a>
+          </div>
+        </details>
         <a href="/excel-to-json" class="nav-link">Excel → JSON</a>
         <% if (currentUser) { %>
           <% if (currentUser.role === 'admin') { %>
