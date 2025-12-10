@@ -1,0 +1,45 @@
+<%- include('partials/page-top') %>
+<section class="page-section">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Account center</p>
+      <h1>Manage your profile and plan</h1>
+      <p class="lede">Update your information, subscription level, and marketing preferences.</p>
+    </div>
+    <div class="account-summary">
+      <p class="label">Signed in as</p>
+      <p class="value"><%= user.email %></p>
+      <p class="label">Current plan</p>
+      <p class="value"><%= user.subscription_plan %></p>
+    </div>
+  </div>
+
+  <form method="POST" action="/account" class="form-grid card">
+    <label>
+      <span>Full name</span>
+      <input type="text" name="fullName" value="<%= user.full_name || '' %>" required />
+    </label>
+    <label>
+      <span>Subscription plan</span>
+      <select name="subscriptionPlan" required>
+        <option value="free" <%= user.subscription_plan === 'free' ? 'selected' : '' %>>Free</option>
+        <option value="pro" <%= user.subscription_plan === 'pro' ? 'selected' : '' %>>Pro</option>
+        <option value="enterprise" <%= user.subscription_plan === 'enterprise' ? 'selected' : '' %>>Enterprise</option>
+      </select>
+    </label>
+    <label class="checkbox">
+      <input type="checkbox" name="marketingOptIn" <%= user.marketing_opt_in ? 'checked' : '' %> />
+      <span>Receive product updates and marketing emails</span>
+    </label>
+    <button type="submit" class="button primary">Save changes</button>
+  </form>
+
+  <div class="card stack">
+    <h3>Data model overview</h3>
+    <p>
+      User records store email, hashed password, full name, subscription plan, marketing preference, and timestamps.
+      Plug in billing providers or ad networks by referencing the subscription plan and marketing flags stored in the database.
+    </p>
+  </div>
+</section>
+<%- include('partials/page-bottom') %>
