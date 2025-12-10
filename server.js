@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url';
 import authRoutes from './src/routes/auth.js';
 import pageRoutes from './src/routes/pages.js';
 import adminRoutes from './src/routes/admin.js';
+import excelRoutes from './src/routes/excel.js';
 import { setUserLocals } from './src/middleware/auth.js';
 import './src/db.js';
 
@@ -51,6 +52,7 @@ app.use(setUserLocals);
 app.use('/', pageRoutes);
 app.use('/', authRoutes);
 app.use('/', adminRoutes);
+app.use('/', excelRoutes);
 
 app.use((req, res) => {
   res.status(404).render('404', { title: 'Not found' });
