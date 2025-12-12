@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Batch File Renamer by Pattern</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Filename cleanup</p>
+          <h1>Batch rename files with prefixes, replacements, and smart numbering.</h1>
+          <p class="lede">
+            Drop in a stack of files and apply consistent naming rules for shoots, code assets, or project cleanups. Preview the
+            before/after mapping then grab a zip of the renamed files—all handled in-memory.
+          </p>
+          <ul class="pill-list">
+            <li>Prefix &amp; suffix toggles</li>
+            <li>Search-and-replace on filenames</li>
+            <li>Auto-number with padding</li>
+          </ul>
+        </div>
+        <div class="hero-card">
+          <p class="hint">Powered by a .NET 8 minimal API. Files are streamed in-memory only.</p>
+          <p class="hint">Perfect for photographers, coders, or anyone wrangling chaotic filenames.</p>
+        </div>
+      </header>
+
+      <section class="card">
+        <form id="rename-form" class="form-grid">
+          <div class="grid">
+            <div class="field">
+              <label for="prefix">Prefix</label>
+              <input id="prefix" name="prefix" type="text" placeholder="event_" />
+              <p class="hint">Prepends text before each filename. Leave blank to skip.</p>
+            </div>
+            <div class="field">
+              <label for="suffix">Suffix</label>
+              <input id="suffix" name="suffix" type="text" placeholder="_draft" />
+              <p class="hint">Appends text right before the extension. Leave blank to skip.</p>
+            </div>
+          </div>
+
+          <div class="grid">
+            <div class="field">
+              <label for="search">Find text in filenames</label>
+              <input id="search" name="search" type="text" placeholder="IMG_" />
+              <p class="hint">Matches are replaced when enabled, respecting the case toggle.</p>
+            </div>
+            <div class="field">
+              <label for="replacement">Replace with</label>
+              <input id="replacement" name="replacement" type="text" placeholder="wedding_" />
+              <label class="checkbox">
+                <input type="checkbox" id="useReplacement" name="useReplacement" /> Apply replacement
+              </label>
+              <label class="checkbox">
+                <input type="checkbox" id="caseSensitive" name="caseSensitive" /> Match case
+              </label>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="inline">
+              <label class="checkbox">
+                <input type="checkbox" id="numberingEnabled" name="numberingEnabled" checked /> Enable auto-numbering
+              </label>
+              <span class="tag">e.g., photo-001.jpg, photo-002.jpg</span>
+            </div>
+            <div class="grid" style="margin-top: 10px;">
+              <div class="field">
+                <label for="numberingStart">Start at</label>
+                <input id="numberingStart" name="numberingStart" type="number" value="1" min="0" />
+              </div>
+              <div class="field">
+                <label for="numberingPad">Pad width</label>
+                <input id="numberingPad" name="numberingPad" type="number" value="3" min="1" max="6" />
+              </div>
+              <div class="field">
+                <label for="numberingPosition">Number placement</label>
+                <select id="numberingPosition" name="numberingPosition">
+                  <option value="suffix">After name</option>
+                  <option value="prefix">Before name</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="files">Upload files to rename</label>
+            <input id="files" name="files" type="file" multiple />
+            <p class="hint">No file contents are modified—only the names. All processing stays in memory.</p>
+          </div>
+
+          <div class="actions">
+            <button type="submit">Generate new names</button>
+            <button type="button" id="clearButton" class="ghost">Reset form</button>
+            <button type="button" id="downloadZip" class="ghost" disabled>Download renamed zip</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card" id="status" aria-live="polite"></section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2>Preview renamed files</h2>
+          <span class="tag" id="summaryTag">Waiting for uploads</span>
+        </div>
+        <div class="table-wrapper">
+          <table class="results-table" id="resultsTable">
+            <thead>
+              <tr>
+                <th>Original name</th>
+                <th>Renamed</th>
+                <th>Flags</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="3">
+                  <p class="hint">Add files and run the tool to see the before/after mapping and download your renamed archive.</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById('rename-form');
+      const statusEl = document.getElementById('status');
+      const resultsTable = document.getElementById('resultsTable').querySelector('tbody');
+      const downloadBtn = document.getElementById('downloadZip');
+      const summaryTag = document.getElementById('summaryTag');
+      const clearBtn = document.getElementById('clearButton');
+
+      let lastZipBase64 = null;
+
+      function setStatus(message, variant = 'info') {
+        statusEl.textContent = message;
+        statusEl.className = 'status';
+        statusEl.dataset.variant = variant;
+      }
+
+      function resetTable() {
+        resultsTable.innerHTML = `
+          <tr>
+            <td colspan="3">
+              <p class="hint">Add files and run the tool to see the before/after mapping and download your renamed archive.</p>
+            </td>
+          </tr>`;
+        summaryTag.textContent = 'Waiting for uploads';
+      }
+
+      function renderResults(renamed) {
+        if (!renamed.length) {
+          resetTable();
+          return;
+        }
+
+        resultsTable.innerHTML = '';
+        renamed.forEach((item) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${item.original}</td>
+            <td>${item.renamed}</td>
+            <td>
+              ${item.replaced ? '<span class="tag">Replaced</span>' : ''}
+              ${item.numberingApplied ? '<span class="tag">Numbered</span>' : ''}
+              ${item.duplicateResolved ? '<span class="tag">Deduped</span>' : ''}
+            </td>`;
+          resultsTable.appendChild(tr);
+        });
+
+        summaryTag.textContent = `${renamed.length} file(s) renamed`;
+      }
+
+      function downloadZip() {
+        if (!lastZipBase64) return;
+        const binary = atob(lastZipBase64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i += 1) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        const blob = new Blob([bytes], { type: 'application/zip' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'renamed-files.zip';
+        link.click();
+        URL.revokeObjectURL(link.href);
+      }
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const formData = new FormData(form);
+        const files = document.getElementById('files').files;
+        if (!files.length) {
+          setStatus('Please upload at least one file to rename.', 'error');
+          return;
+        }
+
+        Array.from(files).forEach((file) => formData.append('files', file));
+
+        setStatus('Renaming files…');
+        downloadBtn.disabled = true;
+        lastZipBase64 = null;
+
+        try {
+          const response = await fetch('/api/rename', {
+            method: 'POST',
+            body: formData
+          });
+
+          const payload = await response.json();
+
+          if (!response.ok) {
+            setStatus(payload.error || 'Unable to rename files.', 'error');
+            resetTable();
+            return;
+          }
+
+          renderResults(payload.renamed || []);
+          lastZipBase64 = payload.zipBase64;
+          downloadBtn.disabled = !lastZipBase64;
+          setStatus('Renaming complete. Download your updated archive.', 'success');
+        } catch (error) {
+          console.error(error);
+          setStatus('Unexpected error while renaming.', 'error');
+          resetTable();
+        }
+      });
+
+      downloadBtn.addEventListener('click', downloadZip);
+
+      clearBtn.addEventListener('click', () => {
+        form.reset();
+        document.getElementById('files').value = '';
+        resetTable();
+        lastZipBase64 = null;
+        downloadBtn.disabled = true;
+        setStatus('Ready to rename files.');
+      });
+
+      resetTable();
+      setStatus('Ready to rename files.');
+    </script>
+  </body>
+</html>

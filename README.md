@@ -9,6 +9,7 @@ A starter website for hosting webapps with monetization in mind. It provides a h
   - Excel to JSON: `/apps/excel-to-json/index.html`
   - YAML/JSON Converter: `/apps/yaml-json-converter/index.html`
   - JSON Combiner: `/apps/json-combiner/wwwroot/index.html`
+  - Batch File Renamer: `/apps/batch-file-renamer/wwwroot/index.html`
   - CSV/XML Converter: `/apps/csv-xml-converter/index.html`
   - List Comparison / Diff Checker: `/apps/list-comparison/wwwroot/index.html`
   - PDF Splitter: `/apps/pdf-splitter/wwwroot/index.html`
@@ -114,6 +115,22 @@ cd apps/find-and-replace
 dotnet run
 ```
 
+### Batch File Renamer by Pattern
+Located in `apps/batch-file-renamer/`, this .NET 8 minimal API applies consistent naming schemes across many files at once.
+
+**Features:**
+- Add prefixes and suffixes without touching file contents
+- Optional find-and-replace on filenames with case sensitivity
+- Auto-numbering with configurable start, padding, and prefix/suffix placement
+- Preview original vs. renamed filenames and download a zip of the new set
+- In-memory processing only for quick, safe cleanups
+
+**Run locally:**
+```bash
+cd apps/batch-file-renamer
+dotnet run
+```
+
 ### CSV/XML Data Converter
 Located in `apps/csv-xml-converter/`, this tool converts CSV to XML and XML back to CSV.
 
@@ -196,6 +213,14 @@ apps/
 │   ├── wwwroot/            # Static web files
 │   ├── Program.cs          # Main application
 │   └── README.md
+├── find-and-replace/       # .NET find-and-replace utility
+│   ├── Program.cs          # Minimal API and text/file processor
+│   ├── find-and-replace.csproj
+│   └── wwwroot/            # Static UI assets
+├── batch-file-renamer/     # .NET batch renamer for filename cleanup
+│   ├── Program.cs          # Minimal API building renamed archives
+│   ├── batch-file-renamer.csproj
+│   └── wwwroot/            # Static UI assets
 └── json-to-excel/          # C# JSON → Excel creator
     ├── wwwroot/            # Static UI assets
     ├── Program.cs          # Minimal API and converter
