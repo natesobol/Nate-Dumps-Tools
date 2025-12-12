@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Table of Contents Extractor | Monetize Hub Tools</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="../../../public/css/styles.css" />
+    <link rel="stylesheet" href="../../../public/css/webapp-theme.css" />
+  </head>
+  <body class="tool-page">
+    <header class="site-header">
+      <div class="header-top">
+        <a class="brand" href="../../../index.html">
+          <img src="../../../public/logo.png" alt="Monetize Hub" class="brand-logo" />
+          <div class="brand-text">
+            <div class="brand-title">Monetize Hub</div>
+            <div class="brand-subtitle">Free AI Tools</div>
+          </div>
+        </a>
+        <div class="header-actions">
+          <a href="../../../login.html" class="btn btn-outline-light btn-sm">Login</a>
+          <a href="../../../register.html" class="btn btn-primary btn-sm">Register</a>
+        </div>
+      </div>
+      <nav class="nav nav-tabs">
+        <a class="nav-link" href="../../../index.html">All Tools</a>
+        <a class="nav-link" href="../../../about.html">About</a>
+      </nav>
+    </header>
+
+    <main class="container my-5">
+      <div class="row g-4">
+        <div class="col-lg-8">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                  <p class="text-uppercase text-muted fw-semibold mb-1">Document Intelligence</p>
+                  <h1 class="h3 mb-2">Table of Contents Extractor</h1>
+                  <p class="text-muted mb-0">
+                    Upload a PDF, DOCX, or EPUB to automatically pull structured headings or navigation into a shareable TOC list.
+                  </p>
+                </div>
+                <span class="badge bg-primary">Browser-first</span>
+              </div>
+
+              <div class="alert alert-info d-flex align-items-start" role="alert">
+                <div class="me-3">
+                  <div class="fw-semibold">Supported formats</div>
+                  <small class="text-muted">PDF (page-aware), DOCX (heading tags), EPUB (embedded navigation)</small>
+                </div>
+                <div class="ms-auto">
+                  <span class="badge text-bg-light">Local processing</span>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="fileInput" class="form-label fw-semibold">Choose a document</label>
+                <input
+                  class="form-control"
+                  type="file"
+                  id="fileInput"
+                  accept=".pdf,.docx,.epub,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/epub+zip"
+                />
+                <small class="text-muted">Drop in a TOC page or the full document—processing happens entirely in the browser.</small>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="toggleHierarchy" checked />
+                    <label class="form-check-label" for="toggleHierarchy">Show nested hierarchy</label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="toggleFlat" checked />
+                    <label class="form-check-label" for="toggleFlat">Show flat list</label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Extraction notes</label>
+                <ul class="small text-muted mb-0">
+                  <li>PDF page numbers are reported when headings are detected on specific pages.</li>
+                  <li>DOCX and EPUB use structural metadata; page numbers may appear as location hints.</li>
+                  <li>Use the hierarchy toggle to quickly compare outline depth against the flat listing.</li>
+                </ul>
+              </div>
+
+              <div class="d-flex align-items-center gap-3">
+                <div id="statusBadge" class="badge text-bg-secondary">Waiting for a file...</div>
+                <div id="warningBadge" class="badge text-bg-warning d-none"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card shadow-sm mt-4" id="flatCard">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <p class="text-uppercase text-muted fw-semibold mb-1">Outline</p>
+                  <h2 class="h5 mb-0">Flat list</h2>
+                </div>
+                <span class="badge text-bg-light">Titles in reading order</span>
+              </div>
+              <div id="flatList" class="list-group"></div>
+            </div>
+          </div>
+
+          <div class="card shadow-sm mt-4" id="hierarchyCard">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <p class="text-uppercase text-muted fw-semibold mb-1">Structure</p>
+                  <h2 class="h5 mb-0">Nested hierarchy</h2>
+                </div>
+                <span class="badge text-bg-light">Grouped by heading depth</span>
+              </div>
+              <div id="nestedList" class="ps-1"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <h2 class="h6 text-uppercase text-muted mb-3">How it works</h2>
+              <ol class="small text-muted ps-3">
+                <li>Select a PDF, DOCX, or EPUB file.</li>
+                <li>The tool reads the document in your browser and searches for structured headings or navigation.</li>
+                <li>Review the flat list or switch to a nested outline to copy into summaries or indexes.</li>
+              </ol>
+              <div class="mt-3">
+                <div class="fw-semibold mb-1">Best results</div>
+                <ul class="small text-muted mb-0 ps-3">
+                  <li>Upload documents with consistent heading styles.</li>
+                  <li>Include dedicated TOC pages in PDFs for stronger matches.</li>
+                  <li>EPUB files with NCX or HTML navigation produce cleaner hierarchies.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="card shadow-sm mt-4">
+            <div class="card-body">
+              <h2 class="h6 text-uppercase text-muted mb-3">Tips</h2>
+              <ul class="small text-muted mb-0 ps-3">
+                <li>Copy results directly to your knowledge base or summarization prompts.</li>
+                <li>Use the hierarchy view to quickly spot missing sections.</li>
+                <li>Re-run extraction after adjusting the document to validate heading consistency.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer border-top py-4">
+      <div class="container d-flex justify-content-between align-items-center">
+        <div>
+          <div class="fw-semibold">Monetize Hub Free AI Tools</div>
+          <small class="text-muted">Document summarization, indexing, and knowledge base prep.</small>
+        </div>
+        <a class="text-muted" href="https://nateshmbhat.github.io/Nates-Free-Tools/">Visit more tools</a>
+      </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.js" integrity="sha512-Yu94+pJvaXE6HT+/9rywOpgWfiqLDbpQXg+WyEsxZlZbOeZKlv27HjTIY6Omk1WRemYmHOkjf7Eyl1HMHxZbhQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.js";
+    </script>
+    <script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/epub.js/0.3.93/epub.min.js"></script>
+    <script>
+      const fileInput = document.getElementById('fileInput');
+      const statusBadge = document.getElementById('statusBadge');
+      const warningBadge = document.getElementById('warningBadge');
+      const flatList = document.getElementById('flatList');
+      const nestedList = document.getElementById('nestedList');
+      const flatCard = document.getElementById('flatCard');
+      const hierarchyCard = document.getElementById('hierarchyCard');
+      const toggleHierarchy = document.getElementById('toggleHierarchy');
+      const toggleFlat = document.getElementById('toggleFlat');
+
+      toggleHierarchy.addEventListener('change', () => {
+        hierarchyCard.classList.toggle('d-none', !toggleHierarchy.checked);
+      });
+
+      toggleFlat.addEventListener('change', () => {
+        flatCard.classList.toggle('d-none', !toggleFlat.checked);
+      });
+
+      fileInput.addEventListener('change', async (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        resetUI();
+        setStatus(`Reading ${file.name}...`, 'info');
+        try {
+          const buffer = await file.arrayBuffer();
+          const ext = getExtension(file.name);
+          let entries = [];
+          let source = '';
+
+          if (ext === 'pdf') {
+            source = 'PDF';
+            entries = await extractPdfHeadings(buffer);
+          } else if (ext === 'docx') {
+            source = 'DOCX';
+            entries = await extractDocxHeadings(buffer);
+          } else if (ext === 'epub') {
+            source = 'EPUB';
+            entries = await extractEpubHeadings(buffer);
+          } else {
+            throw new Error('Unsupported file type. Please use PDF, DOCX, or EPUB.');
+          }
+
+          const cleanedEntries = entries.map((entry) => ({
+            title: entry.title?.trim() ?? '',
+            level: entry.level ?? 1,
+            pageNumber: entry.pageNumber ?? null,
+            locationHint: entry.locationHint ?? null,
+          })).filter((entry) => entry.title.length > 0);
+
+          if (!cleanedEntries.length) {
+            setStatus(`No headings detected in the ${source} document.`, 'warning');
+            showWarning('Try a version with clearer heading styles or a dedicated TOC page.');
+            flatList.innerHTML = '<div class="text-muted small">No entries to display.</div>';
+            nestedList.innerHTML = '<div class="text-muted small">No entries to display.</div>';
+            return;
+          }
+
+          renderFlatList(cleanedEntries);
+          renderNestedList(cleanedEntries);
+          setStatus(`Found ${cleanedEntries.length} entries in your ${source} file.`, 'success');
+        } catch (error) {
+          console.error(error);
+          setStatus('Extraction failed. Please try another file.', 'danger');
+          showWarning(error.message || 'Unknown error occurred.');
+        }
+      });
+
+      function resetUI() {
+        flatList.innerHTML = '';
+        nestedList.innerHTML = '';
+        warningBadge.classList.add('d-none');
+        warningBadge.textContent = '';
+      }
+
+      function setStatus(text, variant = 'secondary') {
+        statusBadge.textContent = text;
+        statusBadge.className = `badge text-bg-${variant}`;
+      }
+
+      function showWarning(text) {
+        warningBadge.textContent = text;
+        warningBadge.classList.remove('d-none');
+      }
+
+      function getExtension(filename) {
+        return filename.split('.').pop()?.toLowerCase() ?? '';
+      }
+
+      async function extractPdfHeadings(buffer) {
+        const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+        const entries = [];
+
+        for (let pageIndex = 1; pageIndex <= pdf.numPages; pageIndex++) {
+          const page = await pdf.getPage(pageIndex);
+          const textContent = await page.getTextContent();
+          const lines = linesFromTextContent(textContent.items);
+
+          lines.forEach((line) => {
+            const heading = interpretHeading(line);
+            if (heading) {
+              entries.push({ ...heading, pageNumber: pageIndex });
+            }
+          });
+        }
+        return entries;
+      }
+
+      function linesFromTextContent(items) {
+        const lines = [];
+        let current = '';
+        items.forEach((item) => {
+          current += item.str;
+          if (item.hasEOL) {
+            const trimmed = current.trim();
+            if (trimmed) lines.push(trimmed);
+            current = '';
+          }
+        });
+        if (current.trim()) lines.push(current.trim());
+        return lines;
+      }
+
+      function interpretHeading(line) {
+        const cleaned = line.replace(/\s+/g, ' ').trim();
+        if (cleaned.length < 3 || cleaned.length > 140) return null;
+
+        const numberedMatch = cleaned.match(/^(\d+(?:\.\d+)*)\s+(.+)/);
+        const romanMatch = cleaned.match(/^([IVXLCDM]+)\.?\s+(.+)/i);
+        const bulletMatch = cleaned.match(/^[\u2022\-\*]\s+(.+)/);
+
+        if (numberedMatch) {
+          return { title: numberedMatch[2], level: numberedMatch[1].split('.').length };
+        }
+
+        if (romanMatch) {
+          return { title: romanMatch[2], level: 2 };
+        }
+
+        if (bulletMatch) {
+          return { title: bulletMatch[1], level: 3 };
+        }
+
+        const words = cleaned.split(' ');
+        const uppercaseWords = words.filter((w) => w === w.toUpperCase() && /[A-Z]/.test(w));
+        const uppercaseRatio = uppercaseWords.length / words.length;
+        const titleCaseLikely = words.every((w) => w.length <= 3 || /^[A-Z][^A-Z]*$/.test(w));
+
+        if (uppercaseRatio > 0.6 || titleCaseLikely) {
+          return { title: cleaned, level: 1 };
+        }
+
+        return null;
+      }
+
+      async function extractDocxHeadings(buffer) {
+        const { value: html } = await window.mammoth.convertToHtml({ arrayBuffer: buffer }, {
+          includeDefaultStyleMap: true,
+        });
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const headings = Array.from(doc.querySelectorAll('h1, h2, h3, h4, h5, h6'));
+        return headings.map((heading) => ({
+          title: heading.textContent?.trim() ?? '',
+          level: Number(heading.tagName.substring(1)) || 1,
+          locationHint: 'Word heading',
+        }));
+      }
+
+      async function extractEpubHeadings(buffer) {
+        const book = window.ePub(buffer, {});
+        await book.ready;
+        const navigation = await book.loaded.navigation;
+        const toc = navigation?.toc || [];
+
+        const entries = [];
+        function walk(items, level = 1) {
+          items.forEach((item) => {
+            entries.push({
+              title: item.label?.trim() || 'Untitled section',
+              level,
+              locationHint: item.href || 'EPUB section',
+            });
+            if (item.subitems?.length) {
+              walk(item.subitems, level + 1);
+            }
+          });
+        }
+
+        walk(toc, 1);
+        return entries;
+      }
+
+      function renderFlatList(entries) {
+        flatList.innerHTML = '';
+        entries.forEach((entry) => {
+          const pageLabel = entry.pageNumber ? `Page ${entry.pageNumber}` : entry.locationHint ? entry.locationHint : 'Unknown page';
+          const badge = `<span class="badge text-bg-light ms-2">${pageLabel}</span>`;
+          const item = document.createElement('div');
+          item.className = 'list-group-item d-flex justify-content-between align-items-start';
+          item.innerHTML = `
+            <div>
+              <div class="fw-semibold">${escapeHtml(entry.title)}</div>
+              <div class="text-muted small">Level ${entry.level}</div>
+            </div>
+            ${badge}
+          `;
+          flatList.appendChild(item);
+        });
+      }
+
+      function renderNestedList(entries) {
+        nestedList.innerHTML = '';
+        const tree = buildHierarchy(entries);
+        nestedList.appendChild(renderTree(tree));
+      }
+
+      function buildHierarchy(entries) {
+        const root = [];
+        const stack = [];
+
+        entries.forEach((entry) => {
+          const node = { ...entry, children: [] };
+          while (stack.length && stack[stack.length - 1].level >= node.level) {
+            stack.pop();
+          }
+          if (stack.length === 0) {
+            root.push(node);
+          } else {
+            stack[stack.length - 1].children.push(node);
+          }
+          stack.push(node);
+        });
+        return root;
+      }
+
+      function renderTree(nodes) {
+        const list = document.createElement('ul');
+        list.className = 'list-unstyled ps-3';
+
+        nodes.forEach((node) => {
+          const li = document.createElement('li');
+          li.className = 'mb-2';
+          const pageLabel = node.pageNumber ? `Page ${node.pageNumber}` : node.locationHint ? node.locationHint : 'Unknown page';
+          li.innerHTML = `
+            <div class="d-flex align-items-center gap-2">
+              <span class="fw-semibold">${escapeHtml(node.title)}</span>
+              <span class="badge text-bg-light">${pageLabel}</span>
+              <span class="badge text-bg-secondary">Level ${node.level}</span>
+            </div>
+          `;
+          if (node.children.length) {
+            li.appendChild(renderTree(node.children));
+          }
+          list.appendChild(li);
+        });
+        return list;
+      }
+
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+    </script>
+  </body>
+</html>
