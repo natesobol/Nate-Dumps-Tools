@@ -9,6 +9,7 @@ A starter website for hosting webapps with monetization in mind. It provides a h
   - Excel to JSON: `/apps/excel-to-json/index.html`
   - JSON Combiner: `/apps/json-combiner/wwwroot/index.html`
   - CSV/XML Converter: `/apps/csv-xml-converter/index.html`
+  - PDF Splitter: `/apps/pdf-splitter/wwwroot/index.html`
 - Dynamic features (login, admin, server-backed Excel conversion) require running the Node.js server locally or on a host that supports server-side rendering.
 
 ## Features
@@ -18,6 +19,7 @@ A starter website for hosting webapps with monetization in mind. It provides a h
 - Admin-only dashboard for reviewing all accounts (seeded with `admin@example.com` / `admin` — change immediately)
 - Excel-to-JSON converter webapp with upload, preview, and JSON download
 - CSV/XML converter that handles both directions with previews
+- Browser-based PDF splitter for page- or size-based slicing
 - SQLite database for user data and session storage
 - EJS templating with responsive styling
 
@@ -91,6 +93,18 @@ Located in `apps/csv-xml-converter/`, this tool converts CSV to XML and XML back
 **Server Route:** `/csv-xml-converter`
 **Static Version:** `/apps/csv-xml-converter/index.html`
 
+### PDF Splitter
+Located in `apps/pdf-splitter/`, this C#-hosted webapp splits one or more PDFs entirely in the browser.
+
+**Features:**
+- Upload a PDF (or multiple PDFs) and configure how to split them
+- Choose exact page ranges, per-file page counts, or approximate size targets
+- Download each split part as soon as it is generated
+- Browser-based processing keeps documents local for quick, private workflows
+
+**Server Route:** `/pdf-splitter`
+**Static Version:** `/apps/pdf-splitter/wwwroot/index.html`
+
 ## Project Structure
 
 ```
@@ -104,6 +118,11 @@ apps/
 │   ├── src/routes/         # Express routes
 │   ├── views/              # EJS templates
 │   └── index.html          # Static version
+├── pdf-splitter/           # Browser-based PDF splitter webapp
+│   ├── Program.cs          # Minimal API hosting the static UI
+│   ├── pdf-splitter.csproj # .NET project file
+│   ├── wwwroot/            # Static web files (served at /pdf-splitter)
+│   └── README.md
 └── json-combiner/          # C# JSON combiner webapp
     ├── wwwroot/            # Static web files
     ├── Program.cs          # Main application
@@ -115,7 +134,7 @@ apps/
 - SQLite for data and session storage
 - EJS for server-rendered views
 - Helmet and secure session defaults for baseline security
-- C# .NET (JSON Combiner webapp)
+- C# .NET (JSON Combiner and PDF Splitter webapps)
 
 ## Notes
 - User passwords are stored as bcrypt hashes

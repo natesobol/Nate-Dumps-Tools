@@ -33,6 +33,7 @@ app.use(helmet());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/json-combiner', express.static(path.join(__dirname, 'apps/json-combiner/wwwroot')));
+app.use('/pdf-splitter', express.static(path.join(__dirname, 'apps/pdf-splitter/wwwroot')));
 app.use(morgan('dev'));
 
 app.use(
