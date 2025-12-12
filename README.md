@@ -418,6 +418,10 @@ apps/
 │   ├── Program.cs          # Minimal API and path detector
 │   ├── file-path-extractor.csproj
 │   └── wwwroot/            # Static UI assets
+├── date-line-extractor/    # C# date/datetime line extractor
+│   ├── Program.cs          # Minimal API reading PDFs, DOCX, TXT, CSV, and logs
+│   ├── date-line-extractor.csproj
+│   └── wwwroot/            # Static UI assets
 └── json-to-excel/          # C# JSON → Excel creator
     ├── wwwroot/            # Static UI assets
     ├── Program.cs          # Minimal API and converter
@@ -429,7 +433,7 @@ apps/
 - Supabase for user data with SQLite session storage
 - EJS for server-rendered views
 - Helmet and secure session defaults for baseline security
-- C# .NET (JSON Combiner, JSON to Excel, PDF Splitter, PDF Link Extractor, Bullet List Extractor, List Comparison, Find & Replace, Batch File Renamer, and PowerPoint Image Extractor webapps)
+- C# .NET (JSON Combiner, JSON to Excel, PDF Splitter, PDF Link Extractor, Bullet List Extractor, List Comparison, Find & Replace, Batch File Renamer, PowerPoint Image Extractor, and Date Line Extractor webapps)
 
 ## Notes
 - User passwords are managed by Supabase Auth
