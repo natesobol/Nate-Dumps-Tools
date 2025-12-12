@@ -14,6 +14,7 @@ A starter website for hosting webapps with monetization in mind. It provides a h
 - List Comparison / Diff Checker: `/apps/list-comparison/wwwroot/index.html`
 - Extract Text Inside Quotes: `/apps/extract-text-inside-quotes/wwwroot/index.html`
 - PDF Splitter: `/apps/pdf-splitter/wwwroot/index.html`
+- Table Data Extractor: `/apps/table-data-extractor/wwwroot/index.html`
 - Bullet List Extractor: `/apps/bullet-list-extractor/wwwroot/index.html`
 - PowerPoint → PDF: `/apps/powerpoint-to-pdf/wwwroot/index.html`
 - PowerPoint Image Extractor: `/apps/powerpoint-image-extractor/wwwroot/index.html`
@@ -271,6 +272,21 @@ Located in `apps/batch-pdf-text-extractor/`, this .NET 8 minimal API extracts te
 **Run locally:**
 ```bash
 cd apps/batch-pdf-text-extractor
+dotnet run
+```
+
+### Extract Table Data From PDF, Word, and HTML Files
+Located in `apps/table-data-extractor/`, this .NET 8 minimal API auto-detects tables in PDFs, DOCX files, and saved HTML pages.
+
+**Features:**
+- Accepts `.pdf`, `.docx`, `.html`, and `.htm` uploads
+- Detects grid-style and borderless tables with per-table previews
+- Honors HTML captions and Word headers while normalizing columns
+- Export all detected tables together as CSV or multi-sheet Excel files
+
+**Run locally:**
+```bash
+cd apps/table-data-extractor
 dotnet run
 ```
 
