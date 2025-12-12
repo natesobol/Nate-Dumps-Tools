@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>C# Find &amp; Replace Utility</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Text and file cleanup</p>
+          <h1>C# Find-and-Replace across text or multiple files.</h1>
+          <p class="lede">
+            Paste content or drop in a handful of files, then run exact or regex-based replacements with instant previews for
+            every file you processed.
+          </p>
+          <ul class="pill-list">
+            <li>Regex and plain-text modes</li>
+            <li>Case sensitivity toggle</li>
+            <li>Per-file match counts</li>
+          </ul>
+        </div>
+        <div class="hero-card">
+          <p class="hint">Powered by a .NET 8 minimal API—no uploads are saved.</p>
+          <p class="hint">Bring your own pattern, preview updates, and download cleaned copies.</p>
+        </div>
+      </header>
+
+      <section class="card">
+        <form id="replace-form" class="form-grid">
+          <div class="field">
+            <label for="pattern">Find</label>
+            <input id="pattern" name="pattern" type="text" required placeholder="customer_id|order_id" />
+            <p class="hint">Provide text or a regex. Empty values are rejected to avoid accidental blank replacements.</p>
+          </div>
+
+          <div class="field">
+            <label for="replacement">Replace with</label>
+            <input id="replacement" name="replacement" type="text" placeholder="identifier" />
+          </div>
+
+          <div class="field inline">
+            <label class="checkbox">
+              <input type="checkbox" id="useRegex" name="useRegex" /> Use regular expression mode
+            </label>
+            <label class="checkbox">
+              <input type="checkbox" id="caseSensitive" name="caseSensitive" /> Match case
+            </label>
+          </div>
+
+          <div class="field">
+            <label for="textInput">Paste text (optional)</label>
+            <textarea
+              id="textInput"
+              name="text"
+              rows="6"
+              placeholder="Paste any snippet here to preview replacements without uploading files."
+            ></textarea>
+          </div>
+
+          <div class="field">
+            <label for="files">Upload one or more files (optional)</label>
+            <input
+              id="files"
+              name="files"
+              type="file"
+              multiple
+              accept=".txt,.md,.markdown,.csv,.tsv,.json,.html,.htm,.xml,.rtf,.docx"
+            />
+            <p class="hint">Drop in .txt, .md, .json, .html, .rtf, .docx, or code files—contents are processed in memory only.</p>
+          </div>
+
+          <div class="actions">
+            <button type="submit">Run find-and-replace</button>
+            <button type="button" id="clearButton" class="ghost">Clear inputs</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card" id="status" aria-live="polite"></section>
+
+      <section class="grid">
+        <div class="card">
+          <div class="card-header">
+            <h2>Text preview</h2>
+            <button type="button" id="copyText" class="ghost">Copy</button>
+          </div>
+          <pre id="textResult" class="code-block">Paste text above to see replacements.</pre>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>Processed files</h2>
+          </div>
+          <div id="fileResults" class="file-list">
+            <p class="hint">Upload files and run the tool to see per-file results with download links.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById('replace-form');
+      const statusEl = document.getElementById('status');
+      const textResultEl = document.getElementById('textResult');
+      const fileResultsEl = document.getElementById('fileResults');
+      const copyTextBtn = document.getElementById('copyText');
+      const clearBtn = document.getElementById('clearButton');
+
+      function setStatus(message, variant = 'info') {
+        statusEl.textContent = message;
+        statusEl.dataset.variant = variant;
+      }
+
+      function renderFileResults(fileResults) {
+        if (!fileResults.length) {
+          fileResultsEl.innerHTML = '<p class="hint">No files processed yet.</p>';
+          return;
+        }
+
+        fileResultsEl.innerHTML = '';
+
+        fileResults.forEach((result) => {
+          const card = document.createElement('div');
+          card.className = 'file-result';
+
+          const header = document.createElement('div');
+          header.className = 'file-result__header';
+          header.innerHTML = `<div><strong>${result.file}</strong><p class="hint">${result.matchCount ?? 0} matches • ${result.lengthBefore} → ${result.lengthAfter} chars</p></div>`;
+
+          const downloadButton = document.createElement('button');
+          downloadButton.type = 'button';
+          downloadButton.textContent = 'Download updated file';
+          downloadButton.addEventListener('click', () => {
+            const blob = createBlob(result);
+            const link = document.createElement('a');
+            const suffix = result.matchCount === 0 ? '-unchanged' : '-updated';
+            link.download = result.file.replace(/(\.[^.]+)?$/, `${suffix}$1`);
+            link.href = URL.createObjectURL(blob);
+            link.click();
+            URL.revokeObjectURL(link.href);
+          });
+
+          card.appendChild(header);
+          card.appendChild(downloadButton);
+
+          fileResultsEl.appendChild(card);
+        });
+      }
+
+      function createBlob(result) {
+        const type = result.contentType || 'text/plain';
+        if (result.updatedContentBase64) {
+          const binary = atob(result.updatedContentBase64);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i += 1) {
+            bytes[i] = binary.charCodeAt(i);
+          }
+
+          return new Blob([bytes], { type });
+        }
+
+        return new Blob([result.updatedContent || ''], { type });
+      }
+
+      function resetResults() {
+        textResultEl.textContent = 'Paste text above to see replacements.';
+        fileResultsEl.innerHTML = '<p class="hint">Upload files and run the tool to see per-file results with download links.</p>';
+        setStatus('Ready to run find-and-replace.');
+      }
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const pattern = document.getElementById('pattern').value.trim();
+        const replacement = document.getElementById('replacement').value;
+        const text = document.getElementById('textInput').value;
+        const files = document.getElementById('files').files;
+        const useRegex = document.getElementById('useRegex').checked;
+        const caseSensitive = document.getElementById('caseSensitive').checked;
+
+        const formData = new FormData();
+        formData.append('pattern', pattern);
+        formData.append('replacement', replacement);
+        formData.append('mode', useRegex ? 'regex' : 'text');
+        formData.append('caseSensitive', caseSensitive ? 'true' : 'false');
+        formData.append('text', text);
+
+        if (files.length) {
+          Array.from(files).forEach((file) => formData.append('files', file));
+        }
+
+        setStatus('Running find-and-replace…');
+        textResultEl.textContent = 'Working…';
+
+        try {
+          const response = await fetch('/api/replace', {
+            method: 'POST',
+            body: formData
+          });
+
+          const payload = await response.json();
+
+          if (!response.ok) {
+            setStatus(payload.error || 'Unable to complete replacement.', 'error');
+            textResultEl.textContent = payload.details || JSON.stringify(payload, null, 2);
+            fileResultsEl.innerHTML = '';
+            return;
+          }
+
+          if (payload.textResult) {
+            textResultEl.textContent = payload.textResult.updatedContent;
+          } else {
+            textResultEl.textContent = 'No text payload provided.';
+          }
+
+          renderFileResults(payload.fileResults || []);
+          const targets = [payload.textResult ? 'text' : null, payload.fileResults?.length ? 'files' : null]
+            .filter(Boolean)
+            .join(' and ');
+          setStatus(`Completed replacements for ${targets || 'your inputs'}.`);
+        } catch (error) {
+          console.error(error);
+          setStatus('Unexpected error running replacements.', 'error');
+          textResultEl.textContent = error.message || String(error);
+          fileResultsEl.innerHTML = '';
+        }
+      });
+
+      copyTextBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(textResultEl.textContent);
+          setStatus('Text result copied.');
+        } catch (error) {
+          setStatus('Could not copy the result.', 'error');
+        }
+      });
+
+      clearBtn.addEventListener('click', () => {
+        form.reset();
+        document.getElementById('files').value = '';
+        resetResults();
+      });
+
+      resetResults();
+    </script>
+  </body>
+</html>
