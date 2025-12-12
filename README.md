@@ -32,6 +32,7 @@ A starter website for hosting webapps with monetization in mind. It provides a h
 - Code Comment Extractor: `/apps/code-comment-extractor/wwwroot/index.html`
 - Capitalized Phrase Extractor: `/apps/capitalized-phrase-extractor/wwwroot/index.html`
 - Sentence Keyword Extractor: `/apps/sentence-keyword-extractor/wwwroot/index.html`
+- Long Word Extractor: `/apps/long-word-extractor/wwwroot/index.html`
 - IP & Port Extractor: `/apps/ip-port-extractor/wwwroot/index.html`
 - Dynamic features (login, admin, server-backed Excel conversion) require running the Node.js server locally or on a host that supports server-side rendering.
 
