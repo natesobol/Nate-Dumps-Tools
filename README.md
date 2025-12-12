@@ -18,6 +18,7 @@ A starter website for hosting webapps with monetization in mind. It provides a h
 - JSON to Excel Creator: `/apps/json-to-excel/wwwroot/index.html`
 - Multi-CSV Column Merger: `/apps/multi-csv-column-merger/wwwroot/index.html`
 - Phone Number Extractor: `/apps/phone-number-extractor/wwwroot/index.html`
+- Product SKU Extractor: `/apps/product-sku-extractor/wwwroot/index.html`
 - PDF Link Extractor: `/apps/pdf-link-extractor/wwwroot/index.html`
 - Resume Contact Info Extractor: `/apps/resume-contact-extractor/wwwroot/index.html`
 - Dynamic features (login, admin, server-backed Excel conversion) require running the Node.js server locally or on a host that supports server-side rendering.

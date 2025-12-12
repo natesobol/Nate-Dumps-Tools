@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Product SKU Extractor</title>
+    <link rel="stylesheet" href="../../../public/css/webapp-theme.css" />
+</head>
+<body>
+    <main class="container">
+        <header>
+            <h1>Product SKU Extractor</h1>
+            <p>Upload Excel or CSV files and extract alphanumeric SKU patterns like <code>ABC-1234-XZ</code> across all sheets.</p>
+            <p class="hint">Add optional prefix and length validation to focus on the SKUs you care about.</p>
+        </header>
+
+        <section class="card">
+            <form id="extract-form">
+                <label for="dataFiles">Select spreadsheets</label>
+                <input id="dataFiles" name="files" type="file" accept=".xls,.xlsx,.csv" multiple required />
+
+                <div class="grid two-columns">
+                    <div>
+                        <label for="prefix">Required prefix (optional)</label>
+                        <input id="prefix" name="prefix" type="text" placeholder="e.g. ABC-" />
+                    </div>
+                    <div class="grid two-columns">
+                        <div>
+                            <label for="minLength">Min length</label>
+                            <input id="minLength" name="minLength" type="number" min="1" placeholder="6" />
+                        </div>
+                        <div>
+                            <label for="maxLength">Max length</label>
+                            <input id="maxLength" name="maxLength" type="number" min="1" placeholder="18" />
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit">Extract SKUs</button>
+            </form>
+
+            <div id="status" class="hint" role="status"></div>
+        </section>
+
+        <section class="card" id="results-card" style="display:none;">
+            <h2>Results</h2>
+            <p><strong id="result-count">0</strong> SKUs found.</p>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>SKU</th>
+                            <th>File</th>
+                            <th>Sheet</th>
+                            <th>Row</th>
+                            <th>Column</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-body"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const form = document.getElementById('extract-form');
+        const statusEl = document.getElementById('status');
+        const resultsCard = document.getElementById('results-card');
+        const resultsBody = document.getElementById('results-body');
+        const resultCount = document.getElementById('result-count');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const files = document.getElementById('dataFiles').files;
+            if (!files.length) {
+                statusEl.textContent = 'Please select at least one spreadsheet.';
+                return;
+            }
+
+            const formData = new FormData(form);
+            statusEl.textContent = 'Processing...';
+            resultsCard.style.display = 'none';
+            resultsBody.innerHTML = '';
+
+            try {
+                const response = await fetch('/api/extract', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Extraction failed.');
+                }
+
+                const data = await response.json();
+                resultCount.textContent = data.count || 0;
+
+                if (data.skus && data.skus.length) {
+                    data.skus.forEach((item) => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td><code>${item.sku}</code></td>
+                            <td>${item.fileName}</td>
+                            <td>${item.sheet}</td>
+                            <td>${item.row}</td>
+                            <td>${item.column}</td>
+                        `;
+                        resultsBody.appendChild(row);
+                    });
+                    resultsCard.style.display = 'block';
+                    statusEl.textContent = '';
+                } else {
+                    statusEl.textContent = 'No SKUs were detected with the current validation rules.';
+                }
+            } catch (err) {
+                statusEl.textContent = err.message;
+            }
+        });
+    </script>
+</body>
+</html>
