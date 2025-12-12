@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Named Entity Extractor</title>
+    <link rel="stylesheet" href="../../../public/css/webapp-theme.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.3.136/pdf.min.js" integrity="sha512-yErfCh3RIf4M6eR9R28rAAM6KVnvmSBczVmiqm9SA8yYI+qzj2M1yKcFYR3AsLVsaEZvYtvmO0sOS9TiZknbGg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.9/mammoth.browser.min.js" integrity="sha512-wtaEuOblo+hdjzIDR5oScFiE8b6zqCYnXbeTbOJm/3dB4Blb9yvzyziYvwLymjzGV4ltY5dGvUkNwyd7+qeEhw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://unpkg.com/compromise@14.11.0/builds/compromise.min.js" defer></script>
+    <style>
+        .pill-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .pill-list span {
+            background: var(--surface-2);
+            border: 1px solid var(--border-subtle);
+            border-radius: 999px;
+            padding: 0.35rem 0.75rem;
+            font-size: 0.95rem;
+        }
+        .muted {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <header>
+            <p class="eyebrow">Content analysis</p>
+            <h1>Named Entity Extractor</h1>
+            <p>Upload PDFs, Word docs, or text files to pull out the people, organizations, and locations they mention. Perfect for research teams, journalists, and analysts triaging long reports.</p>
+            <p class="hint">All parsing and entity detection happens in your browser using lightweight NLP—no documents leave your device.</p>
+        </header>
+
+        <section class="card">
+            <form id="entity-form">
+                <label for="files">Upload documents</label>
+                <input id="files" name="files" type="file" multiple accept=".pdf,.docx,.txt" required />
+                <p class="hint small">Supported formats: searchable PDFs, DOCX, and UTF-8 text files. Scanned PDFs without text will be skipped.</p>
+
+                <div class="grid">
+                    <label class="checkbox">
+                        <input id="dedupe" type="checkbox" checked />
+                        <span>Deduplicate entities across all files</span>
+                    </label>
+                    <label class="checkbox">
+                        <input id="includeCounts" type="checkbox" checked />
+                        <span>Show per-file counts alongside grouped results</span>
+                    </label>
+                </div>
+
+                <button type="submit" class="primary">Extract entities</button>
+            </form>
+        </section>
+
+        <section class="card" id="results" hidden>
+            <div class="grid">
+                <div>
+                    <h2>Combined entities</h2>
+                    <p id="summary" class="hint"></p>
+                </div>
+                <div class="actions" style="text-align: right;">
+                    <button class="secondary" id="downloadJson" disabled>Download JSON</button>
+                </div>
+            </div>
+            <div id="errors" class="alert" hidden></div>
+
+            <div class="grid" id="combinedLists">
+                <div>
+                    <h3>People</h3>
+                    <div id="people-list" class="pill-list"></div>
+                </div>
+                <div>
+                    <h3>Organizations</h3>
+                    <div id="org-list" class="pill-list"></div>
+                </div>
+                <div>
+                    <h3>Locations</h3>
+                    <div id="place-list" class="pill-list"></div>
+                </div>
+            </div>
+
+            <div id="file-results" hidden>
+                <h3>Per-file breakdown</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>File</th>
+                                <th>People</th>
+                                <th>Organizations</th>
+                                <th>Locations</th>
+                            </tr>
+                        </thead>
+                        <tbody id="file-rows"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const form = document.getElementById('entity-form');
+        const filesInput = document.getElementById('files');
+        const dedupeToggle = document.getElementById('dedupe');
+        const showCountsToggle = document.getElementById('includeCounts');
+        const resultsSection = document.getElementById('results');
+        const summary = document.getElementById('summary');
+        const peopleList = document.getElementById('people-list');
+        const orgList = document.getElementById('org-list');
+        const placeList = document.getElementById('place-list');
+        const errorsBox = document.getElementById('errors');
+        const fileResults = document.getElementById('file-results');
+        const fileRows = document.getElementById('file-rows');
+        const downloadButton = document.getElementById('downloadJson');
+
+        if (window['pdfjsLib']) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.3.136/pdf.worker.min.js';
+        }
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const files = Array.from(filesInput.files || []);
+            if (!files.length) return;
+
+            resultsSection.hidden = false;
+            summary.textContent = 'Processing…';
+            errorsBox.hidden = true;
+            errorsBox.textContent = '';
+            peopleList.innerHTML = '';
+            orgList.innerHTML = '';
+            placeList.innerHTML = '';
+            fileRows.innerHTML = '';
+            downloadButton.disabled = true;
+
+            const perFile = [];
+            const errors = [];
+            for (const file of files) {
+                try {
+                    const text = await readFileText(file);
+                    if (!text.trim()) {
+                        throw new Error('No readable text found');
+                    }
+                    const entities = extractEntities(text, dedupeToggle.checked);
+                    perFile.push({ file: file.name, ...entities });
+                } catch (error) {
+                    errors.push(`${file.name}: ${error.message}`);
+                }
+            }
+
+            const combined = combineEntities(perFile, dedupeToggle.checked);
+            renderCombined(combined);
+            renderFiles(perFile, showCountsToggle.checked);
+            renderSummary(perFile, combined, errors);
+            downloadButton.disabled = perFile.length === 0;
+            downloadButton.onclick = () => downloadJson(perFile, combined);
+        });
+
+        async function readFileText(file) {
+            const extension = file.name.split('.').pop().toLowerCase();
+            const buffer = await file.arrayBuffer();
+
+            if (extension === 'pdf') {
+                if (!window['pdfjsLib']) throw new Error('PDF parser not loaded');
+                const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+                let text = '';
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const content = await page.getTextContent();
+                    text += content.items.map((item) => item.str).join(' ') + '\n';
+                }
+                return text;
+            }
+
+            if (extension === 'docx') {
+                if (!window['mammoth']) throw new Error('DOCX parser not loaded');
+                const result = await window.mammoth.extractRawText({ arrayBuffer: buffer });
+                return result.value;
+            }
+
+            const decoder = new TextDecoder('utf-8', { fatal: false });
+            return decoder.decode(buffer);
+        }
+
+        function extractEntities(text, dedupe) {
+            if (!window.nlp) throw new Error('NLP library failed to load');
+            const cleaned = text.replace(/\s+/g, ' ').trim();
+            const doc = window.nlp(cleaned);
+
+            const people = doc.people().out('array');
+            const organizations = doc.organizations().out('array');
+            const places = doc.places().out('array');
+
+            return {
+                people: normalizeEntities(people, dedupe),
+                organizations: normalizeEntities(organizations, dedupe),
+                locations: normalizeEntities(places, dedupe),
+            };
+        }
+
+        function normalizeEntities(entities, dedupe) {
+            const cleaned = entities
+                .map((entity) => (entity || '').replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '').replace(/\s+/g, ' ').trim())
+                .filter(Boolean);
+
+            if (!dedupe) return cleaned;
+
+            const seen = new Map();
+            for (const item of cleaned) {
+                const key = item.toLowerCase();
+                if (!seen.has(key)) {
+                    seen.set(key, item);
+                }
+            }
+            return Array.from(seen.values());
+        }
+
+        function combineEntities(perFile, dedupe) {
+            const combined = { people: [], organizations: [], locations: [] };
+            for (const entry of perFile) {
+                combined.people.push(...entry.people);
+                combined.organizations.push(...entry.organizations);
+                combined.locations.push(...entry.locations);
+            }
+
+            return {
+                people: normalizeEntities(combined.people, dedupe),
+                organizations: normalizeEntities(combined.organizations, dedupe),
+                locations: normalizeEntities(combined.locations, dedupe),
+            };
+        }
+
+        function renderCombined(combined) {
+            renderPills(peopleList, combined.people, 'No people detected yet.');
+            renderPills(orgList, combined.organizations, 'No organizations detected yet.');
+            renderPills(placeList, combined.locations, 'No locations detected yet.');
+        }
+
+        function renderPills(container, items, emptyMessage) {
+            container.innerHTML = '';
+            if (!items.length) {
+                container.innerHTML = `<span class="muted">${emptyMessage}</span>`;
+                return;
+            }
+            for (const item of items) {
+                const pill = document.createElement('span');
+                pill.textContent = item;
+                container.appendChild(pill);
+            }
+        }
+
+        function renderFiles(perFile, showCounts) {
+            fileRows.innerHTML = '';
+            fileResults.hidden = perFile.length === 0;
+            if (!perFile.length) return;
+
+            for (const entry of perFile) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${entry.file}</td>
+                    <td>${formatCell(entry.people, showCounts)}</td>
+                    <td>${formatCell(entry.organizations, showCounts)}</td>
+                    <td>${formatCell(entry.locations, showCounts)}</td>
+                `;
+                fileRows.appendChild(row);
+            }
+        }
+
+        function formatCell(items, showCounts) {
+            if (!items.length) return '<span class="muted">—</span>';
+            if (!showCounts) return items.join(', ');
+            return `${items.length} item${items.length === 1 ? '' : 's'}: ${items.join(', ')}`;
+        }
+
+        function renderSummary(perFile, combined, errors) {
+            const totalFiles = perFile.length;
+            const totalEntities = combined.people.length + combined.organizations.length + combined.locations.length;
+            summary.textContent = totalFiles
+                ? `${totalEntities} unique entities found across ${totalFiles} file${totalFiles === 1 ? '' : 's'}.`
+                : 'No readable files processed.';
+
+            if (errors.length) {
+                errorsBox.hidden = false;
+                errorsBox.textContent = errors.join('\n');
+            }
+        }
+
+        function downloadJson(perFile, combined) {
+            const payload = {
+                generatedAt: new Date().toISOString(),
+                combined,
+                files: perFile,
+            };
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'named-entities.json';
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
