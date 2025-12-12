@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Extract Table Data From PDF, Word, and HTML | Monetize Hub Tools</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="../../../public/css/styles.css" />
+    <link rel="stylesheet" href="../../../public/css/webapp-theme.css" />
+  </head>
+  <body class="tool-page">
+    <header class="site-header">
+      <div class="header-top">
+        <a class="brand" href="../../../index.html">
+          <img src="../../../public/logo.png" alt="Monetize Hub" class="brand-logo" />
+          <div class="brand-text">
+            <span class="brand-name">Monetize Hub</span>
+            <span class="brand-tagline">Launch, host, and grow your webapps</span>
+          </div>
+        </a>
+        <details class="nav-dropdown user-dropdown" open>
+          <summary class="nav-link nav-dropdown-toggle">
+            <span class="user-label">Account</span>
+            <span aria-hidden="true">▾</span>
+          </summary>
+          <div class="nav-dropdown-menu">
+            <a href="../../../login.html" class="dropdown-link">Login</a>
+            <a href="../../../register.html" class="dropdown-link">Create Account</a>
+            <a href="../../../admin.html" class="dropdown-link">Admin Dashboard</a>
+          </div>
+        </details>
+      </div>
+      <nav class="main-nav">
+        <a href="../../../index.html" class="nav-link">Home</a>
+        <a href="../../../about.html" class="nav-link">About</a>
+        <details class="nav-dropdown" open>
+          <summary class="nav-link nav-dropdown-toggle">Webapps <span aria-hidden="true">▾</span></summary>
+          <div class="nav-dropdown-menu">
+            <a href="../../../apps/excel-to-json/index.html" class="dropdown-link">Excel → JSON</a>
+            <a href="../../../apps/json-to-excel/wwwroot/index.html" class="dropdown-link">JSON → Excel</a>
+            <a href="../../../apps/xml-json-translator/index.html" class="dropdown-link">XML ⇄ JSON Translator</a>
+            <a href="../../../apps/yaml-json-converter/index.html" class="dropdown-link">YAML ↔ JSON Converter</a>
+            <a href="../../../apps/list-comparison/wwwroot/index.html" class="dropdown-link">List Comparison / Diff Checker</a>
+            <a href="../../../apps/powerpoint-image-extractor/wwwroot/index.html" class="dropdown-link">PowerPoint Image Extractor</a>
+            <a href="../../../apps/pdf-splitter/wwwroot/index.html" class="dropdown-link">PDF Splitter</a>
+            <a href="../../../apps/table-data-extractor/wwwroot/index.html" class="dropdown-link active">Table Data Extractor</a>
+          </div>
+        </details>
+      </nav>
+    </header>
+
+    <main class="tool-shell">
+      <div class="app-shell">
+        <header class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-3">
+          <div>
+            <p class="badge-pill mb-2">PDF, Word, and HTML table detection</p>
+            <h1 class="page-title mb-1">Extract table data from PDF, Word, and HTML files.</h1>
+            <p class="muted mb-0">
+              Upload reports or saved web pages, auto-detect grid or borderless tables, and download clean CSV or Excel exports
+              you can drop straight into your analysis workflow.
+            </p>
+          </div>
+          <img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f4dd.svg" width="64" height="64" alt="Memo" />
+        </header>
+
+        <div class="card-gradient mb-3">
+          <div class="upload-card">
+            <form id="extractForm" class="d-flex flex-column gap-3" enctype="multipart/form-data">
+              <div>
+                <label for="fileInput" class="form-label fw-semibold">Upload a PDF, DOCX, HTML, or HTM file</label>
+                <input class="form-control" type="file" id="fileInput" accept=".pdf,.docx,.html,.htm" required />
+                <small class="text-secondary">Supports borderless tables, merged cells, and multiple tables per document.</small>
+              </div>
+              <div class="d-flex align-items-center gap-3 flex-wrap">
+                <button class="button primary btn btn-primary btn-modern" type="submit">Detect tables</button>
+                <button class="button ghost btn btn-outline-light btn-modern" type="button" id="downloadCsv" disabled>
+                  Download CSV
+                </button>
+                <button class="button ghost btn btn-outline-light btn-modern" type="button" id="downloadXlsx" disabled>
+                  Download XLSX
+                </button>
+              </div>
+              <div class="d-flex align-items-center gap-3 flex-wrap">
+                <span class="pill" id="tableCount">0 tables detected</span>
+                <span class="pill muted" id="fileLabel">No file selected</span>
+              </div>
+              <p class="help-text text-secondary mb-0" id="statusText"></p>
+            </form>
+          </div>
+        </div>
+
+        <div class="result-card">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+            <div>
+              <h2 class="h5 mb-0">Detected tables</h2>
+              <p class="help-text mb-0">Preview rows and columns for every table found in your upload.</p>
+            </div>
+            <span class="pill" id="rowSummary">0 rows total</span>
+          </div>
+          <div id="emptyState" class="muted">No tables yet. Upload a PDF, Word, or HTML file to get started.</div>
+          <div id="tableResults" class="d-flex flex-column gap-3"></div>
+        </div>
+      </div>
+
+      <aside class="app-sidebar">
+        <div class="sidebar-card">
+          <h3 class="h6">Why this extractor?</h3>
+          <ul class="checklist">
+            <li>Detects both grid-style and borderless tables in PDFs and Word docs.</li>
+            <li>HTML parsing respects header cells and table captions.</li>
+            <li>Exports everything at once as CSV or multi-sheet Excel files.</li>
+          </ul>
+        </div>
+        <div class="sidebar-card">
+          <h3 class="h6">File handling</h3>
+          <p class="help-text mb-1">Files are processed in memory and never stored.</p>
+          <p class="help-text mb-0">Best results come from well-aligned tables with consistent spacing.</p>
+        </div>
+      </aside>
+    </main>
+
+    <script>
+      const extractForm = document.getElementById('extractForm');
+      const fileInput = document.getElementById('fileInput');
+      const statusText = document.getElementById('statusText');
+      const tableResults = document.getElementById('tableResults');
+      const emptyState = document.getElementById('emptyState');
+      const tableCount = document.getElementById('tableCount');
+      const rowSummary = document.getElementById('rowSummary');
+      const downloadCsv = document.getElementById('downloadCsv');
+      const downloadXlsx = document.getElementById('downloadXlsx');
+      const fileLabel = document.getElementById('fileLabel');
+
+      let detectedTables = [];
+
+      fileInput.addEventListener('change', () => {
+        const file = fileInput.files[0];
+        fileLabel.textContent = file ? file.name : 'No file selected';
+      });
+
+      extractForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!fileInput.files.length) {
+          showStatus('Choose a file to extract tables from.', true);
+          return;
+        }
+
+        showStatus('Detecting tables…');
+        toggleButtons(true);
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        try {
+          const response = await fetch('/api/extract', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!response.ok) {
+            const error = await response.json().catch(() => ({ error: 'Unable to extract tables.' }));
+            throw new Error(error.error || 'Unable to extract tables.');
+          }
+
+          const data = await response.json();
+          detectedTables = data.tables || [];
+          renderTables();
+          showStatus(data.message || `Found ${detectedTables.length} table(s) in ${data.file}.`);
+        } catch (error) {
+          console.error(error);
+          showStatus(error.message || 'Extraction failed.', true);
+          detectedTables = [];
+          renderTables();
+        } finally {
+          toggleButtons(false);
+        }
+      });
+
+      downloadCsv.addEventListener('click', () => downloadTables('csv'));
+      downloadXlsx.addEventListener('click', () => downloadTables('xlsx'));
+
+      function renderTables() {
+        tableResults.innerHTML = '';
+
+        if (!detectedTables.length) {
+          emptyState.style.display = 'block';
+          tableCount.textContent = '0 tables detected';
+          rowSummary.textContent = '0 rows total';
+          downloadCsv.disabled = true;
+          downloadXlsx.disabled = true;
+          return;
+        }
+
+        emptyState.style.display = 'none';
+        downloadCsv.disabled = false;
+        downloadXlsx.disabled = false;
+
+        const totalRows = detectedTables.reduce((sum, table) => sum + (table.rows?.length || 0), 0);
+        tableCount.textContent = `${detectedTables.length} table${detectedTables.length === 1 ? '' : 's'} detected`;
+        rowSummary.textContent = `${totalRows} total row${totalRows === 1 ? '' : 's'}`;
+
+        detectedTables.forEach((table, index) => {
+          const card = document.createElement('div');
+          card.className = 'table-preview card p-3 bg-dark border border-secondary-subtle';
+
+          const header = document.createElement('div');
+          header.className = 'd-flex align-items-center justify-content-between mb-2 flex-wrap gap-2';
+          header.innerHTML = `<div><p class="eyebrow mb-1">${table.source || 'Detected table'}</p><h3 class="h6 mb-0">${
+            table.title || `Table ${index + 1}`
+          }</h3></div><span class="pill">${table.rows?.length || 0} rows</span>`;
+
+          const preview = document.createElement('div');
+          preview.className = 'table-responsive';
+          preview.innerHTML = buildHtmlTable(table.rows || []);
+
+          card.appendChild(header);
+          card.appendChild(preview);
+          tableResults.appendChild(card);
+        });
+      }
+
+      function buildHtmlTable(rows) {
+        if (!rows.length) {
+          return '<p class="muted mb-0">No rows in this table.</p>';
+        }
+
+        const maxPreview = 8;
+        const previewRows = rows.slice(0, maxPreview);
+
+        const headerCells = previewRows[0].map((cell, index) => `<th scope="col">${escapeHtml(cell || `Column ${index + 1}`)}</th>`);
+        const bodyRows = previewRows
+          .slice(1)
+          .map((row) => `<tr>${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join('')}</tr>`) 
+          .join('');
+
+        return `
+          <table class="table table-dark table-striped table-bordered align-middle mb-0">
+            <thead><tr>${headerCells.join('')}</tr></thead>
+            <tbody>${bodyRows || '<tr><td colspan="' + headerCells.length + '">Only headers found.</td></tr>'}</tbody>
+          </table>
+          ${rows.length > maxPreview ? `<p class="help-text mt-2">Showing first ${maxPreview} rows out of ${rows.length}.</p>` : ''}
+        `;
+      }
+
+      async function downloadTables(format) {
+        if (!detectedTables.length) return;
+        toggleButtons(true);
+        showStatus(`Preparing ${format.toUpperCase()} download…`);
+
+        try {
+          const response = await fetch('/api/export', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ format, tables: detectedTables })
+          });
+
+          if (!response.ok) {
+            const error = await response.json().catch(() => ({ error: 'Download failed.' }));
+            throw new Error(error.error || 'Download failed.');
+          }
+
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `table-export.${format}`;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          URL.revokeObjectURL(url);
+          showStatus(`${format.toUpperCase()} downloaded.`);
+        } catch (error) {
+          console.error(error);
+          showStatus(error.message || 'Download failed.', true);
+        } finally {
+          toggleButtons(false);
+        }
+      }
+
+      function toggleButtons(isBusy) {
+        downloadCsv.disabled = isBusy || !detectedTables.length;
+        downloadXlsx.disabled = isBusy || !detectedTables.length;
+      }
+
+      function showStatus(message, isError = false) {
+        statusText.textContent = message;
+        statusText.classList.toggle('text-danger', isError);
+      }
+
+      function escapeHtml(value) {
+        return (value || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+    </script>
+  </body>
+</html>

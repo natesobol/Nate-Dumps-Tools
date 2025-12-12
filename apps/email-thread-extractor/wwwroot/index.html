@@ -190,12 +190,12 @@
         <h1>Email Thread Extractor</h1>
         <p class="lede">
           Upload .eml, .msg, or .mbox files to pull sender, recipients, timestamps, and attachment details from each reply in the
-          thread. Export metadata to CSV and plain text bodies for downstream review or ingestion.
+          thread. Group messages by subject line, reorder them chronologically, and export whole conversations as CSV or TXT.
         </p>
         <ul>
           <li>Attachment-aware parsing with optional base64 downloads.</li>
-          <li>CSV export for senders, recipients, subjects, and dates.</li>
-          <li>Plain text transcript builder for the entire thread.</li>
+          <li>Threads normalized by subject (strips Re:, Fwd:, etc.) with chronological ordering.</li>
+          <li>CSV metadata plus conversation-level CSV/TXT exports for audits.</li>
         </ul>
       </div>
       <div class="panel">
@@ -221,11 +221,18 @@
       <div class="panel" id="summary" style="display: none">
         <div class="actions">
           <span class="badge" id="message-count"></span>
-          <button class="button" type="button" id="download-csv">Download CSV</button>
-          <button class="button" type="button" id="download-text">Download thread text</button>
+          <span class="badge" id="thread-count"></span>
+          <button class="button" type="button" id="download-csv">Download message CSV</button>
+          <button class="button" type="button" id="download-text">Download message text</button>
+          <button class="button" type="button" id="download-thread-csv">Download thread CSV</button>
+          <button class="button" type="button" id="download-thread-text">Download conversation text</button>
         </div>
       </div>
 
+      <h2>Subject-grouped conversations</h2>
+      <div class="results-grid" id="thread-results"></div>
+
+      <h2>Raw messages by file</h2>
       <div class="results-grid" id="results"></div>
     </main>
 
@@ -236,9 +243,13 @@
       const submitButton = document.getElementById('submit-button');
       const summary = document.getElementById('summary');
       const messageCount = document.getElementById('message-count');
+      const threadCount = document.getElementById('thread-count');
       const results = document.getElementById('results');
+      const threadResults = document.getElementById('thread-results');
       const downloadCsv = document.getElementById('download-csv');
       const downloadText = document.getElementById('download-text');
+      const downloadThreadCsv = document.getElementById('download-thread-csv');
+      const downloadThreadText = document.getElementById('download-thread-text');
       const dropzone = document.getElementById('dropzone');
 
       dropzone.addEventListener('dragover', (event) => {
@@ -282,6 +293,7 @@
           }
 
           renderSummary(payload);
+          renderThreads(payload.threads || []);
           renderFiles(payload.files || []);
         } catch (error) {
           showError(error.message);
@@ -293,12 +305,70 @@
 
       downloadCsv.addEventListener('click', () => downloadBlob('email-metadata.csv', window.__lastCsv || ''));
       downloadText.addEventListener('click', () => downloadBlob('email-thread.txt', window.__lastBody || ''));
+      downloadThreadCsv.addEventListener('click', () => downloadBlob('email-threads.csv', window.__lastThreadCsv || ''));
+      downloadThreadText.addEventListener('click', () => downloadBlob('email-conversations.txt', window.__lastThreadText || ''));
 
       function renderSummary(payload) {
         window.__lastCsv = payload.csv || '';
         window.__lastBody = payload.bodyText || '';
+        window.__lastThreadCsv = payload.threadCsv || '';
+        window.__lastThreadText = payload.threadText || '';
         messageCount.textContent = `${payload.messageCount || 0} messages parsed`;
+        threadCount.textContent = `${(payload.threads || []).length} threads grouped by subject`;
         summary.style.display = 'block';
+      }
+
+      function renderThreads(threads) {
+        threadResults.innerHTML = '';
+
+        threads.forEach((thread) => {
+          const card = document.createElement('article');
+          card.classList.add('card');
+
+          const title = document.createElement('h3');
+          title.textContent = thread.subject || thread.normalizedSubject || 'Email thread';
+          card.appendChild(title);
+
+          const meta = document.createElement('div');
+          meta.classList.add('meta');
+          meta.innerHTML = `
+            <div><strong>Normalized subject:</strong> ${escapeHtml(thread.normalizedSubject || '')}</div>
+            <div><strong>Messages:</strong> ${thread.messages?.length || 0}</div>
+          `;
+          card.appendChild(meta);
+
+          (thread.messages || []).forEach((message) => {
+            const badge = document.createElement('div');
+            badge.classList.add('badge');
+            badge.textContent = `Message ${message.order || 1}`;
+            card.appendChild(badge);
+
+            const details = document.createElement('div');
+            details.classList.add('meta');
+            details.innerHTML = `
+              <div><strong>From:</strong> ${escapeHtml(message.sender || '')}</div>
+              <div><strong>To:</strong> ${escapeHtml((message.recipients?.to || []).join('; '))}</div>
+              ${message.recipients?.cc?.length ? `<div><strong>Cc:</strong> ${escapeHtml(message.recipients.cc.join('; '))}</div>` : ''}
+              ${message.recipients?.bcc?.length ? `<div><strong>Bcc:</strong> ${escapeHtml(message.recipients.bcc.join('; '))}</div>` : ''}
+              ${message.timestamp ? `<div><strong>Date:</strong> ${escapeHtml(formatDate(message.timestamp))}</div>` : ''}
+              ${message.fileName ? `<div><strong>File:</strong> ${escapeHtml(message.fileName)}</div>` : ''}
+            `;
+            card.appendChild(details);
+
+            if (message.attachments?.length) {
+              const attachments = document.createElement('div');
+              attachments.classList.add('meta');
+              attachments.textContent = `Attachments: ${message.attachments.length}`;
+              card.appendChild(attachments);
+            }
+
+            const body = document.createElement('pre');
+            body.textContent = message.bodyText || '';
+            card.appendChild(body);
+          });
+
+          threadResults.appendChild(card);
+        });
       }
 
       function renderFiles(files) {
@@ -403,6 +473,12 @@
 
       function escapeHtml(value) {
         return (value || '').replace(/[&<>"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
+      }
+
+      function formatDate(value) {
+        const parsed = new Date(value);
+        if (Number.isNaN(parsed.getTime())) return value;
+        return parsed.toLocaleString();
       }
     </script>
   </body>

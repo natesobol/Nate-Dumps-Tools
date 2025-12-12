@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number-Based Row Extractor</title>
+    <link rel="stylesheet" href="../../../public/css/webapp-theme.css">
+</head>
+<body>
+<main>
+    <header class="app-header">
+        <p class="pill">Filter CSV, TSV, or Excel rows by numeric rules</p>
+        <h1>Extract Rows Containing Specific Numbers</h1>
+        <p class="muted">Upload a spreadsheet, choose a number or numeric range, and download only the rows that match. Useful for financial audits, sales ops, and quick data reviews.</p>
+    </header>
+
+    <section class="card">
+        <form id="filter-form">
+            <label>
+                Upload file (.csv, .tsv, .xlsx)
+                <input type="file" id="file" name="file" accept=".csv,.tsv,.xlsx,.xls" required>
+            </label>
+
+            <div class="grid" style="gap:1rem; margin-top:0.5rem;">
+                <label>
+                    Match type
+                    <select id="matchType" name="matchType">
+                        <option value="contains">Contains digits</option>
+                        <option value="equals">Equals</option>
+                        <option value="greater">Greater than</option>
+                        <option value="less">Less than</option>
+                        <option value="between">Between (inclusive)</option>
+                    </select>
+                </label>
+                <label>
+                    Columns to inspect (optional)
+                    <input type="text" id="columns" name="columns" placeholder="Example: amount, balance, qty">
+                    <small class="muted">Leave blank to check every column.</small>
+                </label>
+            </div>
+
+            <div id="contains-fields" class="grid" style="gap:1rem; margin-top:0.75rem;">
+                <label>
+                    Digits to find
+                    <input type="text" id="containsText" name="containsText" placeholder="Example: 1000">
+                </label>
+            </div>
+
+            <div id="target-fields" class="grid" style="gap:1rem; margin-top:0.75rem; display:none;">
+                <label>
+                    Target number
+                    <input type="number" step="any" id="targetValue" name="targetValue" placeholder="Example: 500">
+                </label>
+            </div>
+
+            <div id="range-fields" class="grid" style="gap:1rem; margin-top:0.75rem; display:none;">
+                <label>
+                    Minimum value
+                    <input type="number" step="any" id="minValue" name="minValue" placeholder="Example: 500">
+                </label>
+                <label>
+                    Maximum value
+                    <input type="number" step="any" id="maxValue" name="maxValue" placeholder="Example: 1000">
+                </label>
+            </div>
+
+            <div class="actions" style="margin-top:1rem;">
+                <button type="submit">Extract matching rows</button>
+                <span id="status" class="muted"></span>
+            </div>
+        </form>
+    </section>
+
+    <section class="card" style="margin-top:1.25rem;">
+        <div id="message" style="display:none;"></div>
+        <div id="summary" style="display:none; margin-top:0.75rem;"></div>
+        <div class="actions" id="downloads" style="display:none; margin:0.75rem 0;">
+            <button type="button" id="downloadCsv">Download filtered CSV</button>
+        </div>
+        <div id="preview" style="overflow:auto;"></div>
+    </section>
+</main>
+
+<script>
+    const form = document.getElementById('filter-form');
+    const matchTypeSelect = document.getElementById('matchType');
+    const containsFields = document.getElementById('contains-fields');
+    const targetFields = document.getElementById('target-fields');
+    const rangeFields = document.getElementById('range-fields');
+    const statusEl = document.getElementById('status');
+    const message = document.getElementById('message');
+    const summary = document.getElementById('summary');
+    const preview = document.getElementById('preview');
+    const downloads = document.getElementById('downloads');
+    const downloadCsvBtn = document.getElementById('downloadCsv');
+
+    let lastCsv = '';
+
+    matchTypeSelect.addEventListener('change', toggleInputs);
+    toggleInputs();
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fileInput = document.getElementById('file');
+        const columnsInput = document.getElementById('columns');
+        const containsText = document.getElementById('containsText');
+        const targetValue = document.getElementById('targetValue');
+        const minValue = document.getElementById('minValue');
+        const maxValue = document.getElementById('maxValue');
+
+        if (!fileInput.files.length) {
+            showMessage('Please choose a file to process.', true);
+            return;
+        }
+
+        statusEl.innerHTML = '<span class="loader"></span> Filtering rows...';
+        showMessage('', false);
+        summary.style.display = 'none';
+        preview.innerHTML = '';
+        downloads.style.display = 'none';
+
+        const data = new FormData();
+        data.append('file', fileInput.files[0]);
+        data.append('matchType', matchTypeSelect.value);
+
+        if (columnsInput.value.trim()) {
+            data.append('columns', columnsInput.value.trim());
+        }
+
+        if (matchTypeSelect.value === 'contains') {
+            data.append('containsText', containsText.value.trim());
+        } else if (matchTypeSelect.value === 'between') {
+            data.append('minValue', minValue.value.trim());
+            data.append('maxValue', maxValue.value.trim());
+        } else {
+            data.append('targetValue', targetValue.value.trim());
+        }
+
+        try {
+            const res = await fetch('/api/filter', { method: 'POST', body: data });
+            const payload = await res.json();
+
+            if (!res.ok) {
+                throw new Error(payload.error || 'Failed to filter rows.');
+            }
+
+            lastCsv = payload.csv;
+            renderSummary(payload);
+            renderPreview(payload);
+            downloads.style.display = 'flex';
+            statusEl.textContent = '';
+            showMessage(`Found ${payload.matchedCount} matching rows out of ${payload.totalRows}.`, false);
+        } catch (err) {
+            statusEl.textContent = '';
+            showMessage(err.message, true);
+        }
+    });
+
+    downloadCsvBtn.addEventListener('click', () => {
+        if (!lastCsv) return;
+        const blob = new Blob([lastCsv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'filtered-rows.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+
+    function toggleInputs() {
+        const type = matchTypeSelect.value;
+        containsFields.style.display = type === 'contains' ? 'grid' : 'none';
+        targetFields.style.display = ['equals', 'greater', 'less'].includes(type) ? 'grid' : 'none';
+        rangeFields.style.display = type === 'between' ? 'grid' : 'none';
+    }
+
+    function showMessage(text, isError) {
+        if (!text) {
+            message.style.display = 'none';
+            message.textContent = '';
+            return;
+        }
+        message.style.display = 'block';
+        message.className = isError ? 'error' : 'success';
+        message.textContent = text;
+    }
+
+    function renderSummary(payload) {
+        summary.style.display = 'block';
+        summary.innerHTML = `
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+                <span class="badge">File: ${payload.file}</span>
+                <span class="badge">Rows scanned: ${payload.totalRows}</span>
+                <span class="badge">Matches: ${payload.matchedCount}</span>
+                <span class="badge">Columns checked: ${payload.inspectedColumns.join(', ')}</span>
+            </div>
+        `;
+    }
+
+    function renderPreview(payload) {
+        const limit = 50;
+        const rows = payload.rows.slice(0, limit);
+        if (!rows.length) {
+            preview.innerHTML = '<p class="muted">No matching rows to preview.</p>';
+            return;
+        }
+
+        const thead = `<thead><tr>${payload.headers.map(h => `<th>${escapeHtml(h)}</th>`).join('')}</tr></thead>`;
+        const tbody = rows.map(row => `<tr>${payload.headers.map(h => `<td>${escapeHtml(row[h] || '')}</td>`).join('')}</tr>`).join('');
+        const note = payload.rows.length > limit ? `<p class="muted" style="margin-top:0.5rem;">Showing first ${limit} matches.</p>` : '';
+        preview.innerHTML = `<div style="overflow:auto;"><table>${thead}<tbody>${tbody}</tbody></table></div>${note}`;
+    }
+
+    function escapeHtml(value) {
+        return value.replace(/[&<>"']/g, (ch) => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        })[ch] || ch);
+    }
+</script>
+</body>
+</html>

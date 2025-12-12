@@ -88,6 +88,12 @@ router.get('/hashtag-mention-extractor', (req, res) => {
     metaDescription:
       'Upload CSV, TXT, or JSON exports to find every hashtag and @mention with frequency counts and exportable lists.',
     metaKeywords: 'hashtag extractor,mention finder,social media hashtags,csv hashtag counter,json mention extractor'
+router.get('/highlighted-text-extractor', (req, res) => {
+  res.render('highlighted-text-extractor', {
+    title: 'Extract Highlighted Text from Word, PDF, and PowerPoint Files',
+    metaDescription:
+      'Upload DOCX, PDF, or PPTX files to pull every highlighted or background-colored snippet with optional color tagging for reviewer notes.',
+    metaKeywords: 'highlight extractor docx,pdf highlight reader,powerpoint highlighted text,annotated text puller'
   });
 });
 

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sentence Keyword Extractor | Monetize Hub Tools</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="../../../public/css/styles.css" />
+    <link rel="stylesheet" href="../../../public/css/webapp-theme.css" />
+    <style>
+      .drop-zone {
+        border: 2px dashed var(--border-subtle);
+        border-radius: 12px;
+        padding: 28px;
+        background: rgba(255, 255, 255, 0.55);
+        transition: border-color 0.2s ease, background 0.2s ease;
+      }
+      .drop-zone.dragover {
+        border-color: var(--primary-color);
+        background: rgba(99, 102, 241, 0.06);
+      }
+      .file-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: #eef2ff;
+        color: #312e81;
+        font-weight: 600;
+      }
+      .result-card {
+        border: 1px solid var(--border-subtle);
+        border-radius: 12px;
+        padding: 14px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.82) 100%);
+      }
+      .badge-keyword {
+        background: #e0f2fe;
+        color: #075985;
+        font-weight: 700;
+      }
+      .sentence-text {
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body class="tool-page">
+    <header class="site-header">
+      <div class="header-top">
+        <a class="brand" href="../../../index.html">
+          <img src="../../../public/logo.png" alt="Monetize Hub" class="brand-logo" />
+          <div class="brand-text">
+            <span class="brand-name">Monetize Hub</span>
+            <span class="brand-tagline">Launch, host, and grow your webapps</span>
+          </div>
+        </a>
+        <details class="nav-dropdown user-dropdown" open>
+          <summary class="nav-link nav-dropdown-toggle">
+            <span class="user-label">Account</span>
+            <span aria-hidden="true">▾</span>
+          </summary>
+          <div class="nav-dropdown-menu">
+            <a href="../../../login.html" class="dropdown-link">Login</a>
+            <a href="../../../register.html" class="dropdown-link">Create Account</a>
+            <a href="../../../admin.html" class="dropdown-link">Admin Dashboard</a>
+          </div>
+        </details>
+      </div>
+      <nav class="main-nav">
+        <a href="../../../index.html" class="nav-link">Home</a>
+        <a href="../../../about.html" class="nav-link">About</a>
+        <details class="nav-dropdown" open>
+          <summary class="nav-link nav-dropdown-toggle">Webapps <span aria-hidden="true">▾</span></summary>
+          <div class="nav-dropdown-menu">
+            <a href="../../../apps/excel-to-json/index.html" class="dropdown-link">Excel → JSON</a>
+            <a href="../../../apps/json-to-excel/wwwroot/index.html" class="dropdown-link">JSON → Excel</a>
+            <a href="../../../apps/xml-json-translator/index.html" class="dropdown-link">XML ⇄ JSON Translator</a>
+            <a href="../../../apps/yaml-json-converter/index.html" class="dropdown-link">YAML ↔ JSON Converter</a>
+            <a href="../../../apps/json-combiner/wwwroot/index.html" class="dropdown-link">JSON Combiner</a>
+            <a href="../../../apps/find-and-replace/wwwroot/index.html" class="dropdown-link">Find & Replace</a>
+            <a href="../../../apps/csv-xml-converter/index.html" class="dropdown-link">CSV/XML Converter</a>
+            <a href="../../../apps/list-comparison/wwwroot/index.html" class="dropdown-link">List Comparison / Diff Checker</a>
+            <a href="../../../apps/pdf-splitter/wwwroot/index.html" class="dropdown-link">PDF Splitter</a>
+            <a href="../../../apps/bullet-list-extractor/wwwroot/index.html" class="dropdown-link">Bullet List Extractor</a>
+            <a href="../../../apps/pdf-link-extractor/wwwroot/index.html" class="dropdown-link">PDF Link Extractor</a>
+            <a href="../../../apps/resume-contact-extractor/wwwroot/index.html" class="dropdown-link">Resume Contact Extractor</a>
+            <a href="../../../apps/phone-number-extractor/wwwroot/index.html" class="dropdown-link">Phone Number Extractor</a>
+            <a href="../../../apps/image-path-extractor/wwwroot/index.html" class="dropdown-link">Image Path Extractor</a>
+            <a href="../../../apps/capitalized-phrase-extractor/wwwroot/index.html" class="dropdown-link">Capitalized Phrase Extractor</a>
+          </div>
+        </details>
+      </nav>
+    </header>
+
+    <main class="container py-5">
+      <div class="row align-items-center g-4 mb-4">
+        <div class="col-lg-7">
+          <div class="eyebrow">Content Discovery</div>
+          <h1 class="display-5 fw-bold">Sentence Keyword Extractor</h1>
+          <p class="lead text-secondary">
+            Upload transcripts, legal documents, or survey responses, enter your keywords, and instantly pull full sentences that mention them. Export the matched sentences with file names for easy follow-up and reporting.
+          </p>
+          <div class="d-flex gap-3 flex-wrap">
+            <span class="badge rounded-pill bg-primary-subtle text-primary">DOCX / RTF / PDF</span>
+            <span class="badge rounded-pill bg-secondary-subtle text-secondary">TXT / Markdown</span>
+            <span class="badge rounded-pill bg-success-subtle text-success">CSV export included</span>
+          </div>
+        </div>
+        <div class="col-lg-5">
+          <div class="card shadow-sm border-0">
+            <div class="card-body">
+              <h5 class="card-title mb-3">How it works</h5>
+              <ol class="small text-secondary ps-3 mb-0 d-grid gap-2">
+                <li>Drag in your files or click to browse</li>
+                <li>Add one or more keywords (comma or line separated)</li>
+                <li>Submit to view matching sentences and download CSV</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+          <div class="row g-4">
+            <div class="col-lg-6">
+              <h5 class="mb-3">Upload files</h5>
+              <div class="drop-zone text-center" id="dropZone">
+                <input type="file" id="fileInput" class="form-control" multiple accept=".txt,.docx,.rtf,.md,.pdf" />
+                <p class="text-secondary mt-3 mb-0">Supported: .txt, .docx, .rtf, .md, .pdf (up to 50 MB total)</p>
+              </div>
+              <div class="mt-3" id="fileList" aria-live="polite"></div>
+            </div>
+            <div class="col-lg-6">
+              <h5 class="mb-3">Keywords</h5>
+              <label for="keywords" class="form-label">Comma- or line-separated keywords</label>
+              <textarea id="keywords" class="form-control" rows="4" placeholder="Example: timeline, budget, risk"></textarea>
+              <div class="d-flex align-items-center gap-3 mt-3">
+                <button id="submitBtn" class="btn btn-primary px-4">Extract sentences</button>
+                <div id="status" class="text-secondary small"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-3">
+        <div>
+          <h4 class="mb-0">Matches</h4>
+          <p class="text-secondary mb-0" id="summary">Upload files and run a search to see results.</p>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-secondary btn-sm" id="downloadCsv" disabled>Download CSV</button>
+          <button class="btn btn-outline-secondary btn-sm" id="downloadJson" disabled>Download JSON</button>
+        </div>
+      </div>
+
+      <div id="results" class="d-grid gap-3"></div>
+    </main>
+
+    <script>
+      const fileInput = document.getElementById('fileInput');
+      const dropZone = document.getElementById('dropZone');
+      const fileList = document.getElementById('fileList');
+      const keywordsField = document.getElementById('keywords');
+      const submitBtn = document.getElementById('submitBtn');
+      const statusEl = document.getElementById('status');
+      const summary = document.getElementById('summary');
+      const results = document.getElementById('results');
+      const downloadCsv = document.getElementById('downloadCsv');
+      const downloadJson = document.getElementById('downloadJson');
+
+      let lastResponse = null;
+
+      function renderFileList(files) {
+        if (!files || files.length === 0) {
+          fileList.innerHTML = '';
+          return;
+        }
+        const pills = Array.from(files).map(
+          f => `<span class="file-pill me-2 mb-2">${f.name}</span>`
+        ).join('');
+        fileList.innerHTML = `<div class="d-flex flex-wrap">${pills}</div>`;
+      }
+
+      fileInput.addEventListener('change', (e) => renderFileList(e.target.files));
+
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      });
+
+      dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        fileInput.files = e.dataTransfer.files;
+        renderFileList(fileInput.files);
+      });
+
+      async function postExtraction() {
+        const files = fileInput.files;
+        const keywords = keywordsField.value.trim();
+
+        if (!keywords) {
+          statusEl.textContent = 'Add at least one keyword.';
+          return;
+        }
+        if (!files || files.length === 0) {
+          statusEl.textContent = 'Choose one or more files first.';
+          return;
+        }
+
+        const formData = new FormData();
+        Array.from(files).forEach(file => formData.append('files', file));
+        formData.append('keywords', keywords);
+
+        submitBtn.disabled = true;
+        statusEl.textContent = 'Processing...';
+
+        try {
+          const response = await fetch('/api/extract-sentences', {
+            method: 'POST',
+            body: formData
+          });
+
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.error || 'Request failed.');
+          }
+
+          lastResponse = data;
+          renderResults(data);
+          statusEl.textContent = 'Done';
+        } catch (err) {
+          statusEl.textContent = err.message;
+          results.innerHTML = '';
+          summary.textContent = 'Unable to extract sentences. Please try again.';
+          lastResponse = null;
+          toggleDownloadButtons(false);
+        } finally {
+          submitBtn.disabled = false;
+        }
+      }
+
+      function renderResults(data) {
+        const total = data.totalMatches || 0;
+        summary.textContent = `${total} matching sentence${total === 1 ? '' : 's'} found.`;
+        toggleDownloadButtons(total > 0);
+
+        if (!data.files || data.files.length === 0) {
+          results.innerHTML = '';
+          return;
+        }
+
+        results.innerHTML = data.files.map(renderFileResult).join('');
+      }
+
+      function renderFileResult(file) {
+        if (file.error) {
+          return `<div class="result-card">` +
+            `<div class="d-flex justify-content-between align-items-start">` +
+            `<strong>${file.fileName}</strong>` +
+            `<span class="badge bg-danger-subtle text-danger">Error</span>` +
+            `</div>` +
+            `<p class="text-danger small mb-0">${file.error}</p>` +
+            `</div>`;
+        }
+
+        if (!file.matches || file.matches.length === 0) {
+          return `<div class="result-card">` +
+            `<div class="d-flex justify-content-between align-items-start">` +
+            `<strong>${file.fileName}</strong>` +
+            `<span class="badge bg-secondary-subtle text-secondary">No matches</span>` +
+            `</div>` +
+            `<p class="text-secondary small mb-0">No sentences contained the provided keywords.</p>` +
+            `</div>`;
+        }
+
+        const sentences = file.matches.map(match => {
+          const badges = (match.matchedKeywords || []).map(k => `<span class="badge badge-keyword me-1">${k}</span>`).join('');
+          return `<li class="list-group-item">` +
+            `<div class="d-flex justify-content-between align-items-start">` +
+            `<div class="sentence-text">${match.sentence}</div>` +
+            `<div>${badges}</div>` +
+            `</div>` +
+            `</li>`;
+        }).join('');
+
+        return `<div class="result-card">` +
+          `<div class="d-flex justify-content-between align-items-center mb-2">` +
+          `<div><strong>${file.fileName}</strong></div>` +
+          `<span class="badge bg-success-subtle text-success">${file.matchCount} match${file.matchCount === 1 ? '' : 'es'}</span>` +
+          `</div>` +
+          `<ol class="list-group list-group-flush">${sentences}</ol>` +
+          `</div>`;
+      }
+
+      function toggleDownloadButtons(enabled) {
+        downloadCsv.disabled = !enabled;
+        downloadJson.disabled = !enabled;
+      }
+
+      function downloadFile(data, type, filename) {
+        const blob = new Blob([data], { type });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      downloadCsv.addEventListener('click', () => {
+        if (lastResponse?.csv) {
+          downloadFile(lastResponse.csv, 'text/csv', 'sentence-keyword-extract.csv');
+        }
+      });
+
+      downloadJson.addEventListener('click', () => {
+        if (lastResponse) {
+          downloadFile(JSON.stringify(lastResponse, null, 2), 'application/json', 'sentence-keyword-extract.json');
+        }
+      });
+
+      submitBtn.addEventListener('click', postExtraction);
+    </script>
+  </body>
+</html>

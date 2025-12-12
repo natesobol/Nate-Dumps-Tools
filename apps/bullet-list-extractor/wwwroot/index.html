@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bullet List Extractor | Monetize Hub Tools</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="../../../public/css/styles.css" />
+    <link rel="stylesheet" href="../../../public/css/webapp-theme.css" />
+    <style>
+      .drop-zone {
+        border: 2px dashed var(--border-subtle);
+        border-radius: 12px;
+        padding: 28px;
+        background: rgba(255, 255, 255, 0.55);
+        transition: border-color 0.2s ease, background 0.2s ease;
+      }
+      .drop-zone.dragover {
+        border-color: var(--primary-color);
+        background: rgba(99, 102, 241, 0.06);
+      }
+      .file-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: #eef2ff;
+        color: #312e81;
+        font-weight: 600;
+      }
+      .list-card {
+        border: 1px solid var(--border-subtle);
+        border-radius: 12px;
+        padding: 14px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.8) 100%);
+      }
+      .list-card header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+      .list-preview {
+        list-style: none;
+        padding-left: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .list-preview li {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+      }
+      .list-preview .marker {
+        min-width: 32px;
+        text-align: right;
+        font-weight: 700;
+      }
+      .list-preview .text {
+        flex: 1;
+      }
+      .level-1 { padding-left: 12px; }
+      .level-2 { padding-left: 24px; }
+      .level-3 { padding-left: 36px; }
+      .level-4 { padding-left: 48px; }
+      .level-5 { padding-left: 60px; }
+      .notice {
+        border: 1px solid var(--border-subtle);
+        border-radius: 12px;
+        padding: 14px;
+        background: #f8fafc;
+      }
+      .stat { font-weight: 700; }
+    </style>
+  </head>
+  <body class="tool-page">
+    <header class="site-header">
+      <div class="header-top">
+        <a class="brand" href="../../../index.html">
+          <img src="../../../public/logo.png" alt="Monetize Hub" class="brand-logo" />
+          <div class="brand-text">
+            <span class="brand-name">Monetize Hub</span>
+            <span class="brand-tagline">Launch, host, and grow your webapps</span>
+          </div>
+        </a>
+        <details class="nav-dropdown user-dropdown" open>
+          <summary class="nav-link nav-dropdown-toggle">
+            <span class="user-label">Account</span>
+            <span aria-hidden="true">▾</span>
+          </summary>
+          <div class="nav-dropdown-menu">
+            <a href="../../../login.html" class="dropdown-link">Login</a>
+            <a href="../../../register.html" class="dropdown-link">Create Account</a>
+            <a href="../../../admin.html" class="dropdown-link">Admin Dashboard</a>
+          </div>
+        </details>
+      </div>
+      <nav class="main-nav">
+        <a href="../../../index.html" class="nav-link">Home</a>
+        <a href="../../../about.html" class="nav-link">About</a>
+        <details class="nav-dropdown" open>
+          <summary class="nav-link nav-dropdown-toggle">Webapps <span aria-hidden="true">▾</span></summary>
+          <div class="nav-dropdown-menu">
+            <a href="../../../apps/excel-to-json/index.html" class="dropdown-link">Excel → JSON</a>
+            <a href="../../../apps/json-to-excel/wwwroot/index.html" class="dropdown-link">JSON → Excel</a>
+            <a href="../../../apps/xml-json-translator/index.html" class="dropdown-link">XML ⇄ JSON Translator</a>
+            <a href="../../../apps/yaml-json-converter/index.html" class="dropdown-link">YAML ↔ JSON Converter</a>
+            <a href="../../../apps/json-combiner/wwwroot/index.html" class="dropdown-link">JSON Combiner</a>
+            <a href="../../../apps/find-and-replace/wwwroot/index.html" class="dropdown-link">Find & Replace</a>
+            <a href="../../../apps/csv-xml-converter/index.html" class="dropdown-link">CSV/XML Converter</a>
+            <a href="../../../apps/list-comparison/wwwroot/index.html" class="dropdown-link">List Comparison / Diff Checker</a>
+            <a href="../../../apps/html-tag-cleaner/wwwroot/index.html" class="dropdown-link">HTML Tag Cleaner</a>
+            <a href="../../../apps/tabify-untabify/wwwroot/index.html" class="dropdown-link">Tabify or Untabify</a>
+            <a href="../../../apps/extract-text-inside-quotes/wwwroot/index.html" class="dropdown-link">Extract Text Inside Quotes</a>
+            <a href="../../../apps/pdf-splitter/wwwroot/index.html" class="dropdown-link">PDF Splitter</a>
+            <a href="../../../apps/powerpoint-to-pdf/wwwroot/index.html" class="dropdown-link">PowerPoint → PDF</a>
+            <a href="../../../apps/powerpoint-image-extractor/wwwroot/index.html" class="dropdown-link">PowerPoint Image Extractor</a>
+            <a href="../../../apps/pdf-link-extractor/wwwroot/index.html" class="dropdown-link">PDF Link Extractor</a>
+            <a href="../../../apps/bullet-list-extractor/wwwroot/index.html" class="dropdown-link active">Bullet List Extractor</a>
+          </div>
+        </details>
+      </nav>
+    </header>
+
+    <main class="tool-shell">
+      <div class="app-shell">
+        <header class="d-flex align-items-center justify-content-between mb-3">
+          <div>
+            <p class="badge-pill mb-2">Upload .docx, .pdf, or .txt</p>
+            <h1 class="page-title mb-1">Bullet Point List Extractor</h1>
+            <p class="muted mb-0">
+              Extract bulleted or numbered lists while preserving markers and indentation—perfect for action items and presentation points.
+            </p>
+          </div>
+          <img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f4dd.svg" width="64" height="64" alt="Checklist" />
+        </header>
+
+        <div class="card-gradient mb-4">
+          <div class="row g-3 align-items-stretch">
+            <div class="col-lg-7">
+              <label class="form-label fw-semibold">Drop files or browse</label>
+              <div id="dropZone" class="drop-zone" role="button" tabindex="0">
+                <p class="mb-2">Drag and drop .docx, .pdf, or .txt files here, or</p>
+                <input id="fileInput" class="form-control" type="file" accept=".docx,.pdf,.txt" multiple />
+                <small class="text-secondary">Files stay on your machine; the API processes them server-side.</small>
+              </div>
+            </div>
+            <div class="col-lg-5">
+              <div class="control-card h-100">
+                <label class="form-label">Status</label>
+                <p id="status" class="muted mb-2">Waiting for uploads.</p>
+                <p class="mb-0"><span class="stat" id="foundCount">0</span> list items detected.</p>
+                <small class="text-secondary">Numbering and bullet markers are preserved.</small>
+              </div>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-3 mt-3 flex-wrap">
+            <button id="extractBtn" class="btn btn-primary btn-lg" type="button">Extract Lists</button>
+            <span id="selectedFiles" class="muted">No files selected yet.</span>
+          </div>
+          <div id="toast" class="toast mt-3" role="status" style="display: none"></div>
+        </div>
+
+        <section aria-live="polite" class="mb-4">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <h2 class="h5 mb-0">Extracted Lists</h2>
+            <small class="muted">Indentation shows nesting depth.</small>
+          </div>
+          <div id="results" class="d-flex flex-column gap-3"></div>
+          <p id="emptyState" class="muted">No results yet. Add files and click Extract Lists.</p>
+        </section>
+
+        <div class="notice">
+          <strong>Tip:</strong> Use the output to paste action items into project boards, agendas, or slides while keeping numbering intact.
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const dropZone = document.getElementById('dropZone');
+      const fileInput = document.getElementById('fileInput');
+      const extractBtn = document.getElementById('extractBtn');
+      const selectedFiles = document.getElementById('selectedFiles');
+      const statusEl = document.getElementById('status');
+      const results = document.getElementById('results');
+      const emptyState = document.getElementById('emptyState');
+      const toast = document.getElementById('toast');
+      const foundCount = document.getElementById('foundCount');
+
+      let files = [];
+
+      function showToast(message, tone = 'info') {
+        toast.textContent = message;
+        toast.style.display = 'block';
+        toast.className = `toast toast-${tone}`;
+        setTimeout(() => (toast.style.display = 'none'), 3200);
+      }
+
+      function updateFileList() {
+        if (!files.length) {
+          selectedFiles.textContent = 'No files selected yet.';
+          statusEl.textContent = 'Waiting for uploads.';
+          return;
+        }
+        selectedFiles.innerHTML = files.map(f => `<span class="file-pill">${f.name}</span>`).join(' ');
+        statusEl.textContent = `${files.length} file(s) ready.`;
+      }
+
+      function handleFiles(newFiles) {
+        if (!newFiles?.length) return;
+        files = Array.from(newFiles);
+        updateFileList();
+      }
+
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      });
+
+      dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        handleFiles(e.dataTransfer.files);
+      });
+
+      dropZone.addEventListener('click', () => fileInput.click());
+      dropZone.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          fileInput.click();
+        }
+      });
+
+      fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+      function renderResults(data) {
+        results.innerHTML = '';
+        const { files: fileResults = [], totalItems = 0 } = data;
+        foundCount.textContent = totalItems;
+
+        if (!fileResults.length) {
+          emptyState.style.display = 'block';
+          return;
+        }
+
+        emptyState.style.display = 'none';
+
+        fileResults.forEach((file) => {
+          const card = document.createElement('div');
+          card.className = 'list-card';
+          const header = document.createElement('header');
+          const name = document.createElement('div');
+          name.innerHTML = `<strong>${file.fileName}</strong>`;
+          const count = document.createElement('small');
+          count.className = 'muted';
+          const itemCount = file.items ? file.items.length : 0;
+          count.textContent = `${itemCount} item(s)`;
+          header.appendChild(name);
+          header.appendChild(count);
+          card.appendChild(header);
+
+          if (file.error) {
+            const error = document.createElement('div');
+            error.className = 'alert alert-danger mb-0';
+            error.textContent = file.error;
+            card.appendChild(error);
+            results.appendChild(card);
+            return;
+          }
+
+          const list = document.createElement('ul');
+          list.className = 'list-preview';
+
+          (file.items || []).forEach((item) => {
+            const li = document.createElement('li');
+            li.className = `level-${Math.min(item.level || 0, 5)}`;
+            const marker = document.createElement('span');
+            marker.className = 'marker';
+            marker.textContent = item.marker;
+            const text = document.createElement('span');
+            text.className = 'text';
+            text.textContent = item.text;
+            li.appendChild(marker);
+            li.appendChild(text);
+            list.appendChild(li);
+          });
+
+          if (!file.items?.length) {
+            const none = document.createElement('p');
+            none.className = 'muted mb-0';
+            none.textContent = 'No list items detected in this file.';
+            card.appendChild(none);
+          } else {
+            card.appendChild(list);
+          }
+
+          results.appendChild(card);
+        });
+      }
+
+      extractBtn.addEventListener('click', async () => {
+        if (!files.length) {
+          showToast('Add at least one supported file to extract lists.', 'warning');
+          return;
+        }
+
+        const formData = new FormData();
+        files.forEach((file) => formData.append('files', file));
+        statusEl.textContent = 'Extracting lists...';
+        extractBtn.disabled = true;
+
+        try {
+          const response = await fetch('/api/extract-lists', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            showToast(error.error || 'Unable to extract lists.', 'danger');
+            statusEl.textContent = 'Extraction failed.';
+            extractBtn.disabled = false;
+            return;
+          }
+
+          const data = await response.json();
+          renderResults(data);
+          statusEl.textContent = `Extraction complete. ${data.totalItems ?? 0} item(s) found.`;
+          showToast('Lists extracted successfully.');
+        } catch (err) {
+          console.error(err);
+          showToast('Unexpected error during extraction.', 'danger');
+          statusEl.textContent = 'Extraction failed.';
+        } finally {
+          extractBtn.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>

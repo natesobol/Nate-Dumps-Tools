@@ -14,6 +14,8 @@ A starter website for hosting webapps with monetization in mind. It provides a h
 - List Comparison / Diff Checker: `/apps/list-comparison/wwwroot/index.html`
 - Extract Text Inside Quotes: `/apps/extract-text-inside-quotes/wwwroot/index.html`
 - PDF Splitter: `/apps/pdf-splitter/wwwroot/index.html`
+- Table Data Extractor: `/apps/table-data-extractor/wwwroot/index.html`
+- Bullet List Extractor: `/apps/bullet-list-extractor/wwwroot/index.html`
 - PowerPoint → PDF: `/apps/powerpoint-to-pdf/wwwroot/index.html`
 - PowerPoint Image Extractor: `/apps/powerpoint-image-extractor/wwwroot/index.html`
 - JSON to Excel Creator: `/apps/json-to-excel/wwwroot/index.html`
@@ -23,6 +25,8 @@ A starter website for hosting webapps with monetization in mind. It provides a h
 - PDF Link Extractor: `/apps/pdf-link-extractor/wwwroot/index.html`
 - Resume Contact Info Extractor: `/apps/resume-contact-extractor/wwwroot/index.html`
 - Image Path Extractor: `/apps/image-path-extractor/wwwroot/index.html`
+- Capitalized Phrase Extractor: `/apps/capitalized-phrase-extractor/wwwroot/index.html`
+- Sentence Keyword Extractor: `/apps/sentence-keyword-extractor/wwwroot/index.html`
 - Dynamic features (login, admin, server-backed Excel conversion) require running the Node.js server locally or on a host that supports server-side rendering.
 
 ## Features
@@ -234,6 +238,18 @@ Located in `apps/pdf-splitter/`, this C#-hosted webapp splits one or more PDFs e
 **Server Route:** `/pdf-splitter`
 **Static Version:** `/apps/pdf-splitter/wwwroot/index.html`
 
+### Bullet List Extractor
+Located in `apps/bullet-list-extractor/`, this .NET 8 minimal API pulls bulleted and numbered lists from uploaded documents.
+
+**Features:**
+- Upload multiple `.docx`, `.pdf`, or `.txt` files at once
+- Preserves bullet symbols and numbering formats from Word files
+- Detects indented list items in PDFs and plain text
+- Returns per-file results plus a total count for easy exports
+
+**Server Route:** `/bullet-list-extractor`
+**Static Version:** `/apps/bullet-list-extractor/wwwroot/index.html`
+
 ### PDF Link Extractor
 Located in `apps/pdf-link-extractor/`, this C#-hosted webapp extracts every URL from PDFs by scanning both visible text and link annotations.
 
@@ -257,6 +273,21 @@ Located in `apps/batch-pdf-text-extractor/`, this .NET 8 minimal API extracts te
 **Run locally:**
 ```bash
 cd apps/batch-pdf-text-extractor
+dotnet run
+```
+
+### Extract Table Data From PDF, Word, and HTML Files
+Located in `apps/table-data-extractor/`, this .NET 8 minimal API auto-detects tables in PDFs, DOCX files, and saved HTML pages.
+
+**Features:**
+- Accepts `.pdf`, `.docx`, `.html`, and `.htm` uploads
+- Detects grid-style and borderless tables with per-table previews
+- Honors HTML captions and Word headers while normalizing columns
+- Export all detected tables together as CSV or multi-sheet Excel files
+
+**Run locally:**
+```bash
+cd apps/table-data-extractor
 dotnet run
 ```
 
@@ -284,6 +315,16 @@ Located in `apps/powerpoint-slide-exporter/`, this .NET 8 webapp converts each s
 cd apps/powerpoint-slide-exporter
 dotnet run
 ```
+
+### Named Entity Extractor
+Located in `apps/named-entity-extractor/`, this C# minimal API hosts a browser-based NLP tool for pulling people, organizations, and locations from documents.
+
+**Features:**
+- Upload `.pdf`, `.docx`, or `.txt` files and process them entirely in the browser
+- Combined and per-file entity breakdowns with deduplication controls
+- Quick JSON export for downstream analysis
+
+**Static Version:** `/apps/named-entity-extractor/wwwroot/index.html`
 
 ## Project Structure
 
@@ -333,6 +374,10 @@ apps/
 │   ├── Program.cs          # Minimal API and text/file processor
 │   ├── find-and-replace.csproj
 │   └── wwwroot/            # Static UI assets
+├── named-entity-extractor/ # Browser-based named entity extraction
+│   ├── Program.cs          # Minimal API hosting the static UI
+│   ├── named-entity-extractor.csproj
+│   └── wwwroot/            # Static UI assets
 ├── batch-file-renamer/     # .NET batch renamer for filename cleanup
 │   ├── Program.cs          # Minimal API building renamed archives
 │   ├── batch-file-renamer.csproj
@@ -348,7 +393,7 @@ apps/
 - Supabase for user data with SQLite session storage
 - EJS for server-rendered views
 - Helmet and secure session defaults for baseline security
-- C# .NET (JSON Combiner, JSON to Excel, PDF Splitter, PDF Link Extractor, List Comparison, Find & Replace, Batch File Renamer, and PowerPoint Image Extractor webapps)
+- C# .NET (JSON Combiner, JSON to Excel, PDF Splitter, PDF Link Extractor, Bullet List Extractor, List Comparison, Find & Replace, Batch File Renamer, and PowerPoint Image Extractor webapps)
 
 ## Notes
 - User passwords are managed by Supabase Auth

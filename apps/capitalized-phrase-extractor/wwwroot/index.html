@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Capitalized Phrase Extractor</title>
+    <link rel="stylesheet" href="../../../public/css/webapp-theme.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Names, orgs, and job titles</p>
+          <h1>Extract capitalized phrases from emails, texts, and Word docs.</h1>
+          <p class="lede">
+            Upload .eml, .msg, .txt, or .docx files—or just paste text—to pull out phrases with multiple capitalized words
+            (like “Board of Directors” or “Jane Doe”). Choose alphabetical sorting or keep phrases grouped by file.
+          </p>
+          <ul class="pill-list">
+            <li>Handles email and Word formats</li>
+            <li>Alphabetical or per-file results</li>
+            <li>In-memory processing</li>
+          </ul>
+        </div>
+        <div class="hero-card">
+          <p class="hint">.NET 8 minimal API with MimeKit, MsgReader, and OpenXML handling uploads entirely in memory.</p>
+          <p class="hint">Great for pulling out people, organizations, and titles from mixed documents.</p>
+        </div>
+      </header>
+
+      <section class="card">
+        <form id="extract-form" class="form-grid">
+          <div class="field">
+            <label for="files">Upload files (.eml, .msg, .txt, .docx)</label>
+            <input id="files" name="files" type="file" accept=".eml,.msg,.txt,.docx" multiple />
+            <p class="hint">Files are parsed in memory only. Temporary disk use is limited to .msg parsing.</p>
+          </div>
+
+          <div class="field">
+            <label for="textInput">Or paste text</label>
+            <textarea id="textInput" name="textInput" rows="4" placeholder="Paste email content or notes here..."></textarea>
+          </div>
+
+          <div class="grid">
+            <div class="field">
+              <label>Sorting</label>
+              <label class="checkbox">
+                <input type="radio" name="sortMode" value="alphabetical" checked /> Alphabetical (combined)
+              </label>
+              <label class="checkbox">
+                <input type="radio" name="sortMode" value="byFile" /> Group by file
+              </label>
+            </div>
+            <div class="field">
+              <label>Tips</label>
+              <ul class="pill-list">
+                <li>Looks for two or more capitalized words</li>
+                <li>Keeps connectors like “of” and “and”</li>
+                <li>Ignores duplicate phrases</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button type="submit">Extract phrases</button>
+            <button type="button" id="clear-button" class="ghost">Clear</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card" id="status" aria-live="polite"></section>
+
+      <section class="card" id="results" hidden>
+        <div class="card-header">
+          <h2>Results</h2>
+          <span class="tag" id="result-mode"></span>
+        </div>
+        <div id="results-body"></div>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById('extract-form');
+      const statusEl = document.getElementById('status');
+      const resultsSection = document.getElementById('results');
+      const resultsBody = document.getElementById('results-body');
+      const resultMode = document.getElementById('result-mode');
+      const clearButton = document.getElementById('clear-button');
+      const filesInput = document.getElementById('files');
+      const textInput = document.getElementById('textInput');
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        statusEl.textContent = 'Extracting phrases...';
+        statusEl.className = 'card status notice';
+        resultsSection.hidden = true;
+        resultsBody.innerHTML = '';
+
+        const formData = new FormData();
+        const sortValue = form.querySelector('input[name="sortMode"]:checked')?.value ?? 'alphabetical';
+        formData.append('sortMode', sortValue);
+
+        if (textInput.value.trim()) {
+          formData.append('textInput', textInput.value.trim());
+        }
+
+        Array.from(filesInput.files).forEach((file) => formData.append('files', file));
+
+        if (!formData.has('textInput') && filesInput.files.length === 0) {
+          statusEl.textContent = 'Add at least one file or some text to process.';
+          statusEl.className = 'card status error';
+          return;
+        }
+
+        try {
+          const response = await fetch('/api/extract', { method: 'POST', body: formData });
+
+          if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.error || 'Request failed.');
+          }
+
+          const data = await response.json();
+          renderResults(data);
+          statusEl.textContent = 'Extraction complete.';
+          statusEl.className = 'card status success';
+        } catch (err) {
+          statusEl.textContent = err.message || 'Something went wrong.';
+          statusEl.className = 'card status error';
+        }
+      });
+
+      clearButton.addEventListener('click', () => {
+        form.reset();
+        filesInput.value = '';
+        statusEl.textContent = '';
+        statusEl.className = 'card';
+        resultsSection.hidden = true;
+        resultsBody.innerHTML = '';
+      });
+
+      function renderResults(data) {
+        resultsBody.innerHTML = '';
+        resultMode.textContent = data.mode === 'byFile' ? 'Grouped by file' : 'Alphabetical across all uploads';
+
+        if (data.mode === 'byFile') {
+          const list = document.createElement('div');
+          list.className = 'stack';
+
+          (data.files || []).forEach((file) => {
+            const card = document.createElement('div');
+            card.className = 'nested-card';
+
+            const heading = document.createElement('div');
+            heading.className = 'inline';
+            heading.innerHTML = `<h3>${file.fileName || 'Item'}</h3><span class="tag">${(file.phrases?.length || 0)} phrases</span>`;
+            card.appendChild(heading);
+
+            if (file.error) {
+              const error = document.createElement('p');
+              error.className = 'hint';
+              error.textContent = file.error;
+              card.appendChild(error);
+            } else if (file.phrases && file.phrases.length > 0) {
+              const ul = document.createElement('ul');
+              ul.className = 'bullet-list';
+              file.phrases.forEach((phrase) => {
+                const li = document.createElement('li');
+                li.textContent = phrase;
+                ul.appendChild(li);
+              });
+              card.appendChild(ul);
+            } else {
+              const empty = document.createElement('p');
+              empty.className = 'hint';
+              empty.textContent = 'No capitalized phrases found.';
+              card.appendChild(empty);
+            }
+
+            list.appendChild(card);
+          });
+
+          resultsBody.appendChild(list);
+        } else {
+          const phrases = data.phrases || [];
+          const summary = document.createElement('p');
+          summary.className = 'hint';
+          summary.textContent = `${phrases.length} unique phrases found across uploads.`;
+          resultsBody.appendChild(summary);
+
+          if (phrases.length > 0) {
+            const ul = document.createElement('ul');
+            ul.className = 'bullet-list two-columns';
+            phrases.forEach((phrase) => {
+              const li = document.createElement('li');
+              li.textContent = phrase;
+              ul.appendChild(li);
+            });
+            resultsBody.appendChild(ul);
+          } else {
+            const empty = document.createElement('p');
+            empty.className = 'hint';
+            empty.textContent = 'No capitalized phrases found.';
+            resultsBody.appendChild(empty);
+          }
+        }
+
+        resultsSection.hidden = false;
+      }
+    </script>
+  </body>
+</html>
