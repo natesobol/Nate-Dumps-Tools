@@ -52,6 +52,7 @@ app.use(
 );
 app.use('/number-extractor', express.static(path.join(__dirname, 'apps/number-extractor/wwwroot')));
 app.use('/image-path-extractor', express.static(path.join(__dirname, 'apps/image-path-extractor/wwwroot')));
+app.use('/highlighted-text-extractor', express.static(path.join(__dirname, 'apps/highlighted-text-extractor')));
 app.use(morgan('dev'));
 
 app.use(
