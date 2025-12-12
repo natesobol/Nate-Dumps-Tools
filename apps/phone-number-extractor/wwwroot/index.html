@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Phone Number Extractor</title>
+    <link rel="stylesheet" href="../../../public/css/webapp-theme.css" />
+</head>
+<body>
+    <main class="container">
+        <header>
+            <h1>Phone Number Extractor</h1>
+            <p>Upload Excel or CSV files and extract U.S. and international phone numbers from every cell.</p>
+            <p class="hint">Normalize country codes, choose your preferred formatting, and deduplicate results with a single click.</p>
+        </header>
+
+        <section class="card">
+            <form id="extract-form">
+                <label for="dataFiles">Select Excel or CSV files</label>
+                <input id="dataFiles" name="files" type="file" accept=".xls,.xlsx,.csv" multiple required />
+
+                <div class="grid">
+                    <div>
+                        <label for="region">Default region (fallback)</label>
+                        <input id="region" name="region" type="text" value="US" placeholder="US" />
+                    </div>
+                    <div>
+                        <label for="format">Output format</label>
+                        <select id="format" name="format">
+                            <option value="E164">E.164 (+15551234567)</option>
+                            <option value="International">International (+1 555-123-4567)</option>
+                            <option value="National">National ((555) 123-4567)</option>
+                            <option value="RFC3966">RFC3966 (tel:+1-555-123-4567)</option>
+                            <option value="Custom">Custom pattern</option>
+                        </select>
+                    </div>
+                </div>
+
+                <label for="customFormat">Custom format (optional)</label>
+                <input id="customFormat" name="customFormat" type="text" placeholder="Example: +{CountryCode} {NationalNumber}" />
+                <p class="hint small">Use placeholders {E164}, {International}, {National}, {RFC3966}, {CountryCode}, {NationalNumber}.</p>
+
+                <label class="checkbox">
+                    <input type="checkbox" id="dedupe" name="dedupe" checked />
+                    <span>Deduplicate numbers by country code and national number</span>
+                </label>
+
+                <button type="submit" class="primary">Extract phone numbers</button>
+            </form>
+        </section>
+
+        <section class="card" id="results" hidden>
+            <h2>Results</h2>
+            <p id="summary" class="hint"></p>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Formatted</th>
+                            <th>E.164</th>
+                            <th>Region</th>
+                            <th>Source file</th>
+                            <th>Original text</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-body"></tbody>
+                </table>
+            </div>
+            <div id="errors" class="alert" hidden></div>
+        </section>
+    </main>
+
+    <script>
+        const form = document.getElementById('extract-form');
+        const resultsSection = document.getElementById('results');
+        const resultsBody = document.getElementById('results-body');
+        const summary = document.getElementById('summary');
+        const errorBox = document.getElementById('errors');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            resultsSection.hidden = true;
+            errorBox.hidden = true;
+            resultsBody.innerHTML = '';
+            summary.textContent = 'Working…';
+
+            const formData = new FormData(form);
+            const files = document.getElementById('dataFiles').files;
+            for (const file of files) {
+                formData.append('files', file);
+            }
+
+            try {
+                const response = await fetch('/api/extract', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to extract phone numbers.');
+                }
+
+                const payload = await response.json();
+                renderResults(payload);
+            } catch (error) {
+                summary.textContent = '';
+                errorBox.textContent = error.message;
+                errorBox.hidden = false;
+            }
+        });
+
+        function renderResults(payload) {
+            const { numbers, count, deduplicated, errors } = payload;
+            summary.textContent = `${count} phone number${count === 1 ? '' : 's'} found${deduplicated ? ' after deduplication' : ''}.`;
+
+            numbers.forEach((entry) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><code>${entry.formatted}</code></td>
+                    <td><code>${entry.e164}</code></td>
+                    <td>${entry.region}</td>
+                    <td>${entry.file}</td>
+                    <td><code>${entry.originalText}</code></td>
+                `;
+                resultsBody.appendChild(row);
+            });
+
+            if (errors && errors.length) {
+                errorBox.hidden = false;
+                errorBox.innerHTML = `<strong>Files skipped:</strong> ${errors.map(e => `${e.file}: ${e.message}`).join('; ')}`;
+            }
+
+            resultsSection.hidden = false;
+        }
+    </script>
+</body>
+</html>

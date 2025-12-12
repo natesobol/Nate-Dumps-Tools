@@ -17,6 +17,7 @@ A starter website for hosting webapps with monetization in mind. It provides a h
 - PowerPoint Image Extractor: `/apps/powerpoint-image-extractor/wwwroot/index.html`
 - JSON to Excel Creator: `/apps/json-to-excel/wwwroot/index.html`
 - Multi-CSV Column Merger: `/apps/multi-csv-column-merger/wwwroot/index.html`
+- Phone Number Extractor: `/apps/phone-number-extractor/wwwroot/index.html`
 - Dynamic features (login, admin, server-backed Excel conversion) require running the Node.js server locally or on a host that supports server-side rendering.
 
 ## Features
@@ -114,6 +115,22 @@ Located in `apps/multi-csv-column-merger/`, this C# minimal API merges several C
 **Run locally:**
 ```bash
 cd apps/multi-csv-column-merger
+dotnet run
+```
+
+### Phone Number Extractor
+Located in `apps/phone-number-extractor/`, this C# minimal API scans Excel or CSV files for U.S. and international phone numbers.
+
+**Features:**
+- Upload `.xls`, `.xlsx`, or `.csv` files
+- Extract phone numbers from any cell using libphonenumber
+- Output options: E.164, international, national, RFC3966, or a custom placeholder pattern
+- Optional deduplication by country code and national number
+- Returns source file and original text for each match
+
+**Run locally:**
+```bash
+cd apps/phone-number-extractor
 dotnet run
 ```
 
