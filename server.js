@@ -87,6 +87,7 @@ app.use('/text-url-extractor', express.static(path.join(__dirname, 'apps/text-ur
 app.use('/timestamp-extractor', express.static(path.join(__dirname, 'apps/timestamp-extractor/wwwroot')));
 app.use('/xml-json-translator', express.static(path.join(__dirname, 'apps/xml-json-translator')));
 app.use('/yaml-json-converter', express.static(path.join(__dirname, 'apps/yaml-json-converter')));
+app.use('/youtube-playlist-downloader', express.static(path.join(__dirname, 'apps/youtube-playlist-downloader/wwwroot')));
 app.use(morgan('dev'));
 
 app.use(

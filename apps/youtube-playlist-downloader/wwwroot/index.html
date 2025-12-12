@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script id="asset-base-loader">
+      (function() {
+        const segments = window.location.pathname.split('/').filter(Boolean);
+        const repoIndex = segments.indexOf('Nates-Free-Tools');
+        const baseHref = repoIndex !== -1 ? '/' + segments.slice(0, repoIndex + 1).join('/') + '/' : '/';
+        let baseTag = document.querySelector('base');
+        if (!baseTag) {
+          baseTag = document.createElement('base');
+          document.head.prepend(baseTag);
+        }
+        baseTag.href = baseHref;
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YouTube Playlist Downloader | Monetize Hub Tools</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="../../../css/webapps-unified.css" />
+    <script src="../../../js/site-chrome.js" defer></script>
+    <style>
+      .card-surface {
+        border: 1px solid var(--border-subtle);
+        border-radius: 16px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      }
+      .video-row {
+        border: 1px solid var(--border-subtle);
+        border-radius: 12px;
+        padding: 12px;
+        background: rgba(17, 24, 39, 0.02);
+      }
+      .muted {
+        color: #6b7280;
+      }
+    </style>
+  </head>
+  <body class="tool-page">
+    <header class="site-header">
+      <div class="header-top">
+        <a class="brand" href="../../../index.html">
+          <img src="../../../public/logo.png" alt="Monetize Hub" class="brand-logo" />
+          <div class="brand-text">
+            <span class="brand-name">Monetize Hub</span>
+            <span class="brand-tagline">Launch, host, and grow your webapps</span>
+          </div>
+        </a>
+        <details class="nav-dropdown user-dropdown" open>
+          <summary class="nav-link nav-dropdown-toggle">
+            <span class="user-label">Account</span>
+            <span aria-hidden="true">▾</span>
+          </summary>
+          <div class="nav-dropdown-menu">
+            <a href="../../../login.html" class="dropdown-link">Login</a>
+            <a href="../../../register.html" class="dropdown-link">Create Account</a>
+            <a href="../../../admin.html" class="dropdown-link">Admin Dashboard</a>
+          </div>
+        </details>
+      </div>
+      <nav class="main-nav">
+        <a href="../../../index.html" class="nav-link">Home</a>
+        <a href="../../../about.html" class="nav-link">About</a>
+        <details class="nav-dropdown" open>
+          <summary class="nav-link nav-dropdown-toggle">Webapps <span aria-hidden="true">▾</span></summary>
+          <div class="nav-dropdown-menu">
+            <a href="../../../apps/excel-to-json/index.html" class="dropdown-link">Excel → JSON</a>
+            <a href="../../../apps/json-to-excel/wwwroot/index.html" class="dropdown-link">JSON → Excel</a>
+            <a href="../../../apps/xml-json-translator/index.html" class="dropdown-link">XML ⇄ JSON Translator</a>
+            <a href="../../../apps/yaml-json-converter/index.html" class="dropdown-link">YAML ↔ JSON Converter</a>
+            <a href="../../../apps/list-comparison/wwwroot/index.html" class="dropdown-link">List Comparison</a>
+            <a href="../../../apps/youtube-playlist-downloader/wwwroot/index.html" class="dropdown-link active">YouTube Playlist Downloader</a>
+          </div>
+        </details>
+      </nav>
+    </header>
+
+    <main class="tool-shell">
+      <div class="app-shell">
+        <header class="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+          <div>
+            <p class="mb-1 text-uppercase text-secondary fw-semibold">Playlist backups</p>
+            <h1 class="page-title mb-1">YouTube Playlist Downloader</h1>
+            <p class="muted mb-0">Select specific lessons, choose resolutions, and export everything as MP4s or a ZIP bundle.</p>
+          </div>
+          <img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f4e5.svg" width="72" height="72" alt="Inbox" />
+        </header>
+
+        <section class="card-surface p-4 mb-4">
+          <div class="row g-3 align-items-end">
+            <div class="col-lg-6">
+              <label class="form-label fw-semibold">Playlist URL</label>
+              <input type="url" id="playlistUrl" class="form-control" placeholder="https://www.youtube.com/playlist?list=..." />
+              <small class="muted">Public playlists only. Private or unlisted items cannot be fetched.</small>
+            </div>
+            <div class="col-lg-3">
+              <label class="form-label fw-semibold">Global resolution</label>
+              <select id="globalResolution" class="form-select">
+                <option value="">Highest available</option>
+              </select>
+              <small class="muted">Override per-video picks with this dropdown.</small>
+            </div>
+            <div class="col-lg-3 d-flex gap-2 align-items-end justify-content-end">
+              <button id="loadBtn" class="btn btn-primary px-4">Load playlist</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="card-surface p-4 mb-4">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+            <div>
+              <h2 class="h5 mb-1">Videos</h2>
+              <p class="muted mb-0" id="playlistMeta">Enter a playlist URL to fetch videos.</p>
+            </div>
+            <div class="d-flex gap-3 align-items-center">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="csvToggle" />
+                <label class="form-check-label" for="csvToggle">Include CSV (title + URL)</label>
+              </div>
+              <div class="btn-group" role="group" aria-label="Download mode">
+                <input type="radio" class="btn-check" name="bundleMode" id="modeZip" value="zip" checked />
+                <label class="btn btn-outline-primary" for="modeZip">ZIP bundle</label>
+                <input type="radio" class="btn-check" name="bundleMode" id="modeSingle" value="single" />
+                <label class="btn btn-outline-primary" for="modeSingle">Individual</label>
+              </div>
+              <button id="downloadBtn" class="btn btn-success px-4" disabled>Download selected</button>
+            </div>
+          </div>
+
+          <div id="videoList" class="d-flex flex-column gap-2"></div>
+          <p id="emptyState" class="muted mb-0">Nothing loaded yet.</p>
+        </section>
+
+        <section class="notice">
+          <p class="mb-0">
+            Downloads stream directly from YouTube. Selecting multiple videos or adding a CSV will deliver a ZIP archive.
+          </p>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      const playlistUrlInput = document.getElementById('playlistUrl');
+      const loadBtn = document.getElementById('loadBtn');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const videoList = document.getElementById('videoList');
+      const playlistMeta = document.getElementById('playlistMeta');
+      const emptyState = document.getElementById('emptyState');
+      const globalResolution = document.getElementById('globalResolution');
+      const csvToggle = document.getElementById('csvToggle');
+      const bundleModeRadios = document.querySelectorAll('input[name="bundleMode"]');
+
+      let playlistCache = null;
+
+      loadBtn.addEventListener('click', async () => {
+        const url = playlistUrlInput.value.trim();
+        if (!url) {
+          alert('Paste a playlist URL first.');
+          return;
+        }
+        setLoading(true, 'Loading playlist...');
+        try {
+          const res = await fetch('/api/playlist/info', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playlistUrl: url })
+          });
+
+          if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.error || 'Unable to fetch playlist.');
+          }
+
+          const data = await res.json();
+          playlistCache = data;
+          renderPlaylist(data);
+        } catch (err) {
+          console.error(err);
+          alert(err.message || 'Failed to load playlist.');
+        } finally {
+          setLoading(false);
+        }
+      });
+
+      downloadBtn.addEventListener('click', async () => {
+        if (!playlistCache) return;
+        const selections = [];
+        const globalHeight = globalResolution.value;
+        document.querySelectorAll('.video-checkbox:checked').forEach((checkbox) => {
+          const row = checkbox.closest('.video-row');
+          const resolution = row.querySelector('.resolution-select').value;
+          const chosenHeight = globalHeight || resolution;
+          selections.push({
+            videoId: checkbox.value,
+            resolution: chosenHeight ? Number(chosenHeight) : null
+          });
+        });
+
+        if (selections.length === 0) {
+          alert('Select at least one video.');
+          return;
+        }
+
+        const mode = Array.from(bundleModeRadios).find((r) => r.checked)?.value || 'zip';
+        const payload = {
+          playlistUrl: playlistUrlInput.value.trim(),
+          selections,
+          zipBundle: mode === 'zip',
+          includeCsv: csvToggle.checked
+        };
+
+        setLoading(true, 'Preparing download...');
+        try {
+          const res = await fetch('/api/playlist/download', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.error || 'Download failed.');
+          }
+
+          const blob = await res.blob();
+          const disposition = res.headers.get('Content-Disposition');
+          const fileName = parseFileName(disposition, payload.zipBundle || payload.includeCsv || selections.length > 1);
+          triggerDownload(blob, fileName);
+        } catch (err) {
+          console.error(err);
+          alert(err.message || 'Download failed.');
+        } finally {
+          setLoading(false);
+        }
+      });
+
+      function renderPlaylist(data) {
+        playlistMeta.textContent = `${data.videoCount} videos · ${data.title || 'Untitled playlist'}`;
+        videoList.innerHTML = '';
+        emptyState.classList.add('d-none');
+
+        const uniqueRes = Array.from(
+          new Set(
+            data.videos
+              .flatMap((v) => v.resolutions || [])
+              .map((r) => r.height)
+              .filter(Boolean)
+          )
+        ).sort((a, b) => b - a);
+
+        globalResolution.innerHTML = '<option value="">Highest available</option>';
+        uniqueRes.forEach((height) => {
+          const option = document.createElement('option');
+          option.value = height;
+          option.textContent = `${height}p`;
+          globalResolution.appendChild(option);
+        });
+
+        data.videos.forEach((video) => {
+          const row = document.createElement('div');
+          row.className = 'video-row d-flex align-items-center gap-3';
+          row.innerHTML = `
+            <input class="form-check-input video-checkbox" type="checkbox" value="${video.id}" checked />
+            <div class="flex-grow-1">
+              <div class="fw-semibold">${video.title}</div>
+              <div class="muted small">${video.duration ? formatDuration(video.duration) : 'Duration unknown'}</div>
+            </div>
+            <div>
+              <select class="form-select resolution-select" aria-label="Resolution for ${video.title}">
+                ${renderResolutionOptions(video.resolutions)}
+              </select>
+            </div>
+          `;
+          videoList.appendChild(row);
+        });
+
+        downloadBtn.disabled = false;
+      }
+
+      function renderResolutionOptions(resolutions) {
+        if (!resolutions || resolutions.length === 0) return '<option value="">Highest</option>';
+        const unique = [];
+        resolutions.forEach((r) => {
+          if (!unique.find((u) => u.height === r.height)) {
+            unique.push(r);
+          }
+        });
+        return ['<option value="">Highest</option>']
+          .concat(unique.map((r) => `<option value="${r.height}">${r.label}</option>`))
+          .join('');
+      }
+
+      function setLoading(isLoading, text) {
+        loadBtn.disabled = isLoading;
+        downloadBtn.disabled = isLoading || !playlistCache;
+        if (isLoading) {
+          loadBtn.textContent = text;
+        } else {
+          loadBtn.textContent = 'Load playlist';
+        }
+      }
+
+      function parseFileName(disposition, isZip) {
+        if (disposition) {
+          const match = /filename="?([^";]+)"?/i.exec(disposition);
+          if (match) return match[1];
+        }
+        return isZip ? 'playlist-download.zip' : 'video.mp4';
+      }
+
+      function triggerDownload(blob, fileName) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      }
+
+      function formatDuration(duration) {
+        const parts = duration.split(':').map(Number);
+        if (parts.length === 2) return `${parts[0]}m ${parts[1]}s`;
+        if (parts.length === 3) return `${parts[0]}h ${parts[1]}m ${parts[2]}s`;
+        return duration;
+      }
+    </script>
+  </body>
+</html>
