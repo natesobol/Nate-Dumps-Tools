@@ -118,4 +118,13 @@ router.get('/color-extractor', (req, res) => {
   });
 });
 
+router.get('/domain-name-extractor', (req, res) => {
+  res.render('domain-name-extractor', {
+    title: 'Extract Domain Names and URLs From Files',
+    metaDescription:
+      'Upload TXT, DOCX, CSV, JSON, or HTML files—or paste text—to find every domain and URL with root-only filters, subdomain exclusion, and grouping.',
+    metaKeywords: 'domain extractor,url finder,root domain parser,brand monitoring urls'
+  });
+});
+
 export default router;

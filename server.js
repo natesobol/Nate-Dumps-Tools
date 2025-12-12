@@ -41,6 +41,7 @@ app.use('/batch-pdf-text-extractor', express.static(path.join(__dirname, 'apps/b
 app.use('/bullet-list-extractor', express.static(path.join(__dirname, 'apps/bullet-list-extractor/wwwroot')));
 app.use('/capitalized-phrase-extractor', express.static(path.join(__dirname, 'apps/capitalized-phrase-extractor/wwwroot')));
 app.use('/color-extractor', express.static(path.join(__dirname, 'apps/color-extractor/wwwroot')));
+app.use('/domain-name-extractor', express.static(path.join(__dirname, 'apps/domain-name-extractor/wwwroot')));
 app.use('/csv-xml-converter', express.static(path.join(__dirname, 'apps/csv-xml-converter')));
 app.use('/currency-percent-sentence-extractor', express.static(path.join(__dirname, 'apps/currency-percent-sentence-extractor/wwwroot')));
 app.use('/email-signature-extractor', express.static(path.join(__dirname, 'apps/email-signature-extractor/wwwroot')));
