@@ -37,6 +37,7 @@ app.use('/pdf-splitter', express.static(path.join(__dirname, 'apps/pdf-splitter/
 app.use('/json-to-excel', express.static(path.join(__dirname, 'apps/json-to-excel/wwwroot')));
 app.use('/powerpoint-to-pdf', express.static(path.join(__dirname, 'apps/powerpoint-to-pdf/wwwroot')));
 app.use('/list-comparison', express.static(path.join(__dirname, 'apps/list-comparison/wwwroot')));
+app.use('/html-tag-cleaner', express.static(path.join(__dirname, 'apps/html-tag-cleaner/wwwroot')));
 app.use(morgan('dev'));
 
 app.use(

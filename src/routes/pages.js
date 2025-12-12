@@ -37,4 +37,13 @@ router.get('/json-key-flattener', (req, res) => {
   });
 });
 
+router.get('/html-tag-cleaner', (req, res) => {
+  res.render('html-tag-cleaner', {
+    title: 'HTML Tag Cleaner',
+    metaDescription:
+      'Strip HTML tags or keep only allowlisted elements like <p>, <a>, and <strong>. Clean up scraped pages, CMS pastes, and Word exports.',
+    metaKeywords: 'html cleaner,strip html tags,allowlist html tags'
+  });
+});
+
 export default router;

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HTML Tag Cleaner</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1.5.10/css/pico.min.css" />
+  <style>
+    body { background: linear-gradient(135deg, #0f172a, #111827); color: #e5e7eb; }
+    main { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem 3rem; }
+    .card { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 1.5rem; box-shadow: 0 22px 55px rgba(0,0,0,0.35); }
+    textarea { background: #0b1224; color: #e5e7eb; border-color: #1f2937; min-height: 200px; }
+    input[type="file"] { color: #e5e7eb; }
+    .pill { display: inline-flex; gap: 0.35rem; align-items: center; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18); padding: 0.35rem 0.75rem; border-radius: 999px; font-size: 0.95rem; }
+    .muted { color: #9ca3af; }
+    .dropzone { border: 1px dashed rgba(255,255,255,0.25); padding: 1rem; border-radius: 12px; text-align: center; transition: background 0.2s, border-color 0.2s; }
+    .dropzone.dragover { background: rgba(59,130,246,0.12); border-color: #60a5fa; }
+    pre { background: #0b1224; border-radius: 10px; padding: 0.75rem; white-space: pre-wrap; word-break: break-word; border: 1px solid #1f2937; color: #e5e7eb; }
+    .result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+    .badge { background: #10b981; color: #041014; padding: 0.35rem 0.75rem; border-radius: 999px; font-weight: 700; display: inline-block; margin-bottom: 0.5rem; }
+    .error { background: rgba(239,68,68,0.15); color: #fecdd3; border: 1px solid rgba(239,68,68,0.3); padding: 0.75rem; border-radius: 10px; }
+    .success { color: #bbf7d0; }
+    form .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <header style="text-align: center; margin-bottom: 1.5rem;">
+      <p class="pill">C# HTML utility • Cleans pasted snippets and uploads</p>
+      <h1>HTML Tag Cleaner</h1>
+      <p class="muted">Paste HTML or drop a file, then strip all tags or keep only the ones you trust (like &lt;p&gt;, &lt;a&gt;, &lt;strong&gt;). Perfect for scrapes, CMS pastes, and Word exports.</p>
+    </header>
+
+    <section class="card">
+      <form id="clean-form">
+        <label for="html">Paste HTML</label>
+        <textarea id="html" name="html" placeholder="<p>Hello <strong>world</strong>!</p>"></textarea>
+
+        <div class="grid">
+          <div>
+            <label for="allowedTags">Allowlist tags (comma-separated)</label>
+            <input type="text" id="allowedTags" name="allowedTags" placeholder="p, a, strong, em, ul, ol, li, br" value="p, a, strong, em, ul, ol, li, br" />
+            <small class="muted">Leave empty to remove every tag and return clean text only.</small>
+          </div>
+          <div>
+            <label for="file">Upload HTML, TXT, or XML</label>
+            <div id="dropzone" class="dropzone">
+              <p class="muted">Drag and drop files here or</p>
+              <input type="file" id="file" name="file" accept=".html,.htm,.txt,.xml,.md" multiple />
+            </div>
+            <label><input type="checkbox" name="collapseWhitespace" id="collapseWhitespace" checked /> Collapse whitespace and line breaks</label>
+          </div>
+        </div>
+
+        <div style="margin-top: 1rem; display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+          <button type="submit">Clean HTML</button>
+          <span class="muted">Outputs cleaned content plus before/after lengths.</span>
+        </div>
+      </form>
+    </section>
+
+    <section class="card" style="margin-top: 1.25rem;">
+      <div id="error" class="error" style="display: none;"></div>
+      <div id="results" style="display: none;">
+        <p class="success" id="mode"></p>
+        <div id="result-grid" class="result-grid"></div>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top: 1.25rem;">
+      <h2>What this cleaner is great for</h2>
+      <ul>
+        <li>Removing inline styles and script cruft from CMS or WYSIWYG exports.</li>
+        <li>Keeping only structural tags (paragraphs, links, lists) while stripping everything else.</li>
+        <li>Flattening scraped pages into plaintext for LLM prompts or indexing.</li>
+      </ul>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById('clean-form');
+    const errorBox = document.getElementById('error');
+    const resultsBox = document.getElementById('results');
+    const resultGrid = document.getElementById('result-grid');
+    const modeText = document.getElementById('mode');
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('file');
+
+    dropzone.addEventListener('dragover', (event) => {
+      event.preventDefault();
+      dropzone.classList.add('dragover');
+    });
+
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+
+    dropzone.addEventListener('drop', (event) => {
+      event.preventDefault();
+      dropzone.classList.remove('dragover');
+      if (event.dataTransfer?.files?.length) {
+        fileInput.files = event.dataTransfer.files;
+      }
+    });
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      errorBox.style.display = 'none';
+      resultsBox.style.display = 'none';
+      resultGrid.innerHTML = '';
+
+      const data = new FormData(form);
+      data.set('collapseWhitespace', document.getElementById('collapseWhitespace').checked);
+
+      try {
+        const response = await fetch('/api/clean', { method: 'POST', body: data });
+        const payload = await response.json();
+
+        if (!response.ok) {
+          throw new Error(payload.error || 'Cleaning failed.');
+        }
+
+        modeText.textContent = payload.mode === 'allowlist'
+          ? `Keeping only: ${payload.allowed.join(', ') || 'n/a'}`
+          : 'Stripping all HTML tags and returning plaintext.';
+
+        payload.results.forEach((item) => {
+          const card = document.createElement('article');
+          card.classList.add('card');
+          const title = document.createElement('h3');
+          title.textContent = item.source;
+          card.appendChild(title);
+
+          if (item.error) {
+            const err = document.createElement('p');
+            err.classList.add('error');
+            err.textContent = item.error;
+            card.appendChild(err);
+          } else {
+            const badge = document.createElement('span');
+            badge.classList.add('badge');
+            badge.textContent = `${item.lengthBefore} → ${item.lengthAfter} chars`;
+            card.appendChild(badge);
+
+            const pre = document.createElement('pre');
+            pre.textContent = item.cleaned;
+            card.appendChild(pre);
+          }
+
+          resultGrid.appendChild(card);
+        });
+
+        resultsBox.style.display = 'block';
+      } catch (error) {
+        errorBox.textContent = error.message;
+        errorBox.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

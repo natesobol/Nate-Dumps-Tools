@@ -1,0 +1,167 @@
+<%- include('../../views/partials/page-top', {
+  title: 'HTML Tag Cleaner',
+  metaDescription: 'Strip HTML tags or allow only the elements you trust. Paste HTML or upload files to clean scraped pages, CMS exports, or Word output.',
+  canonicalUrl: 'https://natesobol.github.io/Nates-Free-Tools/html-tag-cleaner',
+  ogTitle: 'HTML Tag Cleaner',
+  ogDescription: 'Drag and drop HTML, strip everything, or allow only tags like <p>, <a>, and <strong>.'
+}) %>
+<section class="tool-hero">
+  <div>
+    <p class="eyebrow">HTML hygiene utility</p>
+    <h1>HTML Tag Cleaner for pastes, scrapes, and exports.</h1>
+    <p class="lede">
+      Paste HTML or drag and drop files, then strip all tags or keep only structural elements like <code>&lt;p&gt;</code>,
+      <code>&lt;a&gt;</code>, <code>&lt;strong&gt;</code>, and list markup. Perfect for cleaning Word exports, CMS pastes, or scraped
+      pages before indexing or prompting.
+    </p>
+    <ul class="trust-points">
+      <li>Allowlist friendly: keep only the tags you specify and discard everything else.</li>
+      <li>Whitespace normalization to tame messy inline styles and extra breaks.</li>
+      <li>Returns cleaned text with before/after lengths for quick QA.</li>
+    </ul>
+  </div>
+  <div class="converter-card">
+    <form id="clean-form" enctype="multipart/form-data">
+      <label for="html">Paste HTML</label>
+      <textarea id="html" name="html" class="form-control" rows="6" placeholder="<p>Hello <strong>world</strong></p>"></textarea>
+      <label for="allowedTags" class="mt-3">Allowlist tags (comma-separated)</label>
+      <input id="allowedTags" name="allowedTags" class="form-control" type="text" value="p, a, strong, em, ul, ol, li, br" />
+      <div class="form-check mt-2">
+        <input class="form-check-input" type="checkbox" value="true" id="collapseWhitespace" name="collapseWhitespace" checked />
+        <label class="form-check-label" for="collapseWhitespace">Collapse whitespace and line breaks</label>
+      </div>
+      <div class="dropzone mt-3" id="dropzone">
+        <p class="mb-2">Drag and drop HTML/TXT/XML files here</p>
+        <input id="file" name="file" type="file" class="form-control" accept=".html,.htm,.txt,.xml,.md" multiple />
+      </div>
+      <p class="help-text">Leave the allowlist empty to remove every tag and return plaintext.</p>
+      <button type="submit" class="button primary btn btn-primary btn-modern full-width">Clean HTML</button>
+      <div class="flash flash-error mt-2" id="error" style="display:none;"></div>
+    </form>
+  </div>
+</section>
+
+<style>
+  .result-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+
+  .result-grid pre {
+    background: #0b1224;
+    color: #e5e7eb;
+    padding: 0.75rem;
+    border-radius: 10px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .dropzone {
+    border: 1px dashed rgba(255, 255, 255, 0.3);
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  .dropzone.dragover {
+    background: rgba(59, 130, 246, 0.08);
+    border-color: #60a5fa;
+  }
+</style>
+
+<section class="result-panel">
+  <div class="result-card" id="results" style="display:none;">
+    <h2>Cleaned output</h2>
+    <p class="help-text" id="mode"></p>
+    <div id="result-grid" class="result-grid"></div>
+  </div>
+  <div class="result-card">
+    <h2>Popular use cases</h2>
+    <ul class="checklist">
+      <li>Remove inline styles, scripts, and tracking attributes from CMS pastes.</li>
+      <li>Keep only paragraph and link tags before sending HTML to an email platform.</li>
+      <li>Flatten scraped content into plaintext for AI prompts or full-text indexing.</li>
+    </ul>
+    <p class="help-text">The cleaner runs locally on the server — files are read in memory and never persisted.</p>
+  </div>
+</section>
+
+<script>
+  const form = document.getElementById('clean-form');
+  const errorBox = document.getElementById('error');
+  const results = document.getElementById('results');
+  const resultGrid = document.getElementById('result-grid');
+  const modeText = document.getElementById('mode');
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('file');
+
+  dropzone.addEventListener('dragover', (event) => {
+    event.preventDefault();
+    dropzone.classList.add('dragover');
+  });
+
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+  dropzone.addEventListener('drop', (event) => {
+    event.preventDefault();
+    dropzone.classList.remove('dragover');
+    if (event.dataTransfer?.files?.length) {
+      fileInput.files = event.dataTransfer.files;
+    }
+  });
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    errorBox.style.display = 'none';
+    results.style.display = 'none';
+    resultGrid.innerHTML = '';
+
+    const data = new FormData(form);
+    data.set('collapseWhitespace', document.getElementById('collapseWhitespace').checked);
+
+    try {
+      const response = await fetch('/api/clean', { method: 'POST', body: data });
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload.error || 'Failed to clean HTML');
+      }
+
+      modeText.textContent = payload.mode === 'allowlist'
+        ? `Keeping only: ${payload.allowed.join(', ') || 'n/a'}`
+        : 'Stripping all tags and returning plaintext';
+
+      payload.results.forEach((item) => {
+        const card = document.createElement('article');
+        card.classList.add('result-card');
+
+        const title = document.createElement('h3');
+        title.textContent = item.source;
+        card.appendChild(title);
+
+        if (item.error) {
+          const alert = document.createElement('div');
+          alert.classList.add('flash', 'flash-error');
+          alert.textContent = item.error;
+          card.appendChild(alert);
+        } else {
+          const badge = document.createElement('span');
+          badge.classList.add('pill');
+          badge.textContent = `${item.lengthBefore} → ${item.lengthAfter} characters`;
+          card.appendChild(badge);
+
+          const pre = document.createElement('pre');
+          pre.textContent = item.cleaned;
+          card.appendChild(pre);
+        }
+
+        resultGrid.appendChild(card);
+      });
+
+      results.style.display = 'block';
+    } catch (error) {
+      errorBox.textContent = error.message;
+      errorBox.style.display = 'block';
+    }
+  });
+</script>
+<%- include('../../views/partials/page-bottom') %>
