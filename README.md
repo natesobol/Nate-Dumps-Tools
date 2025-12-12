@@ -48,3 +48,11 @@ A starter website for hosting webapps with monetization in mind. It provides a h
 - User passwords are stored as bcrypt hashes.
 - Profile updates persist to the database and refresh the session payload.
 - Replace placeholder links in the footer and pricing sections with production resources when ready.
+
+## Additional webapps
+- `apps/json-combiner`: C# minimal API that combines uploaded JSON files. Arrays are concatenated, objects are deep-merged, and mixed roots are wrapped into a single array. Run it locally with:
+  ```bash
+  cd apps/json-combiner
+  dotnet run
+  ```
+  The app serves a standalone UI from its own folder so webapps stay separated in the repository.

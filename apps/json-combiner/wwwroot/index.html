@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>C# JSON Combiner</title>
+    <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+    <main class="container">
+        <header>
+            <h1>C# JSON Combiner</h1>
+            <p>Upload multiple JSON files and combine them directly in the browser using a C# minimal API.</p>
+            <p class="hint">Arrays are concatenated, objects are merged deeply, and mixed roots are wrapped into a single array.</p>
+        </header>
+
+        <section class="card">
+            <form id="combine-form">
+                <label for="jsonFiles">Select one or more JSON files</label>
+                <input id="jsonFiles" name="files" type="file" accept="application/json,.json" multiple required />
+                <p class="hint">You can mix arrays and objects. Duplicate object properties are merged; arrays are appended.</p>
+
+                <button type="submit">Combine JSON</button>
+            </form>
+        </section>
+
+        <section class="card" id="status" aria-live="polite"></section>
+
+        <section class="card">
+            <div class="result-header">
+                <h2>Combined Output</h2>
+                <button id="copy-result" type="button">Copy</button>
+            </div>
+            <pre id="result">Select files and click "Combine JSON".</pre>
+        </section>
+    </main>
+
+    <script>
+        const form = document.getElementById('combine-form');
+        const resultEl = document.getElementById('result');
+        const statusEl = document.getElementById('status');
+        const copyBtn = document.getElementById('copy-result');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            statusEl.textContent = 'Uploading and combining…';
+            resultEl.textContent = 'Working…';
+
+            const files = document.getElementById('jsonFiles').files;
+            if (!files.length) {
+                statusEl.textContent = 'Please select at least one file.';
+                return;
+            }
+
+            const formData = new FormData();
+            for (const file of files) {
+                formData.append('files', file);
+            }
+
+            try {
+                const response = await fetch('/api/combine', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({ error: response.statusText }));
+                    statusEl.textContent = error.error || 'Failed to combine JSON files.';
+                    resultEl.textContent = JSON.stringify(error, null, 2);
+                    return;
+                }
+
+                const data = await response.json();
+                statusEl.textContent = `Combined ${files.length} file(s) into a ${data.combinedType}.`;
+                resultEl.textContent = JSON.stringify(data, null, 2);
+            } catch (err) {
+                console.error(err);
+                statusEl.textContent = 'Unexpected error combining files.';
+                resultEl.textContent = err.message || String(err);
+            }
+        });
+
+        copyBtn.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(resultEl.textContent);
+                statusEl.textContent = 'Result copied to clipboard.';
+            } catch (err) {
+                statusEl.textContent = 'Could not copy result.';
+            }
+        });
+    </script>
+</body>
+</html>
