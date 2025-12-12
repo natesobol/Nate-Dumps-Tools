@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script id="asset-base-loader">
+      (function () {
+        const segments = window.location.pathname.split('/').filter(Boolean);
+        const repoIndex = segments.indexOf('Nates-Free-Tools');
+        const baseHref = repoIndex !== -1 ? '/' + segments.slice(0, repoIndex + 1).join('/') + '/' : '/';
+        let baseTag = document.querySelector('base');
+        if (!baseTag) {
+          baseTag = document.createElement('base');
+          document.head.prepend(baseTag);
+        }
+        baseTag.href = baseHref;
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Currency & Percent Sentence Extractor</title>
+    <link rel="stylesheet" href="css/webapps-unified.css" />
+    <style>
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.2rem 0.75rem;
+        border-radius: 999px;
+        background: var(--surface-2);
+        border: 1px solid var(--border-subtle);
+      }
+      .grid-two {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1rem;
+      }
+      .result-text {
+        white-space: pre-wrap;
+        background: var(--surface-2);
+        border: 1px solid var(--border-subtle);
+        padding: 0.75rem;
+        border-radius: 8px;
+        font-family: var(--font-mono);
+      }
+    </style>
+    <script src="js/site-chrome.js" defer></script>
+  </head>
+  <body>
+    <main class="container">
+      <header>
+        <p class="eyebrow">Finance QA helper</p>
+        <h1>Extract sentences with currency or percent symbols.</h1>
+        <p>
+          Upload financial docs and instantly pull every sentence or row that contains $, €, £, %, and other money symbols.
+          Apply an optional minimum amount filter (e.g., <code>$1000+</code>) and export the context with file names and line
+          numbers as CSV or TXT for quick audits.
+        </p>
+        <p class="hint">All processing happens server-side in-memory; files are never stored.</p>
+      </header>
+
+      <section class="card">
+        <form id="extract-form">
+          <div class="grid-two">
+            <div>
+              <label for="files">Upload documents</label>
+              <input
+                id="files"
+                name="files"
+                type="file"
+                accept=".txt,.csv,.xlsx,.docx,.pdf"
+                multiple
+                required
+              />
+              <p class="hint small">Supported: TXT, CSV, XLSX, DOCX, and searchable PDFs.</p>
+            </div>
+            <div>
+              <label for="minValue">Optional minimum amount or percent</label>
+              <input id="minValue" name="minValue" type="number" step="0.01" min="0" placeholder="e.g., 1000" />
+              <p class="hint small">Only return matches whose numeric value meets or exceeds this threshold.</p>
+            </div>
+          </div>
+
+          <div class="grid-two" style="margin-top: 1rem;">
+            <div class="pill">File name + line number preserved</div>
+            <div class="pill">Exports: CSV and TXT</div>
+            <div class="pill">Spot $, €, £, ¥, ₹, ₽, ₩, ₺, ¢, and %</div>
+            <div class="pill">Inline row/paragraph scanning</div>
+          </div>
+
+          <button type="submit" class="primary" style="margin-top: 1rem;">Extract sentences</button>
+        </form>
+      </section>
+
+      <section class="card" id="results" hidden>
+        <div class="grid" style="align-items: center;">
+          <div>
+            <h2>Matches</h2>
+            <p class="hint" id="summary"></p>
+          </div>
+          <div class="actions" style="text-align: right;">
+            <button class="secondary" id="downloadCsv" disabled>Download CSV</button>
+            <button class="secondary" id="downloadTxt" disabled>Download TXT</button>
+          </div>
+        </div>
+        <div id="errors" class="alert" hidden></div>
+
+        <div id="file-results" class="table-wrapper" hidden>
+          <table>
+            <thead>
+              <tr>
+                <th>File</th>
+                <th>Line</th>
+                <th>Sentence / Row</th>
+                <th>Values</th>
+              </tr>
+            </thead>
+            <tbody id="file-body"></tbody>
+          </table>
+        </div>
+
+        <div id="no-matches" class="hint" hidden>No currency or percentage values found in the uploaded files.</div>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById('extract-form');
+      const results = document.getElementById('results');
+      const summary = document.getElementById('summary');
+      const fileBody = document.getElementById('file-body');
+      const fileResults = document.getElementById('file-results');
+      const errorsBox = document.getElementById('errors');
+      const noMatches = document.getElementById('no-matches');
+      const downloadCsv = document.getElementById('downloadCsv');
+      const downloadTxt = document.getElementById('downloadTxt');
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const files = Array.from(document.getElementById('files').files || []);
+        if (!files.length) return;
+
+        results.hidden = false;
+        summary.textContent = 'Scanning…';
+        fileBody.innerHTML = '';
+        errorsBox.hidden = true;
+        errorsBox.textContent = '';
+        fileResults.hidden = true;
+        noMatches.hidden = true;
+        downloadCsv.disabled = true;
+        downloadTxt.disabled = true;
+
+        const formData = new FormData();
+        files.forEach((file) => formData.append('files', file));
+        const minValue = document.getElementById('minValue').value;
+        if (minValue) {
+          formData.set('minValue', minValue);
+        }
+
+        try {
+          const response = await fetch('/api/extract-currency-sentences', {
+            method: 'POST',
+            body: formData
+          });
+          const payload = await response.json();
+          if (!response.ok) {
+            throw new Error(payload.error || 'Extraction failed.');
+          }
+
+          const total = payload.totalMatches || 0;
+          const rangeLabel = payload.rangeApplied && payload.minValue !== undefined ? ` (≥ ${payload.minValue})` : '';
+          summary.textContent = `${total} matches across ${payload.files.length} file(s)${rangeLabel}.`;
+
+          const errors = payload.files.filter((f) => f.error);
+          if (errors.length) {
+            errorsBox.hidden = false;
+            errorsBox.textContent = errors.map((e) => `${e.fileName}: ${e.error}`).join('\n');
+          }
+
+          if (total === 0) {
+            noMatches.hidden = false;
+            return;
+          }
+
+          payload.files
+            .filter((f) => f.matches)
+            .forEach((file) => {
+              file.matches.forEach((match) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                  <td>${file.fileName}</td>
+                  <td>${match.lineNumber}</td>
+                  <td><div class="result-text">${escapeHtml(match.text)}</div></td>
+                  <td>${match.values && match.values.length ? match.values.join(', ') : '—'}</td>
+                `;
+                fileBody.appendChild(row);
+              });
+            });
+
+          fileResults.hidden = false;
+          downloadCsv.disabled = !payload.csv;
+          downloadTxt.disabled = !payload.text;
+
+          downloadCsv.onclick = () => downloadBlob(payload.csv, 'currency-percent-matches.csv', 'text/csv');
+          downloadTxt.onclick = () => downloadBlob(payload.text, 'currency-percent-matches.txt', 'text/plain');
+        } catch (error) {
+          errorsBox.hidden = false;
+          errorsBox.textContent = error.message;
+          summary.textContent = 'Extraction failed.';
+        }
+      });
+
+      function escapeHtml(str) {
+        return str
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      function downloadBlob(content, filename, mime) {
+        const blob = new Blob([content], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+    </script>
+  </body>
+</html>
