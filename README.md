@@ -441,3 +441,18 @@ apps/
 - Profile updates persist to Supabase and refresh the session payload
 - Replace placeholder links in the footer and pricing sections with production resources when ready
 - Old `/excel-to-json.html` in root redirects to new location for backwards compatibility
+
+### Delimited Text Extractor
+Located in `apps/delimited-text-extractor/`, this .NET 8 minimal API extracts text enclosed in parentheses, brackets, braces, or quotes from uploaded files.
+
+**Features:**
+- Accepts `.txt`, `.docx`, `.pdf`, and `.csv`
+- Returns grouped matches for parentheses, brackets, braces, double quotes, and single quotes
+- Browser UI for drag-and-drop uploads with per-file summaries
+
+**Run locally:**
+```bash
+cd apps/delimited-text-extractor
+dotnet run
+```
+

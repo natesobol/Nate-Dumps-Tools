@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Delimited Text Extractor</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --bg: #0b1221;
+      --panel: #111a2e;
+      --accent: #5dd4ff;
+      --text: #e8f1ff;
+      --muted: #a8b3c9;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at 20% 20%, rgba(93, 212, 255, 0.08), transparent 30%),
+        radial-gradient(circle at 80% 0%, rgba(119, 92, 255, 0.14), transparent 30%),
+        var(--bg);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      width: min(1100px, 100%);
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 20px 80px rgba(0, 0, 0, 0.55);
+      border-radius: 18px;
+      padding: 28px;
+      backdrop-filter: blur(12px);
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+    }
+    p {
+      margin: 6px 0 18px;
+      color: var(--muted);
+    }
+    .upload {
+      border: 2px dashed rgba(255, 255, 255, 0.16);
+      padding: 24px;
+      border-radius: 14px;
+      display: grid;
+      gap: 10px;
+      place-items: center;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.02);
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+    .upload:hover {
+      border-color: var(--accent);
+      background: rgba(93, 212, 255, 0.04);
+    }
+    button {
+      background: linear-gradient(120deg, #7f5af0, #5dd4ff);
+      color: #0b0f1a;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 18px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 10px 35px rgba(127, 90, 240, 0.35);
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .results {
+      margin-top: 22px;
+      display: grid;
+      gap: 14px;
+    }
+    .file-card {
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .file-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(93, 212, 255, 0.12);
+      color: var(--accent);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+    }
+    .pill {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 13px;
+      word-break: break-word;
+    }
+    .error {
+      color: #ff9f9f;
+      font-weight: 600;
+    }
+    .summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 10px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      margin-top: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Delimited Text Extractor</h1>
+    <p>Upload .txt, .docx, .pdf, or .csv files. The tool finds content inside parentheses (), brackets [], braces {}, and single or double quotes.</p>
+
+    <form id="uploadForm" class="upload">
+      <div>
+        <strong>Select files</strong>
+        <div style="font-size: 13px; color: var(--muted);">Drag and drop or click to choose</div>
+      </div>
+      <input type="file" id="fileInput" name="files" multiple accept=".txt,.docx,.pdf,.csv" style="display:none" />
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;">
+        <button type="button" id="fileButton">Choose files</button>
+        <button type="submit" id="submitButton">Extract</button>
+      </div>
+    </form>
+
+    <div id="status" class="summary" style="display:none"></div>
+    <div id="results" class="results"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById('uploadForm');
+    const input = document.getElementById('fileInput');
+    const fileButton = document.getElementById('fileButton');
+    const submitButton = document.getElementById('submitButton');
+    const resultsEl = document.getElementById('results');
+    const statusEl = document.getElementById('status');
+
+    fileButton.addEventListener('click', () => input.click());
+
+    form.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      form.style.borderColor = 'var(--accent)';
+    });
+    form.addEventListener('dragleave', () => {
+      form.style.borderColor = 'rgba(255,255,255,0.16)';
+    });
+    form.addEventListener('drop', (e) => {
+      e.preventDefault();
+      input.files = e.dataTransfer.files;
+      form.style.borderColor = 'rgba(255,255,255,0.16)';
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!input.files.length) {
+        alert('Please choose at least one file.');
+        return;
+      }
+      submitButton.disabled = true;
+      submitButton.textContent = 'Processing...';
+      statusEl.style.display = 'none';
+      resultsEl.innerHTML = '';
+
+      const data = new FormData();
+      for (const file of input.files) {
+        data.append('files', file);
+      }
+
+      try {
+        const response = await fetch('/api/extract', {
+          method: 'POST',
+          body: data
+        });
+
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({ error: 'Upload failed.' }));
+          throw new Error(err.error || 'Upload failed.');
+        }
+
+        const payload = await response.json();
+        renderResults(payload);
+      } catch (error) {
+        statusEl.style.display = 'flex';
+        statusEl.textContent = error.message;
+      } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Extract';
+      }
+    });
+
+    function renderResults(data) {
+      statusEl.style.display = 'flex';
+      statusEl.innerHTML = `<span>Total matches: <strong>${data.totalMatches}</strong></span><span>Files processed: ${data.filesProcessed}</span>`;
+      resultsEl.innerHTML = '';
+
+      data.results.forEach(result => {
+        const card = document.createElement('div');
+        card.className = 'file-card';
+
+        const header = document.createElement('div');
+        header.className = 'file-header';
+        header.innerHTML = `<div><strong>${result.source}</strong><div style="color:var(--muted);font-size:13px;">${result.error ? 'Error' : 'Parsed ' + result.matches.length + ' segments'}</div></div>`;
+        const badge = document.createElement('div');
+        badge.className = 'badge';
+        badge.textContent = result.kind || 'file';
+        header.appendChild(badge);
+        card.appendChild(header);
+
+        if (result.error) {
+          const err = document.createElement('div');
+          err.className = 'error';
+          err.textContent = result.error;
+          card.appendChild(err);
+          resultsEl.appendChild(card);
+          return;
+        }
+
+        const grid = document.createElement('div');
+        grid.className = 'grid';
+
+        const typeOrder = ['parentheses','brackets','braces','doubleQuotes','singleQuotes'];
+
+        typeOrder.forEach(type => {
+          const values = result.grouped[type];
+          if (!values || !values.length) return;
+
+          const column = document.createElement('div');
+          column.innerHTML = `<div class="badge" style="margin-bottom:8px;">${label(type)} (${values.length})</div>`;
+          values.forEach(value => {
+            const pill = document.createElement('div');
+            pill.className = 'pill';
+            pill.textContent = value;
+            column.appendChild(pill);
+          });
+          grid.appendChild(column);
+        });
+
+        if (!grid.children.length) {
+          const empty = document.createElement('div');
+          empty.style.color = 'var(--muted)';
+          empty.textContent = 'No delimited text found.';
+          card.appendChild(empty);
+        } else {
+          card.appendChild(grid);
+        }
+
+        resultsEl.appendChild(card);
+      });
+    }
+
+    function label(type) {
+      switch (type) {
+        case 'parentheses': return 'Parentheses ()';
+        case 'brackets': return 'Brackets []';
+        case 'braces': return 'Braces {}';
+        case 'doubleQuotes': return 'Double Quotes ""';
+        case 'singleQuotes': return "Single Quotes ''";
+        default: return type;
+      }
+    }
+  </script>
+</body>
+</html>
