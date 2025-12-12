@@ -30,6 +30,7 @@ A starter website for hosting webapps with monetization in mind. It provides a h
 - File Path Extractor: `/apps/file-path-extractor/wwwroot/index.html`
 - Capitalized Phrase Extractor: `/apps/capitalized-phrase-extractor/wwwroot/index.html`
 - Sentence Keyword Extractor: `/apps/sentence-keyword-extractor/wwwroot/index.html`
+- IP & Port Extractor: `/apps/ip-port-extractor/wwwroot/index.html`
 - Dynamic features (login, admin, server-backed Excel conversion) require running the Node.js server locally or on a host that supports server-side rendering.
 
 ## Features
@@ -159,6 +160,22 @@ Located in `apps/resume-contact-extractor/`, this ASP.NET Core static webapp pul
 **Run locally:**
 ```bash
 cd apps/resume-contact-extractor
+dotnet run
+```
+
+### IP & Port Extractor
+Located in `apps/ip-port-extractor/`, this C# minimal API parses logs and configs for IPv4/IPv6 addresses with optional port numbers.
+
+**Features:**
+- Accepts `.txt`, `.log`, `.conf`, `.json`, and `.xml` uploads
+- Detects addresses like `192.168.1.1:443` or `[2001:db8::1]:8443`
+- Marks each match as public or private/reserved and supports filtering
+- Captures line numbers plus the first timestamp on a line when present
+- Exports matches to CSV from the browser UI
+
+**Run locally:**
+```bash
+cd apps/ip-port-extractor
 dotnet run
 ```
 
