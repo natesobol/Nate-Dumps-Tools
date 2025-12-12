@@ -197,6 +197,20 @@ cd apps/file-path-extractor
 dotnet run
 ```
 
+### Facebook Reel & Video Downloader
+Located in `apps/facebook-reel-downloader/`, this C# minimal API extracts MP4 download links from public Facebook videos and Reels.
+
+**Features:**
+- Paste any Facebook video or Reel URL to detect SD and HD playback sources when available.
+- Optional session cookie field enables fetching public group content that requires login, while private media stays unsupported.
+- Streams MP4 downloads directly from the extracted CDN URLs with sanitized file names.
+
+**Run locally:**
+```bash
+cd apps/facebook-reel-downloader
+dotnet run
+```
+
 ### Find & Replace Utility
 Located in `apps/find-and-replace/`, this .NET minimal API performs bulk find-and-replace operations across pasted text or uploaded files.
 

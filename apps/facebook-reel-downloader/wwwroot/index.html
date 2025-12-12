@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Facebook Reel & Video Downloader</title>
+    <script id="asset-base-loader">
+      (function() {
+        const segments = window.location.pathname.split('/').filter(Boolean);
+        const repoIndex = segments.indexOf('Nates-Free-Tools');
+        const baseHref = repoIndex !== -1 ? '/' + segments.slice(0, repoIndex + 1).join('/') + '/' : '/';
+        let baseTag = document.querySelector('base');
+        if (!baseTag) {
+          baseTag = document.createElement('base');
+          document.head.prepend(baseTag);
+        }
+        baseTag.href = baseHref;
+      })();
+    </script>
+    <link rel="stylesheet" href="css/downloader.css" />
+</head>
+<body>
+    <main class="container">
+        <header>
+            <p class="eyebrow">C# minimal API</p>
+            <h1>Facebook Reel &amp; Video Downloader</h1>
+            <p class="lead">Extract MP4 download links from public Facebook videos or Reels, including SD/HD variants.</p>
+            <div class="callout">
+                <strong>Tip:</strong> For public group posts that require login, paste your Facebook session cookie string. Private media is not supported.
+            </div>
+        </header>
+
+        <section class="card">
+            <form id="extract-form" novalidate>
+                <label for="url">Facebook Video or Reel URL</label>
+                <input id="url" name="url" type="url" placeholder="https://www.facebook.com/..." required />
+
+                <label for="cookie">Session cookie (optional)</label>
+                <textarea id="cookie" name="cookie" placeholder="c_user=...; xs=..." rows="3"></textarea>
+                <p class="hint">Include cookies only for public group content. They are used solely to fetch the media page.</p>
+
+                <button type="submit">Detect download options</button>
+            </form>
+        </section>
+
+        <section id="status" class="status" aria-live="polite"></section>
+
+        <section class="card" id="results" hidden>
+            <div class="result-header">
+                <div>
+                    <p class="eyebrow">Available downloads</p>
+                    <h2>Choose a resolution</h2>
+                </div>
+                <button id="refresh" type="button">Refresh</button>
+            </div>
+            <div id="variants" class="variants"></div>
+        </section>
+    </main>
+
+    <template id="variant-template">
+        <article class="variant">
+            <div>
+                <p class="eyebrow quality"></p>
+                <p class="url"></p>
+                <p class="size"></p>
+            </div>
+            <button type="button" class="download">Download MP4</button>
+        </article>
+    </template>
+
+    <script>
+        const form = document.getElementById('extract-form');
+        const urlInput = document.getElementById('url');
+        const cookieInput = document.getElementById('cookie');
+        const statusEl = document.getElementById('status');
+        const results = document.getElementById('results');
+        const variantsEl = document.getElementById('variants');
+        const refreshBtn = document.getElementById('refresh');
+        const variantTemplate = document.getElementById('variant-template');
+
+        let lastResponse = null;
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            statusEl.textContent = 'Looking for downloadable video sources...';
+            results.hidden = true;
+            variantsEl.innerHTML = '';
+
+            if (!urlInput.value.trim()) {
+                statusEl.textContent = 'Please paste a Facebook URL first.';
+                return;
+            }
+
+            const payload = {
+                url: urlInput.value.trim(),
+                cookie: cookieInput.value.trim() || null
+            };
+
+            try {
+                const response = await fetch('/api/extract', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({ error: 'Could not detect downloadable sources.' }));
+                    statusEl.textContent = error.error || 'Could not detect downloadable sources.';
+                    return;
+                }
+
+                const data = await response.json();
+                lastResponse = data;
+
+                if (!data.variants || !data.variants.length) {
+                    statusEl.textContent = 'No video sources were found.';
+                    return;
+                }
+
+                renderVariants(data.variants, payload.cookie);
+                statusEl.textContent = `Found ${data.variants.length} download option(s).`;
+                results.hidden = false;
+            } catch (err) {
+                console.error(err);
+                statusEl.textContent = 'Unexpected error while contacting the server.';
+            }
+        });
+
+        refreshBtn.addEventListener('click', () => form.requestSubmit());
+
+        function renderVariants(variants, cookie) {
+            variantsEl.innerHTML = '';
+
+            for (const variant of variants) {
+                const clone = variantTemplate.content.cloneNode(true);
+                clone.querySelector('.quality').textContent = `${variant.quality || variant.Quality || 'Unknown'} quality`;
+                clone.querySelector('.url').textContent = variant.url || variant.Url;
+                clone.querySelector('.size').textContent = variant.sizeLabel ? `Size: ${variant.sizeLabel}` : 'Size: unknown';
+
+                const downloadBtn = clone.querySelector('.download');
+                downloadBtn.addEventListener('click', () => downloadVariant(variant, cookie));
+
+                variantsEl.appendChild(clone);
+            }
+        }
+
+        async function downloadVariant(variant, cookie) {
+            statusEl.textContent = `Downloading ${variant.quality || variant.Quality} video...`;
+            try {
+                const response = await fetch('/api/download', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        videoUrl: variant.url || variant.Url,
+                        fileName: buildFileName(variant),
+                        cookie: cookie || undefined
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({ error: 'Download failed.' }));
+                    statusEl.textContent = error.error || 'Download failed.';
+                    return;
+                }
+
+                const blob = await response.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = buildFileName(variant);
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(downloadUrl);
+                statusEl.textContent = 'Download started.';
+            } catch (err) {
+                console.error(err);
+                statusEl.textContent = 'Unexpected error while downloading the video.';
+            }
+        }
+
+        function buildFileName(variant) {
+            const quality = (variant.quality || variant.Quality || 'video').toLowerCase();
+            return `facebook-${quality}.mp4`;
+        }
+    </script>
+</body>
+</html>
