@@ -73,6 +73,7 @@ app.use('/email-thread-extractor', express.static(path.join(__dirname, 'apps/ema
 app.use('/excel-to-json', express.static(path.join(__dirname, 'apps/excel-to-json')));
 app.use('/extract-text-inside-quotes', express.static(path.join(__dirname, 'apps/extract-text-inside-quotes/wwwroot')));
 app.use('/file-path-extractor', express.static(path.join(__dirname, 'apps/file-path-extractor/wwwroot')));
+app.use('/code-comment-extractor', express.static(path.join(__dirname, 'apps/code-comment-extractor/wwwroot')));
 app.use('/find-and-replace', express.static(path.join(__dirname, 'apps/find-and-replace/wwwroot')));
 app.use('/hashtag-mention-extractor', express.static(path.join(__dirname, 'apps/hashtag-mention-extractor/wwwroot')));
 app.use('/highlighted-text-extractor', express.static(path.join(__dirname, 'apps/highlighted-text-extractor')));

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script id="asset-base-loader">
+    (function() {
+      const segments = window.location.pathname.split('/').filter(Boolean);
+      const repoIndex = segments.indexOf('Nates-Free-Tools');
+      const baseHref = repoIndex !== -1 ? '/' + segments.slice(0, repoIndex + 1).join('/') + '/' : '/';
+      let baseTag = document.querySelector('base');
+      if (!baseTag) {
+        baseTag = document.createElement('base');
+        document.head.prepend(baseTag);
+      }
+      baseTag.href = baseHref;
+    })();
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Code Comment Extractor (C#)</title>
+  <link rel="stylesheet" href="css/webapps-unified.css">
+  <script src="js/site-chrome.js" defer></script>
+</head>
+<body>
+  <main class="container">
+    <header>
+      <p class="eyebrow">Developer documentation helper</p>
+      <h1>Code Comment Extractor</h1>
+      <p>Upload programming files and pull out every commented line with file name and line numbers. Filters let you focus on TODOs/FIXMEs or doc comments.</p>
+      <p class="hint">Supports .js, .ts, .py, .java, .c, .cpp, and .html files with //, #, /* */, and &lt;!-- --&gt; comment syntax.</p>
+    </header>
+
+    <section class="card">
+      <form id="extract-form">
+        <div class="input-group">
+          <label for="codeFiles">Choose source files</label>
+          <input id="codeFiles" name="files" type="file" accept=".js,.ts,.py,.java,.c,.cpp,.html" multiple required>
+          <p class="hint">You can drop in multiple files at once; unsupported types are skipped.</p>
+        </div>
+
+        <div class="input-group">
+          <label for="filter">Filter comments</label>
+          <select id="filter" name="filter">
+            <option value="all" selected>All comments</option>
+            <option value="todo">TODO or FIXME only</option>
+            <option value="doc">Doc comments only (/** or triple quotes)</option>
+          </select>
+        </div>
+
+        <button type="submit">Extract comments</button>
+      </form>
+    </section>
+
+    <section class="card" id="status" aria-live="polite"></section>
+
+    <section class="card">
+      <div class="result-header">
+        <h2>Extracted comments</h2>
+        <div class="action-group">
+          <button id="copy-json" type="button">Copy JSON</button>
+          <button id="clear" type="button" class="ghost">Clear</button>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table id="results-table">
+          <thead>
+            <tr>
+              <th>File</th>
+              <th>Line</th>
+              <th>Category</th>
+              <th>Comment</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="4">Upload files to see extracted comments.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById('extract-form');
+    const statusEl = document.getElementById('status');
+    const tableBody = document.querySelector('#results-table tbody');
+    const copyBtn = document.getElementById('copy-json');
+    const clearBtn = document.getElementById('clear');
+
+    function setStatus(message, tone = 'info') {
+      statusEl.textContent = message;
+      statusEl.className = `card ${tone}`;
+    }
+
+    function renderRows(comments) {
+      tableBody.innerHTML = '';
+      if (!comments.length) {
+        tableBody.innerHTML = '<tr><td colspan="4">No comments found.</td></tr>';
+        return;
+      }
+
+      for (const comment of comments) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td data-label="File">${comment.file}</td>
+          <td data-label="Line">${comment.lineNumber}</td>
+          <td data-label="Category">${comment.category}</td>
+          <td data-label="Comment">${comment.text}</td>
+        `;
+        tableBody.appendChild(row);
+      }
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const files = document.getElementById('codeFiles').files;
+      if (!files.length) {
+        setStatus('Please choose at least one file.', 'warning');
+        return;
+      }
+
+      setStatus('Uploading and scanning comments…');
+      tableBody.innerHTML = '<tr><td colspan="4">Processing…</td></tr>';
+
+      const formData = new FormData();
+      for (const file of files) {
+        formData.append('files', file);
+      }
+      formData.append('filter', document.getElementById('filter').value);
+
+      try {
+        const response = await fetch('/api/extract', {
+          method: 'POST',
+          body: formData
+        });
+
+        const payload = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          const errorText = payload.error || 'Extraction failed.';
+          setStatus(errorText, 'error');
+          tableBody.innerHTML = `<tr><td colspan="4">${errorText}</td></tr>`;
+          return;
+        }
+
+        renderRows(payload.comments || []);
+        const summary = `Processed ${payload.filesProcessed} file(s); found ${payload.totalComments} comment line(s).`;
+        setStatus(summary, payload.totalComments ? 'success' : 'info');
+      } catch (err) {
+        console.error(err);
+        setStatus('Unexpected error while extracting comments.', 'error');
+        tableBody.innerHTML = '<tr><td colspan="4">Unexpected error.</td></tr>';
+      }
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      const rows = Array.from(tableBody.querySelectorAll('tr'));
+      if (!rows.length || rows[0].querySelector('td')?.colSpan === 4) {
+        setStatus('Nothing to copy yet.', 'warning');
+        return;
+      }
+
+      const comments = rows.map(row => ({
+        file: row.children[0].textContent,
+        lineNumber: row.children[1].textContent,
+        category: row.children[2].textContent,
+        text: row.children[3].textContent
+      }));
+
+      try {
+        await navigator.clipboard.writeText(JSON.stringify(comments, null, 2));
+        setStatus('Copied extracted comments to clipboard.', 'success');
+      } catch (err) {
+        setStatus('Could not copy to clipboard.', 'warning');
+      }
+    });
+
+    clearBtn.addEventListener('click', () => {
+      tableBody.innerHTML = '<tr><td colspan="4">Upload files to see extracted comments.</td></tr>';
+      setStatus('Cleared results.', 'info');
+    });
+  </script>
+</body>
+</html>
