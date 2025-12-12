@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>File Path Extractor | Scan code and config files for asset references</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #0b1224;
+      --card: #0f172a;
+      --muted: #94a3b8;
+      --border: #1f2937;
+      --accent: #38bdf8;
+      --accent-strong: #0ea5e9;
+      --text: #e2e8f0;
+      --shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.08), transparent 32%),
+        radial-gradient(circle at 75% 10%, rgba(14, 165, 233, 0.12), transparent 28%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 32px 14px 64px;
+    }
+
+    header {
+      max-width: 1100px;
+      margin: 0 auto 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 40px);
+      letter-spacing: -0.02em;
+    }
+
+    .lede {
+      color: var(--muted);
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.6;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      gap: 18px;
+    }
+
+    .card {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .layout {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    }
+
+    label { font-weight: 600; display: block; margin-bottom: 6px; }
+
+    input[type="file"] { display: none; }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 14px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      color: #0b1224;
+      border-radius: 12px;
+      border: none;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+    }
+
+    .button.secondary {
+      background: rgba(148, 163, 184, 0.14);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .button:active { transform: translateY(1px); }
+    .button:disabled { opacity: 0.65; cursor: not-allowed; }
+
+    textarea {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 12px;
+      background: rgba(15, 23, 42, 0.55);
+      color: var(--text);
+      min-height: 180px;
+      font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+      font-size: 14px;
+    }
+
+    .dropzone {
+      border: 1.5px dashed rgba(148, 163, 184, 0.35);
+      border-radius: 14px;
+      padding: 18px;
+      text-align: center;
+      color: var(--muted);
+      background: rgba(148, 163, 184, 0.06);
+      transition: border-color 120ms ease, background 120ms ease;
+    }
+
+    .dropzone.dragover {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.08);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 10px;
+      background: rgba(56, 189, 248, 0.14);
+      color: var(--accent);
+      border-radius: 10px;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .muted { color: var(--muted); }
+
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-weight: 600; }
+    .path { color: var(--accent); word-break: break-word; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .stack { display: grid; gap: 12px; }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(148, 163, 184, 0.12);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      font-size: 14px;
+    }
+
+    .status { min-height: 22px; font-weight: 600; }
+    .status.error { color: #fca5a5; }
+    .status.success { color: #34d399; }
+
+    @media (max-width: 640px) {
+      .controls { flex-direction: column; align-items: stretch; }
+      header { text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <p class="badge">Private browser scan • No uploads stored</p>
+    <h1>Extract file paths across code, config, and docs.</h1>
+    <p class="lede">
+      Drop .js, .py, .json, .yaml, .md, or .txt files to surface every referenced asset path. Ideal for asset audits and
+      packaging checklists.
+    </p>
+  </header>
+
+  <main class="layout">
+    <section class="card stack">
+      <div class="stack">
+        <div class="controls">
+          <div>
+            <strong>Upload files</strong>
+            <p class="muted">Add multiple files at once. Supported: .js, .py, .json, .yaml/.yml, .md/.markdown, .txt</p>
+          </div>
+          <label class="button" for="fileInput">Select files<input id="fileInput" type="file" multiple accept=".js,.py,.json,.yaml,.yml,.md,.markdown,.txt" /></label>
+        </div>
+        <div id="dropzone" class="dropzone" role="region" aria-label="Drop files to scan">
+          Drag and drop source files here
+        </div>
+      </div>
+
+      <div class="stack">
+        <label for="textInput">Optional pasted snippet</label>
+        <textarea id="textInput" placeholder="Paste code or config here..."></textarea>
+        <div class="controls">
+          <div class="pill" id="selectedCount">0 files ready</div>
+          <div class="stack" style="grid-auto-flow: column; grid-auto-columns: 1fr; align-items: center;">
+            <button id="sampleBtn" class="button secondary" type="button">Load sample</button>
+            <button id="scanBtn" class="button" type="button">Scan for file paths</button>
+          </div>
+        </div>
+        <div id="status" class="status" role="status" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="card stack">
+      <div class="controls">
+        <div class="stack" style="gap: 4px;">
+          <strong>Results</strong>
+          <p id="summary" class="muted" style="margin:0;">No scans yet.</p>
+        </div>
+        <div class="stack" style="grid-auto-flow: column; grid-auto-columns: 1fr; align-items: center;">
+          <button id="downloadCsvBtn" class="button secondary" type="button" disabled>Download CSV</button>
+          <button id="copyJsonBtn" class="button secondary" type="button" disabled>Copy JSON</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table id="resultsTable" aria-live="polite">
+          <thead>
+            <tr>
+              <th>Source file</th>
+              <th>Path</th>
+              <th>Line</th>
+              <th>Snippet</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="4" class="muted">Upload files to see extracted paths.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const dropzone = document.getElementById('dropzone');
+    const textInput = document.getElementById('textInput');
+    const sampleBtn = document.getElementById('sampleBtn');
+    const scanBtn = document.getElementById('scanBtn');
+    const selectedCount = document.getElementById('selectedCount');
+    const statusEl = document.getElementById('status');
+    const summaryEl = document.getElementById('summary');
+    const resultsTable = document.getElementById('resultsTable').querySelector('tbody');
+    const downloadCsvBtn = document.getElementById('downloadCsvBtn');
+    const copyJsonBtn = document.getElementById('copyJsonBtn');
+
+    let queuedFiles = [];
+    let latestResults = null;
+
+    const allowedExtensions = ['.js', '.py', '.json', '.yaml', '.yml', '.md', '.markdown', '.txt'];
+
+    const setStatus = (message, type = '') => {
+      statusEl.textContent = message;
+      statusEl.className = `status ${type}`.trim();
+    };
+
+    const updateCount = () => {
+      selectedCount.textContent = `${queuedFiles.length} file${queuedFiles.length === 1 ? '' : 's'} ready`;
+    };
+
+    const addFiles = (files) => {
+      for (const file of files) {
+        const ext = `.${file.name.split('.').pop()}`.toLowerCase();
+        if (!allowedExtensions.includes(ext)) {
+          setStatus(`Skipped ${file.name} (unsupported type)`, 'error');
+          continue;
+        }
+        queuedFiles.push(file);
+      }
+      updateCount();
+    };
+
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.classList.add('dragover');
+    });
+
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      if (e.dataTransfer?.files?.length) {
+        addFiles(e.dataTransfer.files);
+      }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files?.length) {
+        addFiles(e.target.files);
+        fileInput.value = '';
+      }
+    });
+
+    sampleBtn.addEventListener('click', () => {
+      textInput.value = `import data from './data/file.csv';\nconst configPath = '../config/settings.yaml';\n// image lives at /public/assets/logo.svg\nmarkdown link: ![alt](/images/example.png)\nNotes file: docs/notes.txt`;
+      setStatus('Loaded sample snippet. Add your own files or text to scan.', 'success');
+    });
+
+    const renderResults = (data) => {
+      latestResults = data;
+      resultsTable.innerHTML = '';
+      const rows = [];
+
+      data.results.forEach((fileResult) => {
+        if (!fileResult.matches || fileResult.matches.length === 0) {
+          const row = document.createElement('tr');
+          row.innerHTML = `<td>${fileResult.source}</td><td colspan="3" class="muted">${fileResult.error || 'No paths found'}</td>`;
+          rows.push(row);
+          return;
+        }
+
+        fileResult.matches.forEach((match, idx) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${idx === 0 ? fileResult.source : ''}</td>
+            <td class="path mono">${match.path}</td>
+            <td class="mono">${match.line}</td>
+            <td class="muted mono">${match.snippet}</td>
+          `;
+          rows.push(row);
+        });
+      });
+
+      if (rows.length === 0) {
+        const row = document.createElement('tr');
+        row.innerHTML = '<td colspan="4" class="muted">No paths found.</td>';
+        rows.push(row);
+      }
+
+      rows.forEach((row) => resultsTable.appendChild(row));
+      summaryEl.textContent = `${data.totalMatches} path${data.totalMatches === 1 ? '' : 's'} across ${data.filesProcessed} file${data.filesProcessed === 1 ? '' : 's'}.`;
+      downloadCsvBtn.disabled = data.totalMatches === 0;
+      copyJsonBtn.disabled = data.totalMatches === 0;
+    };
+
+    const toCsv = (data) => {
+      const header = ['source', 'path', 'line', 'snippet'];
+      const rows = [header.join(',')];
+
+      data.results.forEach((file) => {
+        (file.matches || []).forEach((match) => {
+          const escaped = [file.source, match.path, match.line, match.snippet]
+            .map((val) => `"${String(val).replace(/"/g, '""')}"`)
+            .join(',');
+          rows.push(escaped);
+        });
+      });
+
+      return rows.join('\n');
+    };
+
+    downloadCsvBtn.addEventListener('click', () => {
+      if (!latestResults) return;
+      const csv = toCsv(latestResults);
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'file-paths.csv';
+      link.click();
+      URL.revokeObjectURL(url);
+    });
+
+    copyJsonBtn.addEventListener('click', async () => {
+      if (!latestResults) return;
+      await navigator.clipboard.writeText(JSON.stringify(latestResults, null, 2));
+      setStatus('Copied JSON results.', 'success');
+    });
+
+    scanBtn.addEventListener('click', async () => {
+      setStatus('');
+      if (!queuedFiles.length && !textInput.value.trim()) {
+        setStatus('Add at least one file or paste text to scan.', 'error');
+        return;
+      }
+
+      const formData = new FormData();
+      queuedFiles.forEach((file) => formData.append('files', file, file.name));
+      if (textInput.value.trim()) {
+        const blob = new Blob([textInput.value], { type: 'text/plain' });
+        formData.append('files', new File([blob], 'pasted-snippet.txt'));
+      }
+
+      scanBtn.disabled = true;
+      setStatus('Scanning...', '');
+
+      try {
+        const response = await fetch('/api/scan', { method: 'POST', body: formData });
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Unable to scan files.');
+        }
+
+        setStatus('Scan complete.', 'success');
+        renderResults(data);
+      } catch (error) {
+        setStatus(error.message, 'error');
+      } finally {
+        scanBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

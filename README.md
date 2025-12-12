@@ -24,6 +24,7 @@ A starter website for hosting webapps with monetization in mind. It provides a h
 - PDF Link Extractor: `/apps/pdf-link-extractor/wwwroot/index.html`
 - Resume Contact Info Extractor: `/apps/resume-contact-extractor/wwwroot/index.html`
 - Image Path Extractor: `/apps/image-path-extractor/wwwroot/index.html`
+- File Path Extractor: `/apps/file-path-extractor/wwwroot/index.html`
 - Capitalized Phrase Extractor: `/apps/capitalized-phrase-extractor/wwwroot/index.html`
 - Dynamic features (login, admin, server-backed Excel conversion) require running the Node.js server locally or on a host that supports server-side rendering.
 
@@ -154,6 +155,21 @@ Located in `apps/resume-contact-extractor/`, this ASP.NET Core static webapp pul
 **Run locally:**
 ```bash
 cd apps/resume-contact-extractor
+dotnet run
+```
+
+### File Path Extractor
+Located in `apps/file-path-extractor/`, this .NET minimal API scans code and config files for referenced asset paths.
+
+**Features:**
+- Accepts `.js`, `.py`, `.json`, `.yaml/.yml`, `.md/.markdown`, and `.txt`
+- Finds absolute and relative paths like `/images/logo.svg` or `../data/export.csv`
+- Reports line numbers and trimmed context snippets for each match
+- Export matches to CSV or copy JSON directly from the UI
+
+**Run locally:**
+```bash
+cd apps/file-path-extractor
 dotnet run
 ```
 
@@ -350,6 +366,10 @@ apps/
 ├── batch-file-renamer/     # .NET batch renamer for filename cleanup
 │   ├── Program.cs          # Minimal API building renamed archives
 │   ├── batch-file-renamer.csproj
+│   └── wwwroot/            # Static UI assets
+├── file-path-extractor/    # .NET file path extraction utility
+│   ├── Program.cs          # Minimal API and path detector
+│   ├── file-path-extractor.csproj
 │   └── wwwroot/            # Static UI assets
 └── json-to-excel/          # C# JSON → Excel creator
     ├── wwwroot/            # Static UI assets
