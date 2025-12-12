@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script id="asset-base-loader">
+      (function () {
+        const segments = window.location.pathname.split('/').filter(Boolean);
+        const repoIndex = segments.indexOf('Nates-Free-Tools');
+        const baseHref = repoIndex !== -1 ? '/' + segments.slice(0, repoIndex + 1).join('/') + '/' : '/';
+        let baseTag = document.querySelector('base');
+        if (!baseTag) {
+          baseTag = document.createElement('base');
+          document.head.prepend(baseTag);
+        }
+        baseTag.href = baseHref;
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Long Word Extractor | Monetize Hub Tools</title>
+    <link rel="stylesheet" href="css/webapps-unified.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <style>
+      .drop-zone {
+        border: 2px dashed var(--border-subtle);
+        border-radius: 14px;
+        padding: 26px;
+        background: rgba(255, 255, 255, 0.7);
+        transition: border-color 0.2s ease, background 0.2s ease;
+      }
+      .drop-zone.dragover {
+        border-color: var(--primary-color);
+        background: rgba(99, 102, 241, 0.08);
+      }
+      .file-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: #eef2ff;
+        color: #312e81;
+        font-weight: 600;
+      }
+      .result-card {
+        border: 1px solid var(--border-subtle);
+        border-radius: 12px;
+        padding: 14px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.82) 100%);
+      }
+      .word-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 10px;
+        background: #f8fafc;
+        border: 1px solid var(--border-subtle);
+        margin: 4px;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      }
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+      }
+      .stat-box {
+        border: 1px solid var(--border-subtle);
+        border-radius: 12px;
+        padding: 12px;
+        background: #fff;
+      }
+      .stat-box strong {
+        display: block;
+        font-size: 24px;
+      }
+      table th, table td {
+        vertical-align: middle;
+      }
+    </style>
+  </head>
+  <body class="bg-light">
+    <div class="container py-4">
+      <header class="mb-4">
+        <p class="text-uppercase text-muted fw-semibold small mb-1">Language Toolkit</p>
+        <h1 class="display-6 fw-bold mb-2">Long Word Extractor</h1>
+        <p class="text-secondary lead">Pull every word over your chosen length from documents, sort by frequency, and export the results.</p>
+        <div class="d-flex flex-wrap gap-2">
+          <span class="badge text-bg-primary">.txt</span>
+          <span class="badge text-bg-primary">.docx</span>
+          <span class="badge text-bg-primary">.pdf</span>
+          <span class="badge text-bg-primary">.md/.markdown</span>
+          <span class="badge text-bg-primary">.html</span>
+        </div>
+      </header>
+
+      <section class="mb-4">
+        <div class="row g-3">
+          <div class="col-lg-8">
+            <div class="drop-zone" id="drop-zone">
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                  <h2 class="h5 mb-1">Drop files or paste text</h2>
+                  <p class="text-secondary mb-0">Drag in supported documents or paste text below. Files stay in your browser.</p>
+                </div>
+                <div>
+                  <label class="btn btn-outline-primary mb-0">
+                    Choose files
+                    <input type="file" id="file-input" class="d-none" multiple accept=".txt,.docx,.pdf,.md,.markdown,.html,.htm" />
+                  </label>
+                </div>
+              </div>
+              <div class="mt-3" id="file-list" aria-live="polite"></div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="result-card h-100">
+              <h2 class="h5 mb-3">Settings</h2>
+              <div class="mb-3">
+                <label class="form-label fw-semibold" for="threshold">Minimum word length</label>
+                <input type="number" id="threshold" class="form-control" min="3" max="50" value="10" />
+                <div class="form-text">Words must be at least this long to be included.</div>
+              </div>
+              <button id="analyze-btn" class="btn btn-primary w-100">Extract long words</button>
+            </div>
+          </div>
+        </div>
+        <div class="mt-3">
+          <label class="form-label fw-semibold" for="text-input">Inline text (optional)</label>
+          <textarea class="form-control" id="text-input" rows="4" placeholder="Paste text here to analyze without a file upload."></textarea>
+        </div>
+      </section>
+
+      <section class="mb-4">
+        <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+          <h2 class="h5 mb-0">Aggregate results</h2>
+          <button class="btn btn-sm btn-outline-secondary" id="export-csv" disabled>Export CSV</button>
+          <button class="btn btn-sm btn-outline-secondary" id="export-txt" disabled>Export TXT</button>
+        </div>
+        <div class="stats-grid mb-3">
+          <div class="stat-box">
+            <p class="text-secondary mb-1">Unique words</p>
+            <strong id="stat-unique">0</strong>
+          </div>
+          <div class="stat-box">
+            <p class="text-secondary mb-1">Total occurrences</p>
+            <strong id="stat-occurrences">0</strong>
+          </div>
+        </div>
+        <div id="aggregate-table" class="table-responsive d-none">
+          <table class="table table-striped align-middle">
+            <thead>
+              <tr>
+                <th scope="col">Word</th>
+                <th scope="col" style="width: 140px;">Count</th>
+              </tr>
+            </thead>
+            <tbody id="aggregate-body"></tbody>
+          </table>
+        </div>
+        <div id="aggregate-empty" class="text-secondary">Run an extraction to see the longest words across everything you uploaded.</div>
+      </section>
+
+      <section id="results" class="d-none">
+        <h2 class="h5 mb-3">Per-file breakdown</h2>
+        <div id="file-results" class="d-flex flex-column gap-3"></div>
+      </section>
+    </div>
+
+    <script>
+      const dropZone = document.getElementById('drop-zone');
+      const fileInput = document.getElementById('file-input');
+      const fileListEl = document.getElementById('file-list');
+      const analyzeBtn = document.getElementById('analyze-btn');
+      const aggregateTable = document.getElementById('aggregate-table');
+      const aggregateBody = document.getElementById('aggregate-body');
+      const aggregateEmpty = document.getElementById('aggregate-empty');
+      const statUnique = document.getElementById('stat-unique');
+      const statOccurrences = document.getElementById('stat-occurrences');
+      const fileResults = document.getElementById('file-results');
+      const resultsSection = document.getElementById('results');
+      const exportCsvBtn = document.getElementById('export-csv');
+      const exportTxtBtn = document.getElementById('export-txt');
+      const thresholdInput = document.getElementById('threshold');
+      const textInput = document.getElementById('text-input');
+
+      let queuedFiles = [];
+      let latestAggregate = [];
+
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      });
+
+      dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        if (e.dataTransfer.files && e.dataTransfer.files.length) {
+          addFiles([...e.dataTransfer.files]);
+        }
+      });
+
+      fileInput.addEventListener('change', (e) => {
+        addFiles([...e.target.files]);
+        fileInput.value = '';
+      });
+
+      function addFiles(files) {
+        const allowed = ['.txt', '.docx', '.pdf', '.md', '.markdown', '.html', '.htm'];
+        const filtered = files.filter((file) => allowed.some((ext) => file.name.toLowerCase().endsWith(ext)));
+        queuedFiles = [...queuedFiles, ...filtered];
+        renderFileList();
+      }
+
+      function renderFileList() {
+        if (queuedFiles.length === 0) {
+          fileListEl.innerHTML = '<p class="text-secondary mb-0">No files selected yet.</p>';
+          return;
+        }
+
+        fileListEl.innerHTML = '';
+        queuedFiles.forEach((file, idx) => {
+          const pill = document.createElement('div');
+          pill.className = 'file-pill me-2 mb-2';
+          pill.innerHTML = `<span>${file.name}</span><button class="btn btn-sm btn-link text-danger p-0" aria-label="Remove ${file.name}">&times;</button>`;
+          pill.querySelector('button').addEventListener('click', () => {
+            queuedFiles.splice(idx, 1);
+            renderFileList();
+          });
+          fileListEl.appendChild(pill);
+        });
+      }
+
+      analyzeBtn.addEventListener('click', async () => {
+        analyzeBtn.disabled = true;
+        analyzeBtn.textContent = 'Extracting...';
+        aggregateBody.innerHTML = '';
+        aggregateTable.classList.add('d-none');
+        aggregateEmpty.classList.remove('d-none');
+        resultsSection.classList.add('d-none');
+        exportCsvBtn.disabled = true;
+        exportTxtBtn.disabled = true;
+
+        const formData = new FormData();
+        const threshold = parseInt(thresholdInput.value, 10);
+        if (!Number.isNaN(threshold)) {
+          formData.append('threshold', threshold.toString());
+        }
+
+        if (textInput.value.trim()) {
+          formData.append('text', textInput.value);
+        }
+
+        queuedFiles.forEach((file) => formData.append('files', file));
+
+        try {
+          const response = await fetch('/api/extract', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            alert(error.error || 'Extraction failed.');
+            return;
+          }
+
+          const data = await response.json();
+          latestAggregate = data.aggregate || [];
+          statUnique.textContent = data.totalUniqueWords || 0;
+          statOccurrences.textContent = data.totalOccurrences || 0;
+          renderAggregate(latestAggregate);
+          renderResults(data.results || []);
+          exportCsvBtn.disabled = latestAggregate.length === 0;
+          exportTxtBtn.disabled = latestAggregate.length === 0;
+        } catch (err) {
+          alert('Something went wrong. Please try again.');
+          console.error(err);
+        } finally {
+          analyzeBtn.disabled = false;
+          analyzeBtn.textContent = 'Extract long words';
+        }
+      });
+
+      function renderAggregate(items) {
+        aggregateBody.innerHTML = '';
+        if (!items.length) {
+          aggregateEmpty.classList.remove('d-none');
+          aggregateTable.classList.add('d-none');
+          return;
+        }
+
+        aggregateEmpty.classList.add('d-none');
+        aggregateTable.classList.remove('d-none');
+        items.forEach((item) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `<td class="fw-semibold text-break">${item.word}</td><td>${item.count}</td>`;
+          aggregateBody.appendChild(row);
+        });
+      }
+
+      function renderResults(results) {
+        fileResults.innerHTML = '';
+        if (!results.length) {
+          resultsSection.classList.add('d-none');
+          return;
+        }
+        resultsSection.classList.remove('d-none');
+
+        results.forEach((res) => {
+          const card = document.createElement('div');
+          card.className = 'result-card';
+          const header = document.createElement('div');
+          header.className = 'd-flex flex-wrap align-items-center justify-content-between gap-2 mb-2';
+          header.innerHTML = `
+            <div>
+              <div class="fw-semibold">${res.source}</div>
+              <div class="text-secondary small">${res.kind || ''}</div>
+            </div>
+            <div class="text-end">
+              <div class="small text-secondary">Unique words</div>
+              <div class="fw-bold">${res.uniqueWords || 0}</div>
+            </div>
+          `;
+          card.appendChild(header);
+
+          if (res.error) {
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-warning mb-0';
+            alert.textContent = res.error;
+            card.appendChild(alert);
+            fileResults.appendChild(card);
+            return;
+          }
+
+          const wordWrap = document.createElement('div');
+          wordWrap.className = 'd-flex flex-wrap';
+          (res.words || []).forEach((entry) => {
+            const badge = document.createElement('span');
+            badge.className = 'word-badge';
+            badge.innerHTML = `<span class="fw-semibold text-break">${entry.word}</span><span class="text-secondary small">${entry.count}</span>`;
+            wordWrap.appendChild(badge);
+          });
+
+          if (!res.words || res.words.length === 0) {
+            const empty = document.createElement('p');
+            empty.className = 'text-secondary mb-0';
+            empty.textContent = 'No long words were found.';
+            card.appendChild(empty);
+          } else {
+            card.appendChild(wordWrap);
+          }
+
+          fileResults.appendChild(card);
+        });
+      }
+
+      exportCsvBtn.addEventListener('click', () => exportData('csv'));
+      exportTxtBtn.addEventListener('click', () => exportData('txt'));
+
+      function exportData(type) {
+        if (!latestAggregate.length) return;
+
+        let content = '';
+        let mime = 'text/plain';
+        let filename = 'long-words';
+
+        if (type === 'csv') {
+          const rows = [['word', 'count'], ...latestAggregate.map((i) => [i.word, i.count])];
+          content = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+          mime = 'text/csv';
+          filename += '.csv';
+        } else {
+          content = latestAggregate.map((i) => `${i.word} — ${i.count}`).join('\n');
+          filename += '.txt';
+        }
+
+        const blob = new Blob([content], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+
+      renderFileList();
+    </script>
+  </body>
+</html>
