@@ -300,6 +300,16 @@ cd apps/powerpoint-slide-exporter
 dotnet run
 ```
 
+### Named Entity Extractor
+Located in `apps/named-entity-extractor/`, this C# minimal API hosts a browser-based NLP tool for pulling people, organizations, and locations from documents.
+
+**Features:**
+- Upload `.pdf`, `.docx`, or `.txt` files and process them entirely in the browser
+- Combined and per-file entity breakdowns with deduplication controls
+- Quick JSON export for downstream analysis
+
+**Static Version:** `/apps/named-entity-extractor/wwwroot/index.html`
+
 ## Project Structure
 
 ```
@@ -347,6 +357,10 @@ apps/
 ├── find-and-replace/       # .NET find-and-replace utility
 │   ├── Program.cs          # Minimal API and text/file processor
 │   ├── find-and-replace.csproj
+│   └── wwwroot/            # Static UI assets
+├── named-entity-extractor/ # Browser-based named entity extraction
+│   ├── Program.cs          # Minimal API hosting the static UI
+│   ├── named-entity-extractor.csproj
 │   └── wwwroot/            # Static UI assets
 ├── batch-file-renamer/     # .NET batch renamer for filename cleanup
 │   ├── Program.cs          # Minimal API building renamed archives
