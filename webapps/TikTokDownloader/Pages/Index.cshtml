@@ -1,0 +1,58 @@
+@page
+@model TikTokDownloader.Pages.IndexModel
+@{
+    ViewData["Title"] = "TikTok Video Downloader";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h1 class="h3 mb-3">TikTok Video Downloader</h1>
+                <p class="text-muted">Download your TikTok videos in MP4 (720p or 1080p) with or without watermarks when supported by the configured API.</p>
+
+                @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+                {
+                    <div class="alert alert-danger" role="alert">
+                        @Model.ErrorMessage
+                    </div>
+                }
+
+                <form method="post" class="needs-validation" novalidate>
+                    <div class="mb-3">
+                        <label asp-for="Request.VideoUrl" class="form-label"></label>
+                        <input asp-for="Request.VideoUrl" class="form-control" placeholder="https://www.tiktok.com/@username/video/123" required />
+                        <span asp-validation-for="Request.VideoUrl" class="text-danger"></span>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="Request.Resolution" class="form-label"></label>
+                            <select asp-for="Request.Resolution" class="form-select">
+                                <option value="720p">720p</option>
+                                <option value="1080p">1080p</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-center mt-4 mt-md-0">
+                            <div class="form-check">
+                                <input class="form-check-input" asp-for="Request.RemoveWatermark" />
+                                <label class="form-check-label" asp-for="Request.RemoveWatermark"></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="small text-muted">Watermark removal is only available if your chosen API provider supports it. Always respect creator permissions.</p>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Download video</button>
+                        <a class="btn btn-outline-secondary" asp-page="/Index">Reset</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
