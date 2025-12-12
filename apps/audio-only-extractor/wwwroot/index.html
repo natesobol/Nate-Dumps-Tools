@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script id="asset-base-loader">
+      (function () {
+        const segments = window.location.pathname.split('/').filter(Boolean);
+        const repoIndex = segments.indexOf('Nates-Free-Tools');
+        const baseHref = repoIndex !== -1 ? '/' + segments.slice(0, repoIndex + 1).join('/') + '/' : '/';
+        let baseTag = document.querySelector('base');
+        if (!baseTag) {
+          baseTag = document.createElement('base');
+          document.head.prepend(baseTag);
+        }
+        baseTag.href = baseHref;
+      })();
+    </script>
+
+    <link rel="stylesheet" href="css/webapps-unified.css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Audio-Only Extractor for YouTube, Vimeo, and TikTok</title>
+    <script src="js/site-chrome.js" defer></script>
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Podcast- and lecture-friendly</p>
+          <h1>Pull audio tracks from your favorite video platforms.</h1>
+          <p class="lede">
+            Drop in a YouTube, Vimeo, or TikTok link, choose MP3/WAV/AAC, and optionally normalize levels or trim intros/outros
+            before downloading.
+          </p>
+          <ul class="pill-list">
+            <li>Format selector (MP3, WAV, AAC)</li>
+            <li>Optional loudness normalization</li>
+            <li>Clip start/end timestamps</li>
+          </ul>
+        </div>
+        <div class="hero-card">
+          <p class="hint">Runs on a .NET 8 minimal API. Downloads are processed in-memory.</p>
+          <p class="hint">Server requires <code>yt-dlp</code> and <code>ffmpeg</code> in the PATH.</p>
+        </div>
+      </header>
+
+      <section class="card">
+        <form id="audio-form" class="form-grid">
+          <div class="field">
+            <label for="videoUrl">Video URL</label>
+            <input
+              id="videoUrl"
+              name="videoUrl"
+              type="url"
+              required
+              placeholder="https://www.youtube.com/watch?v=..."
+              autocomplete="off"
+            />
+            <p class="hint">Supports YouTube, Vimeo, and TikTok links.</p>
+          </div>
+
+          <div class="field">
+            <label for="format">Audio format</label>
+            <select id="format" name="format">
+              <option value="mp3">MP3</option>
+              <option value="wav">WAV</option>
+              <option value="aac">AAC</option>
+            </select>
+          </div>
+
+          <div class="field inline">
+            <label class="checkbox">
+              <input type="checkbox" id="normalizeLevels" name="normalizeLevels" /> Normalize audio levels
+            </label>
+          </div>
+
+          <div class="field inline">
+            <div>
+              <label for="trimStart">Trim intro (seconds)</label>
+              <input id="trimStart" name="trimStart" type="number" min="0" step="0.5" placeholder="0" />
+            </div>
+            <div>
+              <label for="trimEnd">Trim outro (end time in seconds)</label>
+              <input id="trimEnd" name="trimEnd" type="number" min="0" step="0.5" placeholder="Leave blank for full clip" />
+            </div>
+            <p class="hint">Provide an end timestamp to cut the clip early. Leave blank to keep the full length.</p>
+          </div>
+
+          <div class="actions">
+            <button type="submit">Extract audio</button>
+            <button type="button" id="clearButton" class="ghost">Clear</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="status" class="card" aria-live="polite">Paste a link to begin.</section>
+
+      <section class="card" id="result-card" hidden>
+        <div class="card-header">
+          <h2>Download</h2>
+          <button type="button" id="downloadButton">Download audio</button>
+        </div>
+        <p class="hint" id="fileName">Awaiting processing...</p>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById('audio-form');
+      const statusEl = document.getElementById('status');
+      const resultCard = document.getElementById('result-card');
+      const downloadBtn = document.getElementById('downloadButton');
+      const fileNameEl = document.getElementById('fileName');
+      const clearBtn = document.getElementById('clearButton');
+
+      let lastBlobUrl = null;
+
+      function setStatus(message, variant = 'info') {
+        statusEl.textContent = message;
+        statusEl.dataset.variant = variant;
+      }
+
+      function resetResults() {
+        resultCard.hidden = true;
+        fileNameEl.textContent = 'Awaiting processing...';
+        if (lastBlobUrl) {
+          URL.revokeObjectURL(lastBlobUrl);
+          lastBlobUrl = null;
+        }
+        setStatus('Paste a link to begin.');
+      }
+
+      function parseSeconds(value) {
+        if (!value) return null;
+        const parsed = Number.parseFloat(value);
+        return Number.isFinite(parsed) ? parsed : null;
+      }
+
+      function parseFileName(disposition, fallback) {
+        if (!disposition) return fallback;
+        const match = disposition.match(/filename="?([^";]+)"?/i);
+        return match ? match[1] : fallback;
+      }
+
+      clearBtn.addEventListener('click', () => {
+        form.reset();
+        resetResults();
+      });
+
+      downloadBtn.addEventListener('click', () => {
+        if (!lastBlobUrl) return;
+        const link = document.createElement('a');
+        link.href = lastBlobUrl;
+        link.download = fileNameEl.textContent || 'audio-download';
+        link.click();
+        URL.revokeObjectURL(lastBlobUrl);
+        lastBlobUrl = null;
+        resultCard.hidden = true;
+      });
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        setStatus('Starting extraction...', 'info');
+        resultCard.hidden = true;
+
+        const url = document.getElementById('videoUrl').value.trim();
+        const format = document.getElementById('format').value;
+        const normalizeLevels = document.getElementById('normalizeLevels').checked;
+        const trimStartSeconds = parseSeconds(document.getElementById('trimStart').value);
+        const trimEndSeconds = parseSeconds(document.getElementById('trimEnd').value);
+
+        const payload = {
+          url,
+          format,
+          normalizeLevels,
+          trimStartSeconds,
+          trimEndSeconds,
+        };
+
+        try {
+          const response = await fetch('/api/extract-audio', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            const errorPayload = await response.json().catch(() => ({}));
+            throw new Error(errorPayload.error || 'Failed to extract audio.');
+          }
+
+          const blob = await response.blob();
+          const fileName = parseFileName(response.headers.get('Content-Disposition'), `download.${format}`);
+          if (lastBlobUrl) {
+            URL.revokeObjectURL(lastBlobUrl);
+          }
+
+          lastBlobUrl = URL.createObjectURL(blob);
+          fileNameEl.textContent = fileName;
+          resultCard.hidden = false;
+          setStatus('Ready! Download your audio file below.', 'success');
+        } catch (error) {
+          resetResults();
+          setStatus(error.message || 'Something went wrong.', 'error');
+        }
+      });
+    </script>
+  </body>
+</html>
