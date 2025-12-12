@@ -64,4 +64,13 @@ router.get('/email-thread-extractor', (req, res) => {
   });
 });
 
+router.get('/extract-text-inside-quotes', (req, res) => {
+  res.render('extract-text-inside-quotes', {
+    title: 'Extract Text Inside Quotes',
+    metaDescription:
+      'Paste or upload DOCX, emails, code, or blog posts and instantly pull phrases inside single or double quotes with optional deduplication.',
+    metaKeywords: 'quote extractor,text inside quotes,single and double quotes parser'
+  });
+});
+
 export default router;

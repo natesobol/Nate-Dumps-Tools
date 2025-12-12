@@ -12,6 +12,7 @@ A starter website for hosting webapps with monetization in mind. It provides a h
 - Batch File Renamer: `/apps/batch-file-renamer/wwwroot/index.html`
 - CSV/XML Converter: `/apps/csv-xml-converter/index.html`
 - List Comparison / Diff Checker: `/apps/list-comparison/wwwroot/index.html`
+- Extract Text Inside Quotes: `/apps/extract-text-inside-quotes/wwwroot/index.html`
 - PDF Splitter: `/apps/pdf-splitter/wwwroot/index.html`
 - PowerPoint → PDF: `/apps/powerpoint-to-pdf/wwwroot/index.html`
 - PowerPoint Image Extractor: `/apps/powerpoint-image-extractor/wwwroot/index.html`
@@ -207,6 +208,17 @@ Located in `apps/list-comparison/`, this C# minimal app compares two lists from 
 
 **Server Route:** `/list-comparison`
 **Static Version:** `/apps/list-comparison/wwwroot/index.html`
+
+### Extract Text Inside Quotes
+Located in `apps/extract-text-inside-quotes/`, this C#-hosted browser app isolates text between straight or curly quotes from pasted content or uploaded files.
+
+**Features:**
+- Paste raw text or drag-and-drop DOCX, TXT, MD, JSON, and other text-friendly files
+- Handles straight and smart quotes with a configurable minimum word count
+- Optional deduplication plus one-click copy for single phrases or the entire list
+
+**Server Route:** `/extract-text-inside-quotes`
+**Static Version:** `/apps/extract-text-inside-quotes/wwwroot/index.html`
 
 ### PDF Splitter
 Located in `apps/pdf-splitter/`, this C#-hosted webapp splits one or more PDFs entirely in the browser.

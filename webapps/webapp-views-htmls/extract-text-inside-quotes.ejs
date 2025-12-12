@@ -1,0 +1,335 @@
+<%- include('../../views/partials/page-top', {
+  title: 'Extract Text Inside Quotes',
+  metaDescription: 'Paste or upload DOCX, emails, code, or blog posts and instantly pull phrases found inside single or double quotes.',
+  canonicalUrl: 'https://natesobol.github.io/Nates-Free-Tools/extract-text-inside-quotes',
+  ogTitle: 'Extract Text Inside Quotes',
+  ogDescription: 'Filters out everything except phrases inside straight or smart quotes with optional deduplication.'
+}) %>
+<section class="tool-hero">
+  <div>
+    <p class="eyebrow">Quote-only text extractor</p>
+    <h1>Paste content, drop documents, and capture only the quoted parts.</h1>
+    <p class="lede">
+      Quickly isolate dialogue, tags, and quoted snippets from pasted text or uploaded DOCX/EML/MD/JSON files. Add a minimum word
+      count, toggle smart quotes, and copy the cleaned list for prompts or tagging.
+    </p>
+    <ul class="trust-points">
+      <li>Handles straight and curly quotes to reduce misses from formatted documents.</li>
+      <li>Browser-only parsing keeps sensitive files on your device.</li>
+      <li>Copy individual phrases or export everything at once.</li>
+    </ul>
+  </div>
+  <div class="converter-card">
+    <label for="textInput" class="form-label">Paste text</label>
+    <textarea
+      id="textInput"
+      class="form-control"
+      rows="6"
+      placeholder="Paste transcripts, chat logs, blog drafts, or code samples here..."
+    ></textarea>
+
+    <div class="dropzone mt-3" id="dropzone">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+          <p class="mb-1 fw-semibold">Upload files</p>
+          <p class="help-text mb-0">
+            Supports DOCX, TXT, MD, JSON, HTML, EML, MSG, and similar text-first files.
+          </p>
+        </div>
+        <label class="button ghost btn btn-outline-light btn-modern mb-0" for="fileInput">Choose files</label>
+        <input id="fileInput" type="file" class="form-control" multiple hidden />
+      </div>
+      <p class="help-text mb-0">Drag and drop here to add files.</p>
+    </div>
+
+    <div class="controls-grid mt-3">
+      <div class="control-card">
+        <label for="minWords" class="form-label">Minimum words per phrase</label>
+        <input id="minWords" type="number" min="1" value="1" class="form-control" />
+        <p class="form-text text-secondary">Ignore single-word tokens and contractions.</p>
+      </div>
+      <div class="control-card">
+        <label for="dedupe" class="form-label">Deduplicate results</label>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" role="switch" id="dedupe" checked />
+          <label class="form-check-label" for="dedupe">Return unique phrases only</label>
+        </div>
+      </div>
+      <div class="control-card">
+        <label for="smartQuotes" class="form-label">Smart quote support</label>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" role="switch" id="smartQuotes" checked />
+          <label class="form-check-label" for="smartQuotes">Include “curly” and ‘single’ quotes</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex align-items-center gap-3 mt-3 flex-wrap">
+      <button id="extractBtn" class="button primary btn btn-primary btn-modern full-width">Extract quotes</button>
+      <button id="copyBtn" class="button ghost btn btn-outline-light btn-modern full-width" disabled>Copy all</button>
+    </div>
+    <div id="toast" class="flash flash-error mt-2" style="display:none;"></div>
+    <p id="status" class="help-text muted mt-2"></p>
+  </div>
+</section>
+
+<section class="result-panel">
+  <div class="result-card">
+    <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
+      <div>
+        <h2 class="h5 mb-0">Quoted phrases</h2>
+        <p class="help-text mb-0">Outputs only the text found between straight or smart quotes.</p>
+      </div>
+      <span class="pill" id="resultCount">0 phrases</span>
+    </div>
+    <ul id="results" class="results-list"></ul>
+    <p id="emptyState" class="muted">No phrases yet. Paste some text or add files to get started.</p>
+  </div>
+  <div class="result-card">
+    <h2>Popular uses</h2>
+    <ul class="checklist">
+      <li>Extract dialogue lines from chat logs or screenplay drafts.</li>
+      <li>Pull quoted tags or labels from CSV/JSON exports.</li>
+      <li>Clip cited sentences from blog posts for quick sharing.</li>
+    </ul>
+    <p class="help-text">Processing happens in your browser; files are never uploaded to a server.</p>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script>
+  const textInput = document.getElementById('textInput');
+  const fileInput = document.getElementById('fileInput');
+  const dropzone = document.getElementById('dropzone');
+  const extractBtn = document.getElementById('extractBtn');
+  const copyBtn = document.getElementById('copyBtn');
+  const resultsList = document.getElementById('results');
+  const emptyState = document.getElementById('emptyState');
+  const statusEl = document.getElementById('status');
+  const toast = document.getElementById('toast');
+  const minWordsInput = document.getElementById('minWords');
+  const dedupeToggle = document.getElementById('dedupe');
+  const smartQuotesToggle = document.getElementById('smartQuotes');
+  const resultCount = document.getElementById('resultCount');
+
+  let cachedResults = [];
+
+  function showToast(message, isError = false) {
+    toast.textContent = message;
+    toast.style.display = 'block';
+    toast.classList.toggle('flash-error', isError);
+    setTimeout(() => {
+      toast.style.display = 'none';
+    }, 3200);
+  }
+
+  function sanitizePhrase(text) {
+    return text.replace(/\s+/g, ' ').replace(/[\u0000-\u001F]/g, '').trim();
+  }
+
+  function hasEnoughWords(text, minWords) {
+    return text.split(/\s+/).filter(Boolean).length >= minWords;
+  }
+
+  function buildRegexSet(includeSmartQuotes) {
+    const patterns = [
+      { regex: /"([^"\r\n]{1,500}?)"/g, group: 1 },
+      { regex: /'([^'\r\n]{1,500}?)'/g, group: 1 }
+    ];
+
+    if (includeSmartQuotes) {
+      patterns.push({ regex: /“([^”]{1,500}?)”/g, group: 1 });
+      patterns.push({ regex: /‘([^’]{1,500}?)’/g, group: 1 });
+    }
+
+    return patterns;
+  }
+
+  function extractQuotesFromText(text, { minWords, includeSmartQuotes }) {
+    const phrases = [];
+    const patterns = buildRegexSet(includeSmartQuotes);
+
+    for (const { regex, group } of patterns) {
+      regex.lastIndex = 0;
+      let match;
+      while ((match = regex.exec(text)) !== null) {
+        const phrase = sanitizePhrase(match[group] ?? '');
+        if (!phrase || !/[\p{L}\p{N}]/u.test(phrase)) continue;
+        if (!hasEnoughWords(phrase, minWords)) continue;
+        phrases.push(phrase);
+      }
+    }
+
+    return phrases;
+  }
+
+  async function readDocx(file) {
+    const buffer = await file.arrayBuffer();
+    const zip = await JSZip.loadAsync(buffer);
+    const docFile = zip.file('word/document.xml');
+    if (!docFile) {
+      throw new Error('Unable to find document.xml inside the DOCX.');
+    }
+    const xml = await docFile.async('string');
+    const parser = new DOMParser();
+    const dom = parser.parseFromString(xml, 'application/xml');
+    return dom.documentElement?.textContent || '';
+  }
+
+  async function readFileAsText(file) {
+    const lower = file.name.toLowerCase();
+    try {
+      if (lower.endsWith('.docx')) {
+        return await readDocx(file);
+      }
+    } catch (error) {
+      console.error('DOCX parsing failed', error);
+      throw new Error(`${file.name}: ${error.message}`);
+    }
+
+    return await file.text();
+  }
+
+  async function collectSources() {
+    const sources = [];
+    const pasted = textInput.value.trim();
+    if (pasted) {
+      sources.push({ label: 'Pasted text', content: pasted });
+    }
+
+    const files = Array.from(fileInput.files);
+    for (const file of files) {
+      try {
+        const text = await readFileAsText(file);
+        sources.push({ label: file.name, content: text });
+      } catch (error) {
+        showToast(error.message || `Could not read ${file.name}`, true);
+      }
+    }
+
+    return sources;
+  }
+
+  function renderResults(items) {
+    resultsList.innerHTML = '';
+    cachedResults = items;
+    resultCount.textContent = `${items.length} phrase${items.length === 1 ? '' : 's'}`;
+
+    if (!items.length) {
+      emptyState.style.display = 'block';
+      copyBtn.disabled = true;
+      return;
+    }
+
+    emptyState.style.display = 'none';
+    copyBtn.disabled = false;
+
+    items.forEach((item) => {
+      const li = document.createElement('li');
+      li.classList.add('result');
+
+      const title = document.createElement('div');
+      title.classList.add('d-flex', 'align-items-center', 'justify-content-between', 'gap-2', 'flex-wrap');
+
+      const heading = document.createElement('h3');
+      heading.classList.add('h6', 'mb-1');
+      heading.textContent = item.phrase;
+
+      const badge = document.createElement('span');
+      badge.classList.add('pill');
+      badge.textContent = item.sources.join(', ');
+
+      title.appendChild(heading);
+      title.appendChild(badge);
+      li.appendChild(title);
+
+      const copyLine = document.createElement('button');
+      copyLine.type = 'button';
+      copyLine.classList.add('button', 'ghost', 'btn', 'btn-outline-light', 'btn-modern');
+      copyLine.textContent = 'Copy phrase';
+      copyLine.addEventListener('click', () => {
+        navigator.clipboard.writeText(item.phrase);
+        showToast('Copied phrase to clipboard');
+      });
+
+      li.appendChild(copyLine);
+      resultsList.appendChild(li);
+    });
+  }
+
+  async function handleExtract() {
+    statusEl.textContent = 'Extracting…';
+    resultsList.innerHTML = '';
+    renderResults([]);
+
+    const minWords = Number(minWordsInput.value) || 1;
+    const includeSmartQuotes = smartQuotesToggle.checked;
+    const dedupe = dedupeToggle.checked;
+
+    try {
+      const sources = await collectSources();
+      if (!sources.length) {
+        statusEl.textContent = '';
+        emptyState.style.display = 'block';
+        showToast('Add text or files to extract phrases.', true);
+        return;
+      }
+
+      const merged = [];
+      for (const source of sources) {
+        const phrases = extractQuotesFromText(source.content, { minWords, includeSmartQuotes });
+        phrases.forEach((phrase) => merged.push({ phrase, source: source.label }));
+      }
+
+      const combined = dedupe
+        ? (() => {
+            const map = new Map();
+            for (const item of merged) {
+              const existing = map.get(item.phrase);
+              if (existing) {
+                existing.sources.add(item.source);
+              } else {
+                map.set(item.phrase, { phrase: item.phrase, sources: new Set([item.source]) });
+              }
+            }
+            return Array.from(map.values()).map((entry) => ({
+              phrase: entry.phrase,
+              sources: Array.from(entry.sources)
+            }));
+          })()
+        : merged.map((item) => ({ phrase: item.phrase, sources: [item.source] }));
+
+      renderResults(combined);
+      statusEl.textContent = combined.length ? 'Done' : 'No phrases found';
+    } catch (error) {
+      console.error(error);
+      statusEl.textContent = '';
+      showToast(error.message || 'Failed to extract quotes.', true);
+    }
+  }
+
+  function handleCopyAll() {
+    if (!cachedResults.length) return;
+    const text = cachedResults.map((item) => item.phrase).join('\n');
+    navigator.clipboard.writeText(text);
+    showToast('Copied all phrases to clipboard');
+  }
+
+  dropzone.addEventListener('dragover', (event) => {
+    event.preventDefault();
+    dropzone.classList.add('dragover');
+  });
+
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+  dropzone.addEventListener('drop', (event) => {
+    event.preventDefault();
+    dropzone.classList.remove('dragover');
+    if (event.dataTransfer?.files?.length) {
+      fileInput.files = event.dataTransfer.files;
+    }
+  });
+
+  extractBtn.addEventListener('click', handleExtract);
+  copyBtn.addEventListener('click', handleCopyAll);
+</script>
+<%- include('../../views/partials/page-bottom') %>
