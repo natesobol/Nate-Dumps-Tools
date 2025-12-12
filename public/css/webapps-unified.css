@@ -44,6 +44,14 @@ a:hover {
   text-decoration: underline;
 }
 
+.text-muted,
+.muted,
+.helper-text,
+.eyebrow,
+.brand-tagline {
+  color: #ffffff !important;
+}
+
 main,
 .app-shell,
 .page,
@@ -216,6 +224,7 @@ p {
   display: grid;
   gap: 6px;
   opacity: 0;
+  color: #ffffff;
   pointer-events: none;
   transform: translateY(-4px);
   transition: opacity 0.15s ease, transform 0.15s ease;
@@ -233,12 +242,47 @@ p {
   transform: translateY(0);
 }
 
+.dropdown-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dropdown-heading {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #ffffff;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dropdown-icon {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 50%;
+  font-size: 12px;
+  border: 1px solid var(--border);
+}
+
+.dropdown-links-grid {
+  display: grid;
+  gap: 6px;
+}
+
 .dropdown-link,
 .dropdown-form button {
   width: 100%;
   background: transparent;
   border: none;
-  color: var(--text);
+  color: #ffffff;
   text-align: left;
   padding: 10px 12px;
   border-radius: 10px;

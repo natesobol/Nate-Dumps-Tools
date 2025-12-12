@@ -40,6 +40,14 @@ a:hover {
   text-decoration: underline;
 }
 
+.text-muted,
+.muted,
+.helper-text,
+.eyebrow,
+.brand-tagline {
+  color: #ffffff !important;
+}
+
 .site-header {
   display: flex;
   flex-direction: column;
@@ -198,6 +206,7 @@ a:hover {
   display: grid;
   gap: 6px;
   opacity: 0;
+  color: #ffffff;
   pointer-events: none;
   transform: translateY(-4px);
   transition: opacity 0.15s ease, transform 0.15s ease;
@@ -225,8 +234,23 @@ a:hover {
   font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: #ffffff;
   margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dropdown-icon {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 50%;
+  font-size: 12px;
+  border: 1px solid var(--border);
 }
 
 .dropdown-links-grid {
@@ -250,7 +274,7 @@ a:hover {
   width: 100%;
   background: transparent;
   border: none;
-  color: var(--text);
+  color: #ffffff;
   text-align: left;
   padding: 10px 12px;
   border-radius: 10px;
@@ -311,7 +335,7 @@ a:hover {
 }
 
 .lede {
-  color: var(--muted);
+  color: #ffffff;
   font-size: 18px;
 }
 

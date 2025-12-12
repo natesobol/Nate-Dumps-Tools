@@ -2,6 +2,7 @@
   const categories = [
     {
       title: 'Convert & Combine',
+      icon: '🔄',
       apps: [
         { slug: 'excel-to-json', label: 'Excel → JSON' },
         { slug: 'json-to-excel', label: 'JSON → Excel' },
@@ -17,6 +18,7 @@
     },
     {
       title: 'Cleanup & Editing',
+      icon: '🧹',
       apps: [
         { slug: 'find-and-replace', label: 'Find & Replace' },
         { slug: 'tabify-untabify', label: 'Tabify / Untabify' },
@@ -28,6 +30,7 @@
     },
     {
       title: 'Text Extraction',
+      icon: '✂️',
       apps: [
         { slug: 'batch-pdf-text-extractor', label: 'Batch PDF Text Extractor' },
         { slug: 'capitalized-phrase-extractor', label: 'Capitalized Phrase Extractor' },
@@ -45,6 +48,7 @@
     },
     {
       title: 'Lists & Tables',
+      icon: '📋',
       apps: [
         { slug: 'bullet-list-extractor', label: 'Bullet List Extractor' },
         { slug: 'delimited-text-extractor', label: 'Delimited Text Extractor' },
@@ -57,6 +61,7 @@
     },
     {
       title: 'Entities & Records',
+      icon: '🗂️',
       apps: [
         { slug: 'named-entity-extractor', label: 'Named Entity Extractor' },
         { slug: 'number-extractor', label: 'Number Extractor' },
@@ -72,6 +77,7 @@
     },
     {
       title: 'Links, Code & Metadata',
+      icon: '🔗',
       apps: [
         { slug: 'color-extractor', label: 'Color Extractor' },
         { slug: 'file-path-extractor', label: 'File Path Extractor' },
@@ -89,6 +95,7 @@
     },
     {
       title: 'Downloads & Media',
+      icon: '📥',
       apps: [
         { slug: 'audio-only-extractor', label: 'Audio Only Extractor' },
         { slug: 'podcast-episode-downloader', label: 'Podcast Episode Downloader' },
@@ -96,22 +103,39 @@
         { slug: 'youtube-playlist-downloader', label: 'YouTube Playlist Downloader' },
         { slug: 'VimeoVideoDownloader', label: 'Vimeo Video Downloader' },
         { slug: 'facebook-reel-downloader', label: 'Facebook Reel Downloader' },
-        { slug: 'TikTokDownloader', label: 'TikTok Downloader' },
         { slug: 'powerpoint-image-extractor', label: 'PowerPoint Image Extractor' },
         { slug: 'powerpoint-slide-exporter', label: 'PowerPoint Slide Exporter' },
       ],
     },
   ];
 
+  const rootIndexSlugs = new Set([
+    'csv-xml-converter',
+    'excel-to-json',
+    'highlighted-text-extractor',
+    'xml-json-translator',
+    'yaml-json-converter',
+  ]);
+
+  const customPaths = {};
+
   function getBasePath() {
     const segments = window.location.pathname.split('/').filter(Boolean);
     const repoIndex = segments.indexOf('Nates-Free-Tools');
-    return repoIndex !== -1 ? `/${segments.slice(0, repoIndex + 1).join('/')}` : '';
+    return repoIndex !== -1 ? `/${segments.slice(0, repoIndex + 1).join('/')}` : '.';
+  }
+
+  function getAppPath(slug) {
+    if (customPaths[slug]) return customPaths[slug];
+    const folder = rootIndexSlugs.has(slug) ? 'index.html' : 'wwwroot/index.html';
+    return `apps/${slug}/${folder}`;
   }
 
   function buildLink(basePath, slug) {
     const normalizedBase = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath;
-    return `${normalizedBase}/${slug}`;
+    const appPath = getAppPath(slug);
+    const normalizedPath = appPath.startsWith('/') ? appPath.slice(1) : appPath;
+    return `${normalizedBase}/${normalizedPath}`;
   }
 
   function buildMenu(basePath = getBasePath()) {
@@ -123,7 +147,7 @@
 
         return `
 <section class="dropdown-group">
-  <div class="dropdown-heading">${category.title}</div>
+  <div class="dropdown-heading"><span class="dropdown-icon" aria-hidden="true">${category.icon || ''}</span>${category.title}</div>
   <div class="dropdown-links-grid">${links}</div>
 </section>`;
       })
