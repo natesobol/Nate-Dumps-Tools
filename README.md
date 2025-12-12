@@ -19,6 +19,7 @@ A starter website for hosting webapps with monetization in mind. It provides a h
 - Multi-CSV Column Merger: `/apps/multi-csv-column-merger/wwwroot/index.html`
 - Phone Number Extractor: `/apps/phone-number-extractor/wwwroot/index.html`
 - PDF Link Extractor: `/apps/pdf-link-extractor/wwwroot/index.html`
+- Resume Contact Info Extractor: `/apps/resume-contact-extractor/wwwroot/index.html`
 - Dynamic features (login, admin, server-backed Excel conversion) require running the Node.js server locally or on a host that supports server-side rendering.
 
 ## Features
@@ -132,6 +133,22 @@ Located in `apps/phone-number-extractor/`, this C# minimal API scans Excel or CS
 **Run locally:**
 ```bash
 cd apps/phone-number-extractor
+dotnet run
+```
+
+### Resume Contact Info Extractor
+Located in `apps/resume-contact-extractor/`, this ASP.NET Core static webapp pulls recruiting-ready contacts from resume uploads.
+
+**Features:**
+- Upload PDFs, DOCX files, and other text-friendly resume formats in bulk
+- Browser-only parsing with pdf.js and Mammoth for quick, private processing
+- Detects name candidates, email, phone numbers, plus LinkedIn and GitHub profile links
+- Optional deduplication by email
+- Export the full contact list to CSV in one click
+
+**Run locally:**
+```bash
+cd apps/resume-contact-extractor
 dotnet run
 ```
 

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Resume Contact Info Extractor</title>
+    <link rel="stylesheet" href="../../../public/css/webapp-theme.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.3.136/pdf.min.js" integrity="sha512-yErfCh3RIf4M6eR9R28rAAM6KVnvmSBczVmiqm9SA8yYI+qzj2M1yKcFYR3AsLVsaEZvYtvmO0sOS9TiZknbGg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.9/mammoth.browser.min.js" integrity="sha512-wtaEuOblo+hdjzIDR5oScFiE8b6zqCYnXbeTbOJm/3dB4Blb9yvzyziYvwLymjzGV4ltY5dGvUkNwyd7+qeEhw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+    <main class="container">
+        <header>
+            <p class="eyebrow">Recruiting operations</p>
+            <h1>Resume Contact Info Extractor</h1>
+            <p>Upload stacks of resumes in PDF, DOCX, TXT, or other text-friendly formats and instantly capture name, email, phone, LinkedIn, and GitHub details.</p>
+            <p class="hint">Perfect for HR and recruiting pipelines: keep candidates organized and export everything to a spreadsheet with one click.</p>
+        </header>
+
+        <section class="card">
+            <form id="extract-form">
+                <label for="resumeFiles">Upload resume files</label>
+                <input id="resumeFiles" name="files" type="file" multiple accept=".pdf,.doc,.docx,.txt,.rtf,.md,.csv,.json" required />
+                <p class="hint small">All processing happens in your browser. Large PDFs and scanned images may take longer to process and are skipped if text cannot be detected.</p>
+
+                <div class="grid">
+                    <div>
+                        <label for="fallbackName">Fallback name (optional)</label>
+                        <input id="fallbackName" type="text" placeholder="Use when a resume has no obvious name" />
+                        <p class="hint small">Used only when we cannot infer a name from the document.</p>
+                    </div>
+                    <div>
+                        <label for="enableDedupe" class="checkbox">
+                            <input id="enableDedupe" type="checkbox" checked />
+                            <span>Deduplicate by email before exporting</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="primary">Extract contact info</button>
+            </form>
+        </section>
+
+        <section class="card" id="results" hidden>
+            <div class="grid">
+                <div>
+                    <h2>Extracted contacts</h2>
+                    <p id="summary" class="hint"></p>
+                </div>
+                <div class="actions" style="text-align: right;">
+                    <button id="downloadCsv" class="secondary" disabled>Export to CSV</button>
+                </div>
+            </div>
+            <div id="errors" class="alert" hidden></div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>File</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>LinkedIn</th>
+                            <th>GitHub</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-body"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const form = document.getElementById('extract-form');
+        const resultsSection = document.getElementById('results');
+        const resultsBody = document.getElementById('results-body');
+        const summary = document.getElementById('summary');
+        const errorBox = document.getElementById('errors');
+        const downloadCsvButton = document.getElementById('downloadCsv');
+        const fallbackNameInput = document.getElementById('fallbackName');
+        const dedupeCheckbox = document.getElementById('enableDedupe');
+
+        let extracted = [];
+
+        if (window['pdfjsLib']) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.3.136/pdf.worker.min.js';
+        }
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const files = document.getElementById('resumeFiles').files;
+
+            if (!files.length) {
+                return;
+            }
+
+            summary.textContent = 'Working…';
+            resultsBody.innerHTML = '';
+            errorBox.hidden = true;
+            resultsSection.hidden = false;
+            downloadCsvButton.disabled = true;
+            extracted = [];
+
+            const errors = [];
+            for (const file of files) {
+                try {
+                    const text = await readFileText(file);
+                    if (!text || !text.trim()) {
+                        throw new Error('No readable text found');
+                    }
+                    const contact = extractContact(text, fallbackNameInput.value.trim());
+                    extracted.push({ file: file.name, ...contact });
+                } catch (error) {
+                    errors.push(`${file.name}: ${error.message}`);
+                }
+            }
+
+            if (dedupeCheckbox.checked) {
+                extracted = dedupeByEmail(extracted);
+            }
+
+            renderResults(extracted, errors);
+        });
+
+        async function readFileText(file) {
+            const extension = file.name.split('.').pop().toLowerCase();
+            const buffer = await file.arrayBuffer();
+
+            if (extension === 'pdf') {
+                if (!window['pdfjsLib']) throw new Error('PDF parser not loaded');
+                const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+                let text = '';
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const content = await page.getTextContent();
+                    text += content.items.map((item) => item.str).join(' ') + '\n';
+                }
+                return text;
+            }
+
+            if (extension === 'docx') {
+                const result = await window.mammoth.extractRawText({ arrayBuffer: buffer });
+                return result.value;
+            }
+
+            const decoder = new TextDecoder('utf-8', { fatal: false });
+            return decoder.decode(buffer);
+        }
+
+        function extractContact(text, fallbackName) {
+            const normalized = text.replace(/\r/g, '\n');
+            const emailMatch = normalized.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi);
+            const phoneMatch = normalized.match(/(?:(?:\+?\d{1,3}[\s.-]?)?(?:\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}))/g);
+            const linkedInMatch = normalized.match(/https?:\/\/(?:[\w-]+\.)?linkedin\.com\/[A-Za-z0-9#_\-\/]+/gi);
+            const githubMatch = normalized.match(/https?:\/\/(?:www\.)?github\.com\/[A-Za-z0-9_.-]+/gi);
+
+            const lines = normalized
+                .split(/\n+/)
+                .map((line) => line.trim())
+                .filter(Boolean);
+
+            const probableName = lines.find((line) => {
+                if (!line) return false;
+                const containsContact =
+                    /@|http|linkedin\.com|github\.com|\d{3}[^\d]*\d{3}[^\d]*\d{4}/i.test(line);
+                const tokenCount = line.split(/\s+/).length;
+                const looksName = /^[A-Z][A-Za-z.'-]+(\s+[A-Z][A-Za-z.'-]+){0,3}$/.test(line);
+                return !containsContact && tokenCount <= 5 && looksName;
+            });
+
+            return {
+                name: probableName || fallbackName || '',
+                email: emailMatch ? emailMatch[0] : '',
+                phone: phoneMatch ? phoneMatch[0] : '',
+                linkedIn: linkedInMatch ? linkedInMatch[0] : '',
+                github: githubMatch ? githubMatch[0] : ''
+            };
+        }
+
+        function dedupeByEmail(rows) {
+            const seen = new Set();
+            return rows.filter((row) => {
+                const emailKey = row.email.toLowerCase();
+                if (!emailKey) return true;
+                if (seen.has(emailKey)) return false;
+                seen.add(emailKey);
+                return true;
+            });
+        }
+
+        function renderResults(rows, errors) {
+            resultsBody.innerHTML = '';
+            rows.forEach((row) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${row.file}</td>
+                    <td>${row.name || '<span class="hint">(not found)</span>'}</td>
+                    <td>${row.email ? `<code>${row.email}</code>` : '<span class="hint">—</span>'}</td>
+                    <td>${row.phone ? `<code>${row.phone}</code>` : '<span class="hint">—</span>'}</td>
+                    <td>${row.linkedIn ? `<a href="${row.linkedIn}" target="_blank">Profile</a>` : '<span class="hint">—</span>'}</td>
+                    <td>${row.github ? `<a href="${row.github}" target="_blank">Profile</a>` : '<span class="hint">—</span>'}</td>
+                `;
+                resultsBody.appendChild(tr);
+            });
+
+            summary.textContent = `${rows.length} contact record${rows.length === 1 ? '' : 's'} ready.`;
+            resultsSection.hidden = false;
+            downloadCsvButton.disabled = !rows.length;
+
+            if (errors.length) {
+                errorBox.hidden = false;
+                errorBox.textContent = errors.join(' | ');
+            } else {
+                errorBox.hidden = true;
+            }
+        }
+
+        downloadCsvButton.addEventListener('click', () => {
+            if (!extracted.length) return;
+            const header = ['File', 'Name', 'Email', 'Phone', 'LinkedIn', 'GitHub'];
+            const rows = extracted.map((row) => [
+                row.file,
+                row.name,
+                row.email,
+                row.phone,
+                row.linkedIn,
+                row.github
+            ]);
+
+            const csv = [header, ...rows]
+                .map((cols) => cols.map((value) => `"${(value || '').replace(/"/g, '""')}"`).join(','))
+                .join('\n');
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'resume-contacts.csv';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        });
+    </script>
+</body>
+</html>
