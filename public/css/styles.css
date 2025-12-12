@@ -14,6 +14,8 @@
   --radius: 12px;
   --shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
   --shadow-soft: 0 12px 24px rgba(0, 0, 0, 0.18);
+  --content-gutter: max(24px, calc((100vw - 1200px) / 2 + 24px));
+  --account-gap: clamp(10vw, 15vw, 20vw);
 }
 
 * {
@@ -42,10 +44,9 @@ a:hover {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 20px 32px 18px;
+  padding: 16px 0 18px;
   justify-content: space-between;
-  align-items: center;
-  padding: 24px 32px;
+  align-items: stretch;
   position: sticky;
   top: 0;
   background: rgba(11, 16, 33, 0.9);
@@ -57,8 +58,11 @@ a:hover {
 .header-top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 16px;
+  width: 100%;
+  padding-left: var(--content-gutter);
+  padding-right: var(--account-gap);
 }
 
 .brand {
@@ -112,6 +116,8 @@ a:hover {
   gap: 12px;
   align-items: center;
   flex-wrap: wrap;
+  width: 100%;
+  padding: 0 var(--content-gutter);
 }
 
 .nav-link {
@@ -236,6 +242,7 @@ a:hover {
 
 .user-dropdown {
   margin-left: auto;
+  margin-right: 0;
 }
 
 .user-label {
