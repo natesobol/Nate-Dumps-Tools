@@ -192,6 +192,20 @@ Located in `apps/powerpoint-to-pdf/`, this tool uses LibreOffice through the Nod
 **Server Route:** `/powerpoint-to-pdf`
 **Static Version:** `/apps/powerpoint-to-pdf/wwwroot/index.html`
 
+### PowerPoint Slide Exporter
+Located in `apps/powerpoint-slide-exporter/`, this .NET 8 webapp converts each slide to PNG images or HTML snippets using LibreOffice.
+
+**Features:**
+- Upload `.ppt` or `.pptx` files
+- Choose PNG, HTML, or both outputs bundled into a single zip
+- Clear guidance when LibreOffice is missing locally
+
+**Run locally:**
+```bash
+cd apps/powerpoint-slide-exporter
+dotnet run
+```
+
 ## Project Structure
 
 ```
