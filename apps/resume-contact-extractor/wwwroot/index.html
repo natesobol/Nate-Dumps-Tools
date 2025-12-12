@@ -1,15 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script id="asset-base-loader">
+      (function() {
+        const segments = window.location.pathname.split('/').filter(Boolean);
+        const repoIndex = segments.indexOf('Nates-Free-Tools');
+        const baseHref = repoIndex !== -1 ? '/' + segments.slice(0, repoIndex + 1).join('/') + '/' : '/';
+        let baseTag = document.querySelector('base');
+        if (!baseTag) {
+          baseTag = document.createElement('base');
+          document.head.prepend(baseTag);
+        }
+        baseTag.href = baseHref;
+      })();
+    </script>
+
+    <link rel="stylesheet" href="css/webapps-unified.css" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Resume Contact Info Extractor</title>
-    <link rel="stylesheet" href="/css/styles.css" />
-
-    <link rel="stylesheet" href="/css/webapp-theme.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.3.136/pdf.min.js" integrity="sha512-yErfCh3RIf4M6eR9R28rAAM6KVnvmSBczVmiqm9SA8yYI+qzj2M1yKcFYR3AsLVsaEZvYtvmO0sOS9TiZknbGg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.9/mammoth.browser.min.js" integrity="sha512-wtaEuOblo+hdjzIDR5oScFiE8b6zqCYnXbeTbOJm/3dB4Blb9yvzyziYvwLymjzGV4ltY5dGvUkNwyd7+qeEhw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script src="/js/site-chrome.js" defer></script>
+  <script src="js/site-chrome.js" defer></script>
 </head>
 <body>
     <main class="container">

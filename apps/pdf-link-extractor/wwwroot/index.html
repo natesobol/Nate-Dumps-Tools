@@ -1,6 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <script id="asset-base-loader">
+      (function() {
+        const segments = window.location.pathname.split('/').filter(Boolean);
+        const repoIndex = segments.indexOf('Nates-Free-Tools');
+        const baseHref = repoIndex !== -1 ? '/' + segments.slice(0, repoIndex + 1).join('/') + '/' : '/';
+        let baseTag = document.querySelector('base');
+        if (!baseTag) {
+          baseTag = document.createElement('base');
+          document.head.prepend(baseTag);
+        }
+        baseTag.href = baseHref;
+      })();
+    </script>
+
+    <link rel="stylesheet" href="css/webapps-unified.css" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PDF Link Extractor | Monetize Hub Tools</title>
@@ -10,8 +25,6 @@
       integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
       crossorigin="anonymous"
     />
-    <link rel="stylesheet" href="/css/styles.css" />
-    <link rel="stylesheet" href="/css/webapp-theme.css" />
     <style>
       .drop-zone {
         border: 2px dashed var(--border-subtle);
@@ -61,7 +74,7 @@
         font-size: 0.85rem;
       }
     </style>
-    <script src="/js/site-chrome.js" defer></script>
+    <script src="js/site-chrome.js" defer></script>
 </head>
   <body class="tool-page">
     <header class="site-header">
@@ -356,7 +369,21 @@
             return `<li><a href="${entry.url}" target="_blank" rel="noopener">${entry.url}</a><br /><small>File: ${entry.fileName} · Pages: ${pages} · Sources: ${sources}</small></li>`;
           })
           .join("\n");
-        const html = `<!DOCTYPE html><html><head><meta charset="UTF-8" /><title>PDF Links</title></head><body><h1>Extracted PDF Links</h1><ol>${items}</ol></body></html>`;
+        const html = `<!DOCTYPE html><html><head>
+    <script id="asset-base-loader">
+      (function() {
+        const segments = window.location.pathname.split('/').filter(Boolean);
+        const repoIndex = segments.indexOf('Nates-Free-Tools');
+        const baseHref = repoIndex !== -1 ? '/' + segments.slice(0, repoIndex + 1).join('/') + '/' : '/';
+        let baseTag = document.querySelector('base');
+        if (!baseTag) {
+          baseTag = document.createElement('base');
+          document.head.prepend(baseTag);
+        }
+        baseTag.href = baseHref;
+      })();
+    </script>
+<meta charset="UTF-8" /><title>PDF Links</title></head><body><h1>Extracted PDF Links</h1><ol>${items}</ol></body></html>`;
         downloadFile("pdf-links.html", html);
       }
 
