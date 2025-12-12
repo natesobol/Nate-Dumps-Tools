@@ -210,17 +210,19 @@ Located in `apps/powerpoint-to-pdf/`, this tool uses LibreOffice through the Nod
 **Server Route:** `/powerpoint-to-pdf`
 **Static Version:** `/apps/powerpoint-to-pdf/wwwroot/index.html`
 
-### PowerPoint Image Extractor
-Located in `apps/powerpoint-image-extractor/`, this .NET 8 minimal API pulls every embedded image from `.pptx` decks and returns them as a single ZIP download.
+### PowerPoint Slide Exporter
+Located in `apps/powerpoint-slide-exporter/`, this .NET 8 webapp converts each slide to PNG images or HTML snippets using LibreOffice.
 
 **Features:**
-- Accepts `.pptx` uploads up to 50 MB
-- Filters media from the `ppt/media` folder and keeps common image formats
-- Deduplicates filenames by numbering duplicates for easier review
-- Responds with clear JSON errors for invalid presentations or missing images
+- Upload `.ppt` or `.pptx` files
+- Choose PNG, HTML, or both outputs bundled into a single zip
+- Clear guidance when LibreOffice is missing locally
 
-**Server Route:** `/powerpoint-image-extractor`
-**Static Version:** `/apps/powerpoint-image-extractor/wwwroot/index.html`
+**Run locally:**
+```bash
+cd apps/powerpoint-slide-exporter
+dotnet run
+```
 
 ## Project Structure
 
