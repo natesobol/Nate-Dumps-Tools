@@ -613,6 +613,64 @@ textarea:focus {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
 }
 
+.translator-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+  margin-top: 12px;
+}
+
+.translator-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.pill {
+  background: rgba(108, 240, 194, 0.12);
+  color: var(--accent);
+  border: 1px solid rgba(108, 240, 194, 0.4);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-weight: 600;
+}
+
+.conversion-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.drop-target {
+  border: 1px dashed var(--border);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.drop-target.is-dragover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(108, 240, 194, 0.2);
+}
+
+.translator-card .code-block {
+  min-height: 180px;
+  background: #0f172a;
+}
+
+.output-label {
+  font-weight: 600;
+}
+
 .code-block {
   width: 100%;
   background: #0f172a;

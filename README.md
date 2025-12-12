@@ -49,6 +49,18 @@ Located in `apps/excel-to-json/`, this webapp converts Excel spreadsheets to JSO
 **Server Route:** `/excel-to-json`  
 **Static Version:** `/apps/excel-to-json/index.html`
 
+### XML/JSON Translator
+Located in `apps/xml-json-translator/`, this browser-based translator converts XML snippets to JSON or reverses JSON back to
+XML without any uploads.
+
+**Features:**
+- Paste or drag-and-drop XML and JSON payloads
+- Handles attributes and repeated elements with array-friendly output
+- Converts entirely in the browser for quick tickets, demos, or docs
+
+**Server Route:** `/xml-json-translator`
+**Static Version:** `/apps/xml-json-translator/index.html`
+
 ### JSON Combiner
 Located in `apps/json-combiner/`, this C# .NET minimal API webapp combines multiple JSON files.
 

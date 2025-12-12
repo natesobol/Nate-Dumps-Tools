@@ -1,0 +1,262 @@
+<%- include('partials/page-top') %>
+<section class="tool-hero">
+  <div>
+    <p class="eyebrow">XML/JSON Translator</p>
+    <h1>Drop XML or JSON and get a clean translation instantly.</h1>
+    <p class="lede">
+      The desktop XML To JSON Converter Software from sobolsoft.com is great for batch files. This browser-friendly version
+      keeps the same spirit for quick snippets: paste or drop your payload, toggle the direction, and ship a ready-to-use
+      JSON or XML response without installing anything.
+    </p>
+    <ul class="trust-points">
+      <li>Drag-and-drop friendly editor that respects attributes, text nodes, and repeated elements.</li>
+      <li>Round-trip support so you can validate XML → JSON and JSON → XML in one place.</li>
+      <li>Runs entirely in the browser — no uploads, servers, or storage involved.</li>
+    </ul>
+  </div>
+  <div class="converter-card">
+    <h2>Quick actions</h2>
+    <p class="help-text">Use the buttons below to translate whichever pane you are working in.</p>
+    <div class="conversion-actions">
+      <button id="xmlToJsonBtn" class="button primary btn btn-primary btn-modern full-width">Convert XML → JSON</button>
+      <button id="jsonToXmlBtn" class="button secondary btn btn-dark btn-modern full-width">Convert JSON → XML</button>
+    </div>
+    <p class="help-text" id="translatorStatus" role="status" aria-live="polite"></p>
+  </div>
+</section>
+
+<section class="translator-layout">
+  <div class="translator-card">
+    <div class="card-header">
+      <div>
+        <p class="eyebrow">XML input</p>
+        <h3>Drop XML and translate to JSON</h3>
+      </div>
+      <span class="pill">XML → JSON</span>
+    </div>
+    <textarea
+      id="xmlInput"
+      class="code-block drop-target"
+      rows="14"
+      placeholder="<order id=\"SO-1023\">\n  <customer>Acme Industries</customer>\n  <item sku=\"A100\" quantity=\"2\">Widget</item>\n  <item sku=\"B350\" quantity=\"1\">Gadget</item>\n</order>"
+    ></textarea>
+    <p class="help-text">Paste XML or drop a snippet to start. Attributes and nested elements are preserved.</p>
+    <label class="output-label" for="jsonOutput">JSON output</label>
+    <textarea id="jsonOutput" class="code-block" rows="12" readonly>{
+  "order": {
+    "_attributes": { "id": "SO-1023" },
+    "customer": "Acme Industries",
+    "item": [
+      { "_attributes": { "sku": "A100", "quantity": "2" }, "_text": "Widget" },
+      { "_attributes": { "sku": "B350", "quantity": "1" }, "_text": "Gadget" }
+    ]
+  }
+}</textarea>
+  </div>
+
+  <div class="translator-card">
+    <div class="card-header">
+      <div>
+        <p class="eyebrow">JSON input</p>
+        <h3>Drop JSON and translate to XML</h3>
+      </div>
+      <span class="pill">JSON → XML</span>
+    </div>
+    <textarea
+      id="jsonInput"
+      class="code-block drop-target"
+      rows="14"
+      placeholder="{\n  \"order\": {\n    \"_attributes\": { \"id\": \"SO-1023\" },\n    \"customer\": \"Acme Industries\",\n    \"item\": [\n      { \"_attributes\": { \"sku\": \"A100\", \"quantity\": \"2\" }, \"_text\": \"Widget\" },\n      { \"_attributes\": { \"sku\": \"B350\", \"quantity\": \"1\" }, \"_text\": \"Gadget\" }\n    ]\n  }\n}"
+    ></textarea>
+    <p class="help-text">Supply JSON with a single root key. Arrays and attributes are supported via the <code>_attributes</code> field.</p>
+    <label class="output-label" for="xmlOutput">XML output</label>
+    <textarea id="xmlOutput" class="code-block" rows="12" readonly><?xml version="1.0" encoding="UTF-8"?>
+<order id="SO-1023">
+  <customer>Acme Industries</customer>
+  <item sku="A100" quantity="2">Widget</item>
+  <item sku="B350" quantity="1">Gadget</item>
+</order></textarea>
+  </div>
+</section>
+
+<section class="seo-content">
+  <h2>Reliable translations for API payloads and integrations</h2>
+  <p>
+    Copy/paste converters are a common workflow for teams cleaning webhook responses or exporting data to tools that expect a
+    different format. This translator mirrors the flexibility of Sobolsoft's desktop utility while staying lightweight enough
+    for support tickets, QA steps, or quick documentation updates.
+  </p>
+  <p>
+    The JSON structure supports attributes (<code>_attributes</code>) and text nodes (<code>_text</code>) so you can keep
+    fidelity when moving between schemas. Arrays are handled automatically when the same element appears more than once.
+  </p>
+  <h3>Usage tips</h3>
+  <ul class="checklist">
+    <li>Drag files, log output, or code samples directly into either pane — no file picker required.</li>
+    <li>Keep one root key in JSON to produce predictable XML with a matching root element.</li>
+    <li>Copy the outputs to your clipboard for API clients, test fixtures, or support replies.</li>
+  </ul>
+</section>
+
+<script>
+  (() => {
+    const xmlInput = document.getElementById('xmlInput');
+    const jsonInput = document.getElementById('jsonInput');
+    const jsonOutput = document.getElementById('jsonOutput');
+    const xmlOutput = document.getElementById('xmlOutput');
+    const xmlToJsonBtn = document.getElementById('xmlToJsonBtn');
+    const jsonToXmlBtn = document.getElementById('jsonToXmlBtn');
+    const status = document.getElementById('translatorStatus');
+
+    const setStatus = (message, isError = false) => {
+      status.textContent = message;
+      status.className = isError ? 'flash flash-error' : 'flash flash-success';
+    };
+
+    const setDragTarget = (element) => {
+      element.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        element.classList.add('is-dragover');
+      });
+
+      element.addEventListener('dragleave', () => {
+        element.classList.remove('is-dragover');
+      });
+
+      element.addEventListener('drop', (event) => {
+        event.preventDefault();
+        const text = event.dataTransfer.getData('text');
+        if (text) {
+          element.value = text.trim();
+          setStatus('Dropped content into the converter. Choose a direction to translate.');
+        }
+        element.classList.remove('is-dragover');
+      });
+    };
+
+    [xmlInput, jsonInput].forEach(setDragTarget);
+
+    const xmlNodeToObject = (node) => {
+      const obj = {};
+
+      if (node.attributes && node.attributes.length > 0) {
+        obj._attributes = {};
+        Array.from(node.attributes).forEach((attr) => {
+          obj._attributes[attr.name] = attr.value;
+        });
+      }
+
+      const elementChildren = Array.from(node.children);
+      if (elementChildren.length === 0) {
+        const text = node.textContent.trim();
+        if (text && Object.keys(obj).length > 0) {
+          obj._text = text;
+          return obj;
+        }
+        return Object.keys(obj).length > 0 ? obj : text;
+      }
+
+      elementChildren.forEach((child) => {
+        const childObj = xmlNodeToObject(child);
+        const tag = child.nodeName;
+
+        if (obj[tag]) {
+          if (!Array.isArray(obj[tag])) {
+            obj[tag] = [obj[tag]];
+          }
+          obj[tag].push(childObj);
+        } else {
+          obj[tag] = childObj;
+        }
+      });
+
+      return obj;
+    };
+
+    const convertXmlToJson = () => {
+      try {
+        const xmlString = xmlInput.value.trim();
+        if (!xmlString) {
+          setStatus('Add XML to convert.', true);
+          return;
+        }
+        const parser = new DOMParser();
+        const dom = parser.parseFromString(xmlString, 'application/xml');
+        const parseError = dom.querySelector('parsererror');
+        if (parseError) {
+          throw new Error(parseError.textContent || 'Unable to parse XML.');
+        }
+        const root = dom.documentElement;
+        const jsonObj = { [root.nodeName]: xmlNodeToObject(root) };
+        jsonOutput.value = JSON.stringify(jsonObj, null, 2);
+        setStatus('Converted XML to JSON. Copy the output or translate back to XML.');
+      } catch (error) {
+        setStatus(error.message || 'Could not convert XML.', true);
+      }
+    };
+
+    const escapeXml = (value) =>
+      String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+
+    const objectToXml = (value, nodeName) => {
+      if (Array.isArray(value)) {
+        return value.map((entry) => objectToXml(entry, nodeName)).join('');
+      }
+
+      if (value !== null && typeof value === 'object') {
+        const { _attributes = {}, _text, ...children } = value;
+        const attrString = Object.entries(_attributes)
+          .map(([key, attrValue]) => ` ${key}="${escapeXml(attrValue)}"`)
+          .join('');
+
+        const childXml = Object.entries(children)
+          .map(([childName, childValue]) => objectToXml(childValue, childName))
+          .join('');
+
+        if (!_text && !childXml) {
+          return `<${nodeName}${attrString}/>`;
+        }
+
+        const textContent = _text ? escapeXml(_text) : '';
+        return `<${nodeName}${attrString}>${textContent}${childXml}</${nodeName}>`;
+      }
+
+      return `<${nodeName}>${escapeXml(value)}</${nodeName}>`;
+    };
+
+    const convertJsonToXml = () => {
+      try {
+        const jsonString = jsonInput.value.trim();
+        if (!jsonString) {
+          setStatus('Add JSON to convert.', true);
+          return;
+        }
+        const parsed = JSON.parse(jsonString);
+        if (typeof parsed !== 'object' || parsed === null) {
+          throw new Error('Please provide a JSON object with one root key.');
+        }
+
+        const entries = Object.entries(parsed);
+        if (entries.length === 0) {
+          throw new Error('JSON needs at least one root element.');
+        }
+
+        const [rootName, rootValue] = entries[0];
+        const xmlBody = objectToXml(rootValue, rootName);
+        xmlOutput.value = `<?xml version="1.0" encoding="UTF-8"?>\n${xmlBody}`;
+        setStatus('Converted JSON to XML. Copy the output or drop XML to translate back.');
+      } catch (error) {
+        setStatus(error.message || 'Could not convert JSON.', true);
+      }
+    };
+
+    xmlToJsonBtn.addEventListener('click', convertXmlToJson);
+    jsonToXmlBtn.addEventListener('click', convertJsonToXml);
+  })();
+</script>
+<%- include('partials/page-bottom') %>
