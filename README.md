@@ -12,6 +12,7 @@ A starter website for hosting webapps with monetization in mind. It provides a h
   - CSV/XML Converter: `/apps/csv-xml-converter/index.html`
   - PDF Splitter: `/apps/pdf-splitter/wwwroot/index.html`
   - PowerPoint → PDF: `/apps/powerpoint-to-pdf/wwwroot/index.html`
+  - JSON to Excel Creator: `/apps/json-to-excel/wwwroot/index.html`
 - Dynamic features (login, admin, server-backed Excel conversion) require running the Node.js server locally or on a host that supports server-side rendering.
 
 ## Features
@@ -172,9 +173,13 @@ apps/
 │   ├── src/routes/         # Express route handling uploads and conversion
 │   ├── wwwroot/            # Static UI assets
 │   └── README.md
-└── json-combiner/          # C# JSON combiner webapp
-    ├── wwwroot/            # Static web files
-    ├── Program.cs          # Main application
+├── json-combiner/          # C# JSON combiner webapp
+│   ├── wwwroot/            # Static web files
+│   ├── Program.cs          # Main application
+│   └── README.md
+└── json-to-excel/          # C# JSON → Excel creator
+    ├── wwwroot/            # Static UI assets
+    ├── Program.cs          # Minimal API and converter
     └── README.md
 ```
 
@@ -183,7 +188,7 @@ apps/
 - Supabase for user data with SQLite session storage
 - EJS for server-rendered views
 - Helmet and secure session defaults for baseline security
-- C# .NET (JSON Combiner and PDF Splitter webapps)
+- C# .NET (JSON Combiner, JSON to Excel, and PDF Splitter webapps)
 
 ## Notes
 - User passwords are managed by Supabase Auth
