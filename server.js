@@ -56,6 +56,10 @@ app.use(
 );
 app.use('/number-extractor', express.static(path.join(__dirname, 'apps/number-extractor/wwwroot')));
 app.use('/image-path-extractor', express.static(path.join(__dirname, 'apps/image-path-extractor/wwwroot')));
+app.use(
+  '/image-caption-alt-extractor',
+  express.static(path.join(__dirname, 'apps/image-caption-alt-extractor/wwwroot'))
+);
 app.use('/file-path-extractor', express.static(path.join(__dirname, 'apps/file-path-extractor/wwwroot')));
 app.use(
   '/hashtag-mention-extractor',

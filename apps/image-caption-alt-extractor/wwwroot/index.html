@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script id="asset-base-loader">
+      (function () {
+        const segments = window.location.pathname.split('/').filter(Boolean);
+        const repoIndex = segments.indexOf('Nates-Free-Tools');
+        const baseHref = repoIndex !== -1 ? '/' + segments.slice(0, repoIndex + 1).join('/') + '/' : '/';
+        let baseTag = document.querySelector('base');
+        if (!baseTag) {
+          baseTag = document.createElement('base');
+          document.head.prepend(baseTag);
+        }
+        baseTag.href = baseHref;
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Extract Image Captions & Alt Text</title>
+    <link rel="stylesheet" href="css/webapps-unified.css" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0b1224;
+        --card: #0f172a;
+        --border: #1f2937;
+        --muted: #94a3b8;
+        --accent: #22c55e;
+        --accent-strong: #16a34a;
+        --text: #e2e8f0;
+      }
+
+      body {
+        margin: 0;
+        font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: radial-gradient(circle at 20% 20%, rgba(34, 197, 94, 0.12), transparent 25%),
+          radial-gradient(circle at 80% 0%, rgba(16, 163, 74, 0.1), transparent 22%),
+          var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 32px 16px 64px;
+      }
+
+      main {
+        max-width: 1100px;
+        margin: 0 auto;
+        display: grid;
+        gap: 18px;
+      }
+
+      .card {
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 10px 35px rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(10px);
+      }
+
+      h1 {
+        margin: 0 0 6px;
+        font-size: clamp(28px, 4vw, 42px);
+      }
+
+      .lede {
+        color: var(--muted);
+        margin: 0 0 12px;
+      }
+
+      .pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        color: var(--muted);
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: rgba(148, 163, 184, 0.08);
+        font-size: 14px;
+      }
+
+      .controls {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+        color: #0b1224;
+        font-weight: 700;
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+        box-shadow: 0 10px 30px rgba(22, 163, 74, 0.35);
+      }
+
+      .button.secondary {
+        background: rgba(148, 163, 184, 0.14);
+        color: var(--text);
+        border: 1px solid var(--border);
+        box-shadow: none;
+      }
+
+      .dropzone {
+        border: 1.5px dashed rgba(148, 163, 184, 0.4);
+        border-radius: 14px;
+        padding: 18px;
+        text-align: center;
+        color: var(--muted);
+        background: rgba(148, 163, 184, 0.08);
+        transition: border-color 120ms ease, background 120ms ease;
+      }
+
+      .dropzone.dragover {
+        border-color: var(--accent);
+        background: rgba(34, 197, 94, 0.14);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 10px 8px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      th {
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      .path {
+        color: #4ade80;
+        word-break: break-all;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 200px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: rgba(15, 23, 42, 0.6);
+        color: var(--text);
+        padding: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="card">
+        <h1>Extract All Image Captions & Alt Text</h1>
+        <p class="lede">
+          Scan HTML, Markdown, Word docs, or PDFs for image references, alt tags, and captions. Export to CSV, TXT,
+          or previewable HTML for accessibility and SEO audits.
+        </p>
+        <div class="pill-row">
+          <span class="pill">.html / .md / .docx / .pdf</span>
+          <span class="pill">CSV, TXT, or HTML exports</span>
+          <span class="pill">Skip blanks option</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="controls">
+          <label class="button">
+            <input id="file-input" type="file" accept=".html,.htm,.md,.markdown,.docx,.pdf" multiple />
+            <span>Choose files</span>
+          </label>
+          <label><input type="checkbox" id="skip-empty" /> Only include entries with caption or alt text</label>
+          <select id="export-format">
+            <option value="csv">Export CSV</option>
+            <option value="txt">Export TXT</option>
+            <option value="html">Preview HTML</option>
+          </select>
+          <button class="button secondary" id="download">Download</button>
+        </div>
+        <div id="dropzone" class="dropzone" aria-label="Drop files here">Drop files here or click Choose files</div>
+        <p class="muted" id="status">Waiting for files...</p>
+      </section>
+
+      <section class="card" id="results" style="display: none">
+        <div class="controls">
+          <div class="pill">Total entries: <span id="total-count">0</span></div>
+          <div class="pill">Files processed: <span id="file-count">0</span></div>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>File</th>
+                <th>Reference</th>
+                <th>Caption</th>
+                <th>Alt Text</th>
+                <th>Source</th>
+              </tr>
+            </thead>
+            <tbody id="result-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card" id="export-card" style="display: none">
+        <h3 style="margin-top: 0">Export preview</h3>
+        <textarea id="export-preview" readonly></textarea>
+      </section>
+    </main>
+
+    <script>
+      const dropzone = document.getElementById('dropzone');
+      const fileInput = document.getElementById('file-input');
+      const skipEmpty = document.getElementById('skip-empty');
+      const statusEl = document.getElementById('status');
+      const resultsSection = document.getElementById('results');
+      const exportCard = document.getElementById('export-card');
+      const resultBody = document.getElementById('result-body');
+      const totalCount = document.getElementById('total-count');
+      const fileCount = document.getElementById('file-count');
+      const downloadBtn = document.getElementById('download');
+      const exportFormat = document.getElementById('export-format');
+      const exportPreview = document.getElementById('export-preview');
+
+      let lastRows = [];
+
+      fileInput.addEventListener('change', () => handleFiles(fileInput.files));
+
+      dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+      });
+
+      dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+
+      dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
+          handleFiles(e.dataTransfer.files);
+        }
+      });
+
+      downloadBtn.addEventListener('click', () => {
+        if (!lastRows.length) return;
+        const format = exportFormat.value;
+        const { content, mime, extension } = buildExport(format, lastRows);
+        exportPreview.value = content;
+        exportCard.style.display = 'block';
+
+        const blob = new Blob([content], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `captions.${extension}`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      function handleFiles(fileList) {
+        if (!fileList.length) return;
+        const formData = new FormData();
+        for (const file of fileList) {
+          formData.append('files', file);
+        }
+        formData.append('onlyWithCaption', skipEmpty.checked);
+
+        statusEl.textContent = 'Processing...';
+        fetch('/api/extract', {
+          method: 'POST',
+          body: formData,
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            renderResults(data.results || []);
+            totalCount.textContent = data.totalCaptions ?? 0;
+            fileCount.textContent = data.filesProcessed ?? 0;
+            statusEl.textContent = 'Done. Review results below.';
+          })
+          .catch((err) => {
+            console.error(err);
+            statusEl.textContent = 'Something went wrong. Please try again.';
+          });
+      }
+
+      function renderResults(results) {
+        resultBody.innerHTML = '';
+        lastRows = [];
+
+        results.forEach((file) => {
+          if (file.error) {
+            const row = createRow(file.file, '—', '—', file.error, 'Error');
+            resultBody.appendChild(row);
+            return;
+          }
+
+          (file.entries || []).forEach((entry) => {
+            const row = createRow(file.file, entry.reference, entry.caption, entry.altText, entry.source);
+            resultBody.appendChild(row);
+            lastRows.push({
+              file: file.file,
+              reference: entry.reference,
+              caption: entry.caption,
+              alt: entry.altText,
+              source: entry.source,
+            });
+          });
+        });
+
+        resultsSection.style.display = results.length ? 'block' : 'none';
+        exportCard.style.display = lastRows.length ? 'block' : 'none';
+        exportPreview.value = lastRows.length ? buildExport(exportFormat.value, lastRows).content : '';
+      }
+
+      function createRow(file, reference, caption, alt, source) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(file)}</td>
+          <td class="path">${escapeHtml(reference)}</td>
+          <td>${escapeHtml(caption || '')}</td>
+          <td>${escapeHtml(alt || '')}</td>
+          <td>${escapeHtml(source || '')}</td>
+        `;
+        return tr;
+      }
+
+      function buildExport(format, rows) {
+        if (format === 'txt') {
+          const content = rows
+            .map((r) => `File: ${r.file}\nReference: ${r.reference}\nCaption: ${r.caption}\nAlt Text: ${r.alt}\nSource: ${r.source}`)
+            .join('\n\n');
+          return { content, mime: 'text/plain', extension: 'txt' };
+        }
+
+        if (format === 'html') {
+          const content = `<!doctype html><html><body><table border="1" cellpadding="6" cellspacing="0"><thead><tr><th>File</th><th>Reference</th><th>Caption</th><th>Alt Text</th><th>Source</th></tr></thead><tbody>${rows
+            .map(
+              (r) =>
+                `<tr><td>${escapeHtml(r.file)}</td><td>${escapeHtml(r.reference)}</td><td>${escapeHtml(
+                  r.caption,
+                )}</td><td>${escapeHtml(r.alt)}</td><td>${escapeHtml(r.source)}</td></tr>`,
+            )
+            .join('')}</tbody></table></body></html>`;
+          return { content, mime: 'text/html', extension: 'html' };
+        }
+
+        const header = 'File,Reference,Caption,Alt Text,Source';
+        const lines = rows.map((r) =>
+          [r.file, r.reference, r.caption, r.alt, r.source]
+            .map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`)
+            .join(',')
+        );
+        const content = [header, ...lines].join('\n');
+        return { content, mime: 'text/csv', extension: 'csv' };
+      }
+
+      function escapeHtml(value) {
+        return (value || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+    </script>
+  </body>
+</html>
