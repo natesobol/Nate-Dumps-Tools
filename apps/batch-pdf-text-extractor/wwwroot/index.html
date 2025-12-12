@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Batch PDF Text Extractor</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      .drop-zone {
+        border: 2px dashed #7c3aed;
+        border-radius: 12px;
+        padding: 28px;
+        background: rgba(124, 58, 237, 0.04);
+        text-align: center;
+        cursor: pointer;
+        transition: background 0.2s ease, border-color 0.2s ease;
+      }
+      .drop-zone.dragover {
+        background: rgba(124, 58, 237, 0.1);
+        border-color: #4c1d95;
+      }
+      .result-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
+        background: #fff;
+      }
+      .result-meta {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        font-size: 0.95rem;
+        color: #374151;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 999px;
+        padding: 4px 10px;
+        background: #eef2ff;
+        color: #312e81;
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+      .warning {
+        background: #fff7ed;
+        color: #9a3412;
+      }
+      pre.output {
+        background: #0b1021;
+        color: #e5e7eb;
+        border-radius: 10px;
+        padding: 12px;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .page-block {
+        border-top: 1px solid #e5e7eb;
+        padding-top: 10px;
+        margin-top: 10px;
+      }
+      .actions-inline {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Batch PDF Text Extractor</p>
+          <h1>Drag, drop, and capture text from every PDF you own.</h1>
+          <p class="lede">
+            Upload stacks of PDFs and extract raw text or structured, per-page output. The extractor automatically falls back to
+            different strategies when a document is stubborn so you get results instead of errors.
+          </p>
+          <ul class="pill-list">
+            <li>Layout-aware parsing with word and letter fallbacks</li>
+            <li>Per-page structure and combined text views</li>
+            <li>Detailed warnings when pages are empty or needed a fallback</li>
+          </ul>
+        </div>
+        <div class="hero-card">
+          <p class="hint">Powered by a .NET 8 minimal API with PdfPig for fast, local text extraction.</p>
+          <p class="hint">No documents are stored—everything is processed in memory and returned immediately.</p>
+        </div>
+      </header>
+
+      <section class="card">
+        <form id="extract-form" class="form-grid">
+          <div class="field">
+            <label for="files">PDF files</label>
+            <div id="drop-zone" class="drop-zone">
+              <strong>Drop multiple PDFs here</strong>
+              <p class="hint">or click to browse. Nothing leaves your browser beyond this request.</p>
+              <input id="files" name="files" type="file" accept="application/pdf" multiple style="display: none" />
+            </div>
+          </div>
+
+          <div class="field inline">
+            <label class="checkbox">
+              <input type="checkbox" id="structured" name="structured" checked /> Include per-page structure
+            </label>
+            <label class="checkbox">
+              <input type="checkbox" id="compact" name="compact" /> Compact mode (skip layout-aware merging)
+            </label>
+          </div>
+
+          <div class="actions">
+            <button type="submit">Extract text</button>
+            <button type="button" id="clear" class="ghost">Clear</button>
+            <p id="status" class="hint" aria-live="polite"></p>
+          </div>
+        </form>
+      </section>
+
+      <section class="card" id="results" style="display: none">
+        <header>
+          <h2>Extraction results</h2>
+          <p class="hint">Each file shows the strategy used, page count, and any warnings or errors.</p>
+        </header>
+        <div id="result-list"></div>
+      </section>
+    </main>
+
+    <script>
+      const dropZone = document.getElementById("drop-zone");
+      const fileInput = document.getElementById("files");
+      const form = document.getElementById("extract-form");
+      const statusEl = document.getElementById("status");
+      const resultsSection = document.getElementById("results");
+      const resultList = document.getElementById("result-list");
+      const structuredCheckbox = document.getElementById("structured");
+      const compactCheckbox = document.getElementById("compact");
+
+      dropZone.addEventListener("click", () => fileInput.click());
+
+      const preventDefaults = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      };
+
+      ["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+      });
+
+      ["dragenter", "dragover"].forEach((eventName) => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.add("dragover"), false);
+      });
+
+      ["dragleave", "drop"].forEach((eventName) => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.remove("dragover"), false);
+      });
+
+      dropZone.addEventListener("drop", (e) => {
+        const files = Array.from(e.dataTransfer.files).filter((f) => f.type === "application/pdf");
+        fileInput.files = createFileList(files);
+        statusEl.textContent = `${files.length} PDF${files.length === 1 ? "" : "s"} ready to extract.`;
+      });
+
+      document.getElementById("clear").addEventListener("click", () => {
+        fileInput.value = "";
+        statusEl.textContent = "";
+        resultsSection.style.display = "none";
+        resultList.innerHTML = "";
+      });
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (!fileInput.files.length) {
+          statusEl.textContent = "Add at least one PDF to extract.";
+          return;
+        }
+
+        statusEl.textContent = "Extracting...";
+        resultsSection.style.display = "none";
+        resultList.innerHTML = "";
+
+        const formData = new FormData();
+        Array.from(fileInput.files).forEach((file) => formData.append("files", file));
+        formData.append("structured", structuredCheckbox.checked);
+        formData.append("compact", compactCheckbox.checked);
+
+        try {
+          const response = await fetch("/api/extract", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!response.ok) {
+            const problem = await response.json().catch(() => ({}));
+            throw new Error(problem.error || "Extraction failed");
+          }
+
+          const payload = await response.json();
+          renderResults(payload.files || []);
+          statusEl.textContent = "Extraction finished.";
+        } catch (error) {
+          statusEl.textContent = error.message;
+        }
+      });
+
+      function renderResults(files) {
+        resultsSection.style.display = "block";
+        resultList.innerHTML = "";
+
+        files.forEach((file) => {
+          const card = document.createElement("div");
+          card.className = "result-card";
+
+          const header = document.createElement("div");
+          header.className = "result-meta";
+          header.innerHTML = `
+            <strong>${file.file || "(unknown file)"}</strong>
+            <span class="pill">${file.pageCount || 0} page${file.pageCount === 1 ? "" : "s"}</span>
+            ${file.attempts ? `<span class="pill">Tried: ${file.attempts.join(" → ")}</span>` : ""}
+          `;
+          card.appendChild(header);
+
+          if (file.warnings && file.warnings.length) {
+            const warnList = document.createElement("div");
+            warnList.className = "pill warning";
+            warnList.textContent = file.warnings.join(" | ");
+            card.appendChild(warnList);
+          }
+
+          if (file.error) {
+            const errorEl = document.createElement("p");
+            errorEl.className = "hint";
+            errorEl.style.color = "#b91c1c";
+            errorEl.textContent = file.error;
+            card.appendChild(errorEl);
+            resultList.appendChild(card);
+            return;
+          }
+
+          if (file.combinedText) {
+            const combinedBlock = document.createElement("div");
+            combinedBlock.className = "page-block";
+            combinedBlock.innerHTML = `
+              <div class="actions-inline">
+                <h3 style="margin: 0">Combined text</h3>
+                <button type="button" class="ghost" data-copy>${"Copy"}</button>
+                <button type="button" class="ghost" data-download>Download .txt</button>
+              </div>
+              <pre class="output">${escapeHtml(file.combinedText)}</pre>
+            `;
+            card.appendChild(combinedBlock);
+
+            combinedBlock.querySelector("[data-copy]").addEventListener("click", () => copyText(file.combinedText));
+            combinedBlock.querySelector("[data-download]").addEventListener("click", () =>
+              downloadText(file.file || "output.txt", file.combinedText)
+            );
+          }
+
+          if (file.pages && Array.isArray(file.pages)) {
+            const pagesWrapper = document.createElement("div");
+            pagesWrapper.className = "page-block";
+
+            file.pages.forEach((page) => {
+              const pageEl = document.createElement("div");
+              pageEl.className = "page-block";
+              pageEl.innerHTML = `
+                <div class="actions-inline">
+                  <h4 style="margin: 0">${page.Header || `Page ${page.Number}`}</h4>
+                  <button type="button" class="ghost" data-copy-page>Copy page</button>
+                </div>
+                <pre class="output">${escapeHtml(page.Text)}</pre>
+              `;
+              pageEl.querySelector("[data-copy-page]").addEventListener("click", () => copyText(page.Text));
+              pagesWrapper.appendChild(pageEl);
+            });
+
+            card.appendChild(pagesWrapper);
+          }
+
+          resultList.appendChild(card);
+        });
+      }
+
+      function createFileList(files) {
+        const dataTransfer = new DataTransfer();
+        files.forEach((file) => dataTransfer.items.add(file));
+        return dataTransfer.files;
+      }
+
+      function copyText(text) {
+        navigator.clipboard.writeText(text).catch(() => {
+          statusEl.textContent = "Copy failed";
+        });
+      }
+
+      function downloadText(filename, content) {
+        const blob = new Blob([content], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename.replace(/\.pdf$/i, "-text.txt");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+
+      function escapeHtml(text) {
+        return text
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+    </script>
+  </body>
+</html>

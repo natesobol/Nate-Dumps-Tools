@@ -167,6 +167,20 @@ Located in `apps/pdf-splitter/`, this C#-hosted webapp splits one or more PDFs e
 **Server Route:** `/pdf-splitter`
 **Static Version:** `/apps/pdf-splitter/wwwroot/index.html`
 
+### Batch PDF Text Extractor
+Located in `apps/batch-pdf-text-extractor/`, this .NET 8 minimal API extracts text from many PDFs at once with layered fallbacks.
+
+**Features:**
+- Drag-and-drop multiple PDFs
+- Layout-aware extraction with word-level and letter-level fallbacks
+- Combined or per-page structured text output with warnings for tricky pages
+
+**Run locally:**
+```bash
+cd apps/batch-pdf-text-extractor
+dotnet run
+```
+
 ### PowerPoint → PDF Converter
 Located in `apps/powerpoint-to-pdf/`, this tool uses LibreOffice through the Node server to turn `.ppt` and `.pptx` files into PDFs.
 
