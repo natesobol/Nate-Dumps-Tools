@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script id="asset-base-loader">
+      (function () {
+        const segments = window.location.pathname.split('/').filter(Boolean);
+        const repoIndex = segments.indexOf('Nates-Free-Tools');
+        const baseHref = repoIndex !== -1 ? '/' + segments.slice(0, repoIndex + 1).join('/') + '/' : '/';
+        let baseTag = document.querySelector('base');
+        if (!baseTag) {
+          baseTag = document.createElement('base');
+          document.head.prepend(baseTag);
+        }
+        baseTag.href = baseHref;
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document Comment Extractor | Monetize Hub Tools</title>
+    <link rel="stylesheet" href="css/webapps-unified.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="js/site-chrome.js" defer></script>
+    <style>
+      .drop-zone {
+        border: 2px dashed var(--border-subtle);
+        border-radius: 12px;
+        padding: 32px;
+        background: rgba(255, 255, 255, 0.5);
+        transition: border-color 0.2s ease, background 0.2s ease;
+      }
+      .drop-zone.dragover {
+        border-color: var(--primary-color);
+        background: rgba(99, 102, 241, 0.05);
+      }
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .stat-card {
+        border: 1px solid var(--border-subtle);
+        border-radius: 10px;
+        padding: 12px 14px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.8) 100%);
+      }
+      .results-table thead th {
+        position: sticky;
+        top: 0;
+        background: #f8fafc;
+        z-index: 1;
+      }
+    </style>
+  </head>
+  <body class="tool-page">
+    <header class="site-header">
+      <div class="header-top">
+        <a class="brand" href="../../../index.html">
+          <img src="../../../public/logo.png" alt="Monetize Hub" class="brand-logo" />
+          <div class="brand-text">
+            <span class="brand-name">Monetize Hub</span>
+            <span class="brand-tagline">Launch, host, and grow your webapps</span>
+          </div>
+        </a>
+        <details class="nav-dropdown user-dropdown" open>
+          <summary class="nav-link nav-dropdown-toggle">
+            <span class="user-label">Account</span>
+            <span aria-hidden="true">▾</span>
+          </summary>
+          <div class="nav-dropdown-menu">
+            <a href="../../../login.html" class="dropdown-link">Login</a>
+            <a href="../../../register.html" class="dropdown-link">Create Account</a>
+            <a href="../../../admin.html" class="dropdown-link">Admin Dashboard</a>
+          </div>
+        </details>
+      </div>
+      <nav class="main-nav">
+        <a href="../../../index.html" class="nav-link">Home</a>
+        <a href="../../../about.html" class="nav-link">About</a>
+        <details class="nav-dropdown" open>
+          <summary class="nav-link nav-dropdown-toggle">Webapps <span aria-hidden="true">▾</span></summary>
+          <div class="nav-dropdown-menu">
+            <a href="../../../apps/excel-to-json/index.html" class="dropdown-link">Excel → JSON</a>
+            <a href="../../../apps/json-to-excel/wwwroot/index.html" class="dropdown-link">JSON → Excel</a>
+            <a href="../../../apps/xml-json-translator/index.html" class="dropdown-link">XML ⇄ JSON Translator</a>
+            <a href="../../../apps/yaml-json-converter/index.html" class="dropdown-link">YAML ↔ JSON Converter</a>
+            <a href="../../../apps/json-combiner/wwwroot/index.html" class="dropdown-link">JSON Combiner</a>
+            <a href="../../../apps/find-and-replace/wwwroot/index.html" class="dropdown-link">Find &amp; Replace</a>
+            <a href="../../../apps/csv-xml-converter/index.html" class="dropdown-link">CSV/XML Converter</a>
+            <a href="../../../apps/list-comparison/wwwroot/index.html" class="dropdown-link">List Comparison</a>
+            <a href="../../../apps/pdf-splitter/wwwroot/index.html" class="dropdown-link">PDF Splitter</a>
+            <a href="../../../apps/pdf-link-extractor/wwwroot/index.html" class="dropdown-link">PDF Link Extractor</a>
+            <a href="../../../apps/powerpoint-to-pdf/wwwroot/index.html" class="dropdown-link">PowerPoint → PDF</a>
+            <a href="../../../apps/powerpoint-image-extractor/wwwroot/index.html" class="dropdown-link">PowerPoint Image Extractor</a>
+            <a href="../../../apps/document-comment-extractor/wwwroot/index.html" class="dropdown-link active">Document Comment Extractor</a>
+          </div>
+        </details>
+      </nav>
+    </header>
+
+    <main class="tool-main container py-4">
+      <div class="row g-4 align-items-start">
+        <div class="col-lg-6">
+          <div class="card shadow-sm border-0 mb-3">
+            <div class="card-body">
+              <h1 class="h4 mb-3">Extract Comments From Word, PDF, and Google Docs Exports</h1>
+              <p class="text-muted mb-4">
+                Upload .docx (including Google Docs exports), .pdf, or .rtf files to pull out reviewer comments, annotations,
+                and threaded replies. Get author names, page or paragraph hints, and export to CSV, XLSX, or JSON for audits and
+                consolidated feedback.
+              </p>
+              <form id="upload-form">
+                <div
+                  id="drop-zone"
+                  class="drop-zone mb-3 text-center"
+                  role="button"
+                  tabindex="0"
+                  aria-label="Upload or drop files"
+                >
+                  <p class="fw-semibold mb-1">Drop files here or click to choose</p>
+                  <p class="text-muted small mb-2">Accepted: .docx, .pdf, .rtf (Google Docs → File → Download → Microsoft Word)</p>
+                  <input type="file" id="file-input" class="d-none" multiple accept=".docx,.pdf,.rtf" />
+                  <div class="form-check d-inline-flex align-items-center gap-2">
+                    <input class="form-check-input" type="checkbox" id="threading" name="threading" />
+                    <label class="form-check-label" for="threading">Group replies into threads when possible</label>
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Extract Comments</button>
+              </form>
+            </div>
+          </div>
+          <div class="alert alert-info small mb-0">
+            <div class="fw-semibold mb-1">Tips</div>
+            <ul class="mb-0 ps-3">
+              <li>For Google Docs, export to <strong>Microsoft Word (.docx)</strong> to keep comments.</li>
+              <li>PDF annotations work best when reviewers used comment or sticky note tools.</li>
+              <li>RTF files are parsed best-effort; unusual RTF structures may omit comment text.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="card shadow-sm border-0">
+            <div class="card-body">
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <h2 class="h5 mb-0">Results</h2>
+                <div class="btn-group" role="group" aria-label="Export">
+                  <button type="button" class="btn btn-outline-secondary btn-sm" id="export-csv" disabled>CSV</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm" id="export-xlsx" disabled>XLSX</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm" id="export-json" disabled>JSON</button>
+                </div>
+              </div>
+              <div id="summary" class="mb-3"></div>
+              <div class="table-responsive" style="max-height: 400px; overflow: auto;">
+                <table class="table table-sm align-middle results-table">
+                  <thead class="table-light">
+                    <tr>
+                      <th scope="col">File</th>
+                      <th scope="col">Source</th>
+                      <th scope="col">Author</th>
+                      <th scope="col">Location</th>
+                      <th scope="col">Comment</th>
+                    </tr>
+                  </thead>
+                  <tbody id="results-body">
+                    <tr class="text-muted">
+                      <td colspan="5">No results yet. Upload files to begin.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div id="thread-section" class="mt-3" hidden>
+                <h3 class="h6">Threads</h3>
+                <div id="thread-list" class="small text-muted">No threads available.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const dropZone = document.getElementById('drop-zone');
+      const fileInput = document.getElementById('file-input');
+      const form = document.getElementById('upload-form');
+      const resultsBody = document.getElementById('results-body');
+      const summary = document.getElementById('summary');
+      const exportButtons = {
+        csv: document.getElementById('export-csv'),
+        xlsx: document.getElementById('export-xlsx'),
+        json: document.getElementById('export-json'),
+      };
+      const threadSection = document.getElementById('thread-section');
+      const threadList = document.getElementById('thread-list');
+      let lastResults = [];
+      let lastThreads = [];
+
+      const resetResults = () => {
+        resultsBody.innerHTML = '<tr class="text-muted"><td colspan="5">No results yet. Upload files to begin.</td></tr>';
+        summary.innerHTML = '';
+        threadSection.hidden = true;
+        lastResults = [];
+        lastThreads = [];
+        Object.values(exportButtons).forEach((btn) => {
+          btn.disabled = true;
+        });
+      };
+
+      const formatSummary = (data) => {
+        const stats = [
+          { label: 'Total comments', value: data.total },
+          { label: 'Files processed', value: data.files?.length || 0 },
+          { label: 'Threads', value: data.threads?.length || 0 },
+        ];
+
+        summary.innerHTML = `
+          <ul class="stats-grid">
+            ${stats
+              .map(
+                (stat) => `
+                  <li class="stat-card">
+                    <div class="text-muted small">${stat.label}</div>
+                    <div class="fw-bold fs-5">${stat.value}</div>
+                  </li>`
+              )
+              .join('')}
+          </ul>
+          ${data.errors?.length ? `<p class="text-danger small mt-2">${data.errors.length} file(s) returned errors.</p>` : ''}
+        `;
+      };
+
+      const renderResults = (comments) => {
+        if (!comments.length) {
+          resultsBody.innerHTML = '<tr class="text-muted"><td colspan="5">No comments found.</td></tr>';
+          return;
+        }
+
+        resultsBody.innerHTML = comments
+          .map(
+            (item) => `
+            <tr>
+              <td class="small text-nowrap">${item.file}</td>
+              <td class="small">${item.source}</td>
+              <td class="small">${item.author || '—'}</td>
+              <td class="small">${item.pageLabel || item.location || '—'}</td>
+              <td>${item.commentText}</td>
+            </tr>`
+          )
+          .join('');
+      };
+
+      const renderThreads = (threads) => {
+        if (!threads || !threads.length) {
+          threadSection.hidden = true;
+          return;
+        }
+
+        threadSection.hidden = false;
+        threadList.innerHTML = threads
+          .map((thread) => {
+            const threadHeading = `<div class="fw-semibold">Thread ${thread.threadId}</div>`;
+            const items = thread.comments
+              .map(
+                (c) => `
+                <div class="mb-2 p-2 rounded border bg-light">
+                  <div class="d-flex justify-content-between small text-muted">
+                    <span>${c.author || 'Unknown'} · ${c.location || c.pageLabel || '—'}</span>
+                    <span>${c.file}</span>
+                  </div>
+                  <div>${c.commentText}</div>
+                </div>`
+              )
+              .join('');
+            return `<div class="mb-3">${threadHeading}${items}</div>`;
+          })
+          .join('');
+      };
+
+      const toCsv = (rows) => {
+        const headers = ['file', 'source', 'author', 'location', 'commentText'];
+        const csvRows = [headers.join(',')];
+        for (const row of rows) {
+          const values = headers.map((h) => {
+            const val = row[h] ?? '';
+            return '"' + String(val).replace(/"/g, '""') + '"';
+          });
+          csvRows.push(values.join(','));
+        }
+        return csvRows.join('\n');
+      };
+
+      const download = (blob, filename) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+
+      exportButtons.csv.addEventListener('click', () => {
+        const csv = toCsv(lastResults);
+        download(new Blob([csv], { type: 'text/csv' }), 'comments.csv');
+      });
+
+      exportButtons.json.addEventListener('click', () => {
+        download(new Blob([JSON.stringify(lastResults, null, 2)], { type: 'application/json' }), 'comments.json');
+      });
+
+      exportButtons.xlsx.addEventListener('click', () => {
+        const worksheet = XLSX.utils.json_to_sheet(lastResults);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Comments');
+        const blob = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+        download(new Blob([blob], { type: 'application/octet-stream' }), 'comments.xlsx');
+      });
+
+      ['dragover', 'dragenter'].forEach((eventName) => {
+        dropZone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          dropZone.classList.add('dragover');
+        });
+      });
+
+      ['dragleave', 'drop'].forEach((eventName) => {
+        dropZone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          dropZone.classList.remove('dragover');
+        });
+      });
+
+      dropZone.addEventListener('click', () => fileInput.click());
+      dropZone.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          fileInput.click();
+        }
+      });
+
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        fileInput.files = e.dataTransfer.files;
+      });
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const files = fileInput.files;
+        if (!files.length) {
+          alert('Please select at least one file.');
+          return;
+        }
+
+        const formData = new FormData();
+        Array.from(files).forEach((file) => formData.append('files', file));
+        formData.append('threading', document.getElementById('threading').checked);
+
+        summary.innerHTML = '<div class="text-muted small">Extracting comments…</div>';
+        resultsBody.innerHTML = '<tr class="text-muted"><td colspan="5">Working…</td></tr>';
+
+        try {
+          const response = await fetch('/api/extract', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to extract comments');
+          }
+
+          const data = await response.json();
+          lastResults = data.comments || [];
+          lastThreads = data.threads || [];
+
+          formatSummary(data);
+          renderResults(lastResults);
+          renderThreads(lastThreads);
+
+          Object.values(exportButtons).forEach((btn) => {
+            btn.disabled = !lastResults.length;
+          });
+        } catch (error) {
+          resetResults();
+          summary.innerHTML = '<div class="text-danger small">' + error.message + '</div>';
+        }
+      });
+
+      resetResults();
+    </script>
+  </body>
+</html>

@@ -377,6 +377,21 @@ cd apps/timestamp-extractor
 dotnet run
 ```
 
+### Document Comment Extractor
+Located in `apps/document-comment-extractor/`, this ASP.NET Core webapp pulls reviewer notes, annotations, and threaded replies from Word, PDF, and RTF files (including Google Docs .docx exports).
+
+**Features:**
+- Upload `.docx`, `.pdf`, or `.rtf` files
+- Extract comment text, author, and paragraph/page hints
+- Optional reply grouping to keep comment threads together
+- Export results to CSV, XLSX, or JSON
+
+**Run locally:**
+```bash
+cd apps/document-comment-extractor
+dotnet run
+```
+
 ## Project Structure
 
 ```
