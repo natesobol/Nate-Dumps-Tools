@@ -4,24 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tabify or Untabify</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1.5.10/css/pico.min.css" />
-  <style>
-    body { background: linear-gradient(135deg, #0f172a, #111827); color: #e5e7eb; }
-    main { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem 3rem; }
-    .card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 1.5rem; box-shadow: 0 18px 50px rgba(0,0,0,0.35); }
-    textarea { background: #0b1224; color: #e5e7eb; border-color: #1f2937; min-height: 200px; }
-    .muted { color: #9ca3af; }
-    .pill { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.8rem; border-radius: 999px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16); font-size: 0.95rem; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
-    .stat { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 0.75rem; border: 1px solid rgba(255,255,255,0.08); }
-    pre { background: #0b1224; border-radius: 10px; padding: 0.75rem; border: 1px solid #1f2937; color: #e5e7eb; white-space: pre-wrap; word-break: break-word; }
-    .error { background: rgba(239,68,68,0.15); color: #fecdd3; border: 1px solid rgba(239,68,68,0.4); padding: 0.75rem; border-radius: 10px; }
-    .success { color: #bbf7d0; }
-  </style>
+  <link rel="stylesheet" href="../../../public/css/webapp-theme.css" />
 </head>
 <body>
   <main>
-    <header style="text-align: center; margin-bottom: 1.5rem;">
+    <header class="app-header">
       <p class="pill">Text-only C# utility • Tabify or untabify</p>
       <h1>Convert tabs ↔ spaces with preview</h1>
       <p class="muted">Paste any code or plaintext, choose your direction, and preview the converted text before copying it back into your editor.</p>

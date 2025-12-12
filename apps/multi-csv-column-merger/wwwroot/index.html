@@ -4,33 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Multi-CSV Column Merger</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1.5.10/css/pico.min.css">
+    <link rel="stylesheet" href="../../../public/css/webapp-theme.css">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <style>
-        body { background: radial-gradient(circle at 20% 20%, rgba(79,70,229,0.08), transparent 25%), #0b1120; color: #e5e7eb; }
-        main { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem 3rem; }
-        .card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 1.5rem; box-shadow: 0 22px 55px rgba(0,0,0,0.35); }
-        .muted { color: #9ca3af; }
-        .dropzone { border: 2px dashed rgba(255,255,255,0.35); padding: 1.5rem; border-radius: 12px; text-align: center; cursor: pointer; background: rgba(255,255,255,0.02); transition: border-color 0.2s ease, background 0.2s ease; }
-        .dropzone.dragover { border-color: #a855f7; background: rgba(168,85,247,0.08); }
-        .pill { display: inline-flex; gap: 0.35rem; align-items: center; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); padding: 0.35rem 0.85rem; border-radius: 999px; font-size: 0.95rem; }
-        .badge { background: #22d3ee; color: #05202c; padding: 0.4rem 0.85rem; border-radius: 999px; font-weight: 700; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid rgba(255,255,255,0.1); padding: 0.55rem; }
-        th { background: rgba(255,255,255,0.04); }
-        tbody tr:nth-child(odd) { background: rgba(255,255,255,0.02); }
-        .error { background: rgba(239,68,68,0.14); border: 1px solid rgba(239,68,68,0.35); color: #fecdd3; padding: 0.85rem; border-radius: 10px; }
-        .success { background: rgba(34,197,94,0.14); border: 1px solid rgba(34,197,94,0.35); color: #d1fae5; padding: 0.85rem; border-radius: 10px; }
-        .file-list { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-        .file-chip { background: rgba(255,255,255,0.08); padding: 0.4rem 0.75rem; border-radius: 999px; font-size: 0.9rem; }
-        .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
-        .loader { border: 4px solid rgba(255,255,255,0.1); border-left-color: #a855f7; border-radius: 50%; width: 26px; height: 26px; animation: spin 0.9s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-    </style>
 </head>
 <body>
 <main>
-    <header style="text-align:center; margin-bottom: 1.6rem;">
+    <header class="app-header">
         <p class="pill">Merge Shopify, Stripe, CRM exports—without spreadsheets</p>
         <h1>Multi-CSV Column Merger</h1>
         <p class="muted">Upload or drop multiple CSVs, auto-detect a shared key column (email, product ID, order ID), and download a perfectly aligned dataset as CSV or Excel.</p>

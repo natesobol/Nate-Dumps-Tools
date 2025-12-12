@@ -4,28 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>HTML Tag Cleaner</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1.5.10/css/pico.min.css" />
-  <style>
-    body { background: linear-gradient(135deg, #0f172a, #111827); color: #e5e7eb; }
-    main { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem 3rem; }
-    .card { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 1.5rem; box-shadow: 0 22px 55px rgba(0,0,0,0.35); }
-    textarea { background: #0b1224; color: #e5e7eb; border-color: #1f2937; min-height: 200px; }
-    input[type="file"] { color: #e5e7eb; }
-    .pill { display: inline-flex; gap: 0.35rem; align-items: center; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18); padding: 0.35rem 0.75rem; border-radius: 999px; font-size: 0.95rem; }
-    .muted { color: #9ca3af; }
-    .dropzone { border: 1px dashed rgba(255,255,255,0.25); padding: 1rem; border-radius: 12px; text-align: center; transition: background 0.2s, border-color 0.2s; }
-    .dropzone.dragover { background: rgba(59,130,246,0.12); border-color: #60a5fa; }
-    pre { background: #0b1224; border-radius: 10px; padding: 0.75rem; white-space: pre-wrap; word-break: break-word; border: 1px solid #1f2937; color: #e5e7eb; }
-    .result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
-    .badge { background: #10b981; color: #041014; padding: 0.35rem 0.75rem; border-radius: 999px; font-weight: 700; display: inline-block; margin-bottom: 0.5rem; }
-    .error { background: rgba(239,68,68,0.15); color: #fecdd3; border: 1px solid rgba(239,68,68,0.3); padding: 0.75rem; border-radius: 10px; }
-    .success { color: #bbf7d0; }
-    form .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
-  </style>
+  <link rel="stylesheet" href="../../../public/css/webapp-theme.css" />
 </head>
 <body>
   <main>
-    <header style="text-align: center; margin-bottom: 1.5rem;">
+    <header class="app-header">
       <p class="pill">C# HTML utility • Cleans pasted snippets and uploads</p>
       <h1>HTML Tag Cleaner</h1>
       <p class="muted">Paste HTML or drop a file, then strip all tags or keep only the ones you trust (like &lt;p&gt;, &lt;a&gt;, &lt;strong&gt;). Perfect for scrapes, CMS pastes, and Word exports.</p>
@@ -52,14 +35,14 @@
           </div>
         </div>
 
-        <div style="margin-top: 1rem; display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+        <div class="actions" style="margin-top: 1rem;">
           <button type="submit">Clean HTML</button>
           <span class="muted">Outputs cleaned content plus before/after lengths.</span>
         </div>
       </form>
     </section>
 
-    <section class="card" style="margin-top: 1.25rem;">
+    <section class="card">
       <div id="error" class="error" style="display: none;"></div>
       <div id="results" style="display: none;">
         <p class="success" id="mode"></p>
@@ -67,7 +50,7 @@
       </div>
     </section>
 
-    <section class="card" style="margin-top: 1.25rem;">
+    <section class="card">
       <h2>What this cleaner is great for</h2>
       <ul>
         <li>Removing inline styles and script cruft from CMS or WYSIWYG exports.</li>
