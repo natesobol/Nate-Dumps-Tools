@@ -25,6 +25,7 @@ A starter website for hosting webapps with monetization in mind. It provides a h
 - Resume Contact Info Extractor: `/apps/resume-contact-extractor/wwwroot/index.html`
 - Image Path Extractor: `/apps/image-path-extractor/wwwroot/index.html`
 - Capitalized Phrase Extractor: `/apps/capitalized-phrase-extractor/wwwroot/index.html`
+- Named Entity Extractor: `/apps/named-entity-extractor/wwwroot/index.html`
 - Dynamic features (login, admin, server-backed Excel conversion) require running the Node.js server locally or on a host that supports server-side rendering.
 
 ## Features
@@ -299,6 +300,16 @@ cd apps/powerpoint-slide-exporter
 dotnet run
 ```
 
+### Named Entity Extractor
+Located in `apps/named-entity-extractor/`, this C# minimal API hosts a browser-based NLP tool for pulling people, organizations, and locations from documents.
+
+**Features:**
+- Upload `.pdf`, `.docx`, or `.txt` files and process them entirely in the browser
+- Combined and per-file entity breakdowns with deduplication controls
+- Quick JSON export for downstream analysis
+
+**Static Version:** `/apps/named-entity-extractor/wwwroot/index.html`
+
 ## Project Structure
 
 ```
@@ -346,6 +357,10 @@ apps/
 ├── find-and-replace/       # .NET find-and-replace utility
 │   ├── Program.cs          # Minimal API and text/file processor
 │   ├── find-and-replace.csproj
+│   └── wwwroot/            # Static UI assets
+├── named-entity-extractor/ # Browser-based named entity extraction
+│   ├── Program.cs          # Minimal API hosting the static UI
+│   ├── named-entity-extractor.csproj
 │   └── wwwroot/            # Static UI assets
 ├── batch-file-renamer/     # .NET batch renamer for filename cleanup
 │   ├── Program.cs          # Minimal API building renamed archives
