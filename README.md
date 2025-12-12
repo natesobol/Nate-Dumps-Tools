@@ -11,6 +11,7 @@ A starter website for hosting webapps with monetization in mind. It provides a h
   - JSON Combiner: `/apps/json-combiner/wwwroot/index.html`
   - CSV/XML Converter: `/apps/csv-xml-converter/index.html`
   - PDF Splitter: `/apps/pdf-splitter/wwwroot/index.html`
+  - PowerPoint → PDF: `/apps/powerpoint-to-pdf/wwwroot/index.html`
 - Dynamic features (login, admin, server-backed Excel conversion) require running the Node.js server locally or on a host that supports server-side rendering.
 
 ## Features
@@ -21,6 +22,7 @@ A starter website for hosting webapps with monetization in mind. It provides a h
 - Excel-to-JSON converter webapp with upload, preview, and JSON download
 - CSV/XML converter that handles both directions with previews
 - Browser-based PDF splitter for page- or size-based slicing
+- PowerPoint → PDF converter that uses LibreOffice when the Node server is running
 - SQLite database for user data and session storage
 - EJS templating with responsive styling
 
@@ -117,6 +119,17 @@ Located in `apps/pdf-splitter/`, this C#-hosted webapp splits one or more PDFs e
 **Server Route:** `/pdf-splitter`
 **Static Version:** `/apps/pdf-splitter/wwwroot/index.html`
 
+### PowerPoint → PDF Converter
+Located in `apps/powerpoint-to-pdf/`, this tool uses LibreOffice through the Node server to turn `.ppt` and `.pptx` files into PDFs.
+
+**Features:**
+- Upload `.ppt` or `.pptx` files up to 50 MB
+- In-memory handling with no disk persistence
+- Clear error guidance when LibreOffice is missing from the host
+
+**Server Route:** `/powerpoint-to-pdf`
+**Static Version:** `/apps/powerpoint-to-pdf/wwwroot/index.html`
+
 ## Project Structure
 
 ```
@@ -138,6 +151,10 @@ apps/
 │   ├── Program.cs          # Minimal API hosting the static UI
 │   ├── pdf-splitter.csproj # .NET project file
 │   ├── wwwroot/            # Static web files (served at /pdf-splitter)
+│   └── README.md
+├── powerpoint-to-pdf/      # LibreOffice-backed PPT/PPTX to PDF converter
+│   ├── src/routes/         # Express route handling uploads and conversion
+│   ├── wwwroot/            # Static UI assets
 │   └── README.md
 └── json-combiner/          # C# JSON combiner webapp
     ├── wwwroot/            # Static web files
