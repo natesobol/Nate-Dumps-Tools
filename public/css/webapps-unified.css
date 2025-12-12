@@ -6,8 +6,8 @@
   --panel: #10162f;
   --panel-strong: #0f172a;
   --panel-soft: rgba(255, 255, 255, 0.04);
-  --text: #e8ecff;
-  --muted: #9fb4ff;
+  --text: #ffffff;
+  --muted: #ffffff;
   --accent: #6dd3ff;
   --accent-strong: #7ed3ff;
   --danger: #ff6b6b;
@@ -40,7 +40,7 @@ a {
 }
 
 a:hover {
-  color: #a5dfff;
+  color: #ffffff;
   text-decoration: underline;
 }
 
@@ -342,7 +342,7 @@ p {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   font-weight: 700;
-  color: #9ca3af;
+  color: #ffffff;
   margin: 0 0 0.35rem;
 }
 
@@ -402,7 +402,7 @@ button[type='submit'] {
   border: none;
   border-radius: 10px;
   background: linear-gradient(135deg, #22d3ee, #6366f1);
-  color: #0b1120;
+  color: #ffffff;
   font-weight: 700;
   padding: 0.8rem 1.2rem;
   cursor: pointer;
@@ -412,7 +412,7 @@ button[type='submit'] {
 
 .btn-primary,
 .btn-modern {
-  color: #0b1120;
+  color: #ffffff;
 }
 
 button:hover,
@@ -497,7 +497,7 @@ pre,
   white-space: pre-wrap;
   word-break: break-word;
   border: 1px solid rgba(148, 163, 184, 0.2);
-  color: #e5e7eb;
+  color: #ffffff;
   overflow-x: auto;
 }
 
@@ -546,7 +546,7 @@ pre,
 
 .badge {
   background: #10b981;
-  color: #041014;
+  color: #ffffff;
   padding: 0.35rem 0.75rem;
   border-radius: 999px;
   font-weight: 700;
@@ -558,7 +558,7 @@ pre,
 #status[data-variant='error'],
 .status[data-variant='error'] {
   background: rgba(239, 68, 68, 0.15);
-  color: #fecdd3;
+  color: #ffffff;
   border: 1px solid rgba(239, 68, 68, 0.3);
   padding: 0.75rem;
   border-radius: 10px;
@@ -567,14 +567,14 @@ pre,
 .success,
 #status[data-variant='success'],
 .status[data-variant='success'] {
-  color: #bbf7d0;
+  color: #ffffff;
 }
 
 .controls-grid .form-text,
 .form-text,
 .small,
 .small-text {
-  color: #94a3b8;
+  color: #ffffff;
 }
 
 .table,
