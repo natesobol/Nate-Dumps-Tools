@@ -1,6 +1,6 @@
 # CSV/XML Data Converter
 
-This webapp converts CSV to well-formed XML and XML back to CSV on the fly. It is inspired by Sobolsoft's CSV To XML Converter and packaged for Monetize Hub so you can drop it alongside other tools.
+This webapp converts CSV to well-formed XML and XML back to CSV on the fly. It is packaged for Monetize Hub so you can drop it alongside other tools.
 
 ## Endpoints
 - `GET /csv-xml-converter` - render the converter UI

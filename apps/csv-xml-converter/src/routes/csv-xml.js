@@ -28,7 +28,7 @@ function buildMeta(req) {
   const canonicalUrl = `${baseUrl}${req.originalUrl.split('?')[0]}`;
   const metaDescription =
     'Convert CSV to XML or XML to CSV instantly. Upload or paste data, preview the conversion, and download clean payloads.';
-  const metaKeywords = 'csv to xml converter, xml to csv, data converter, sobolsoft csv xml, webapp';
+  const metaKeywords = 'csv to xml converter, xml to csv, data converter, webapp';
   const ogTitle = 'CSV/XML Data Converter | Monetize Hub';
   return {
     canonicalUrl,

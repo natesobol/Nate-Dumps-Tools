@@ -1,6 +1,6 @@
 # List Comparison / Diff Checker
 
-This C#-hosted webapp compares two lists inspired by Sobolsoft's Compare Two Lists For Matches Software. Paste content or upload a mix of text, HTML, code, or Word documents to quickly see overlaps and unique entries.
+This C#-hosted webapp compares two lists. Paste content or upload a mix of text, HTML, code, or Word documents to quickly see overlaps and unique entries.
 
 ## Features
 - Paste text or upload files (TXT, CSV, JSON, HTML/HTM, DOCX, source files) for each list

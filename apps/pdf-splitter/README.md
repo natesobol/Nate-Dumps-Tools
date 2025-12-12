@@ -1,6 +1,6 @@
 # PDF Splitter
 
-This C#-hosted, browser-first webapp splits one or more PDF documents into smaller PDFs without sending data to a server. It is inspired by Sobolsoft's PDF Split Multiple Files Software and is aimed at users who frequently ask how to extract or split pages.
+This C#-hosted, browser-first webapp splits one or more PDF documents into smaller PDFs without sending data to a server. It is aimed at users who frequently ask how to extract or split pages.
 
 ## Features
 - Upload a single PDF or batch multiple PDFs for splitting
