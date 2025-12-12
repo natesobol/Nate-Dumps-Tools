@@ -109,4 +109,13 @@ router.get('/color-extractor', (req, res) => {
   });
 });
 
+router.get('/excel-highlighted-row-extractor', (req, res) => {
+  res.render('excel-highlighted-row-extractor', {
+    title: 'Extract Highlighted or Color-Coded Rows from Excel',
+    metaDescription:
+      'Upload .xlsx or .xlsm files and export only the highlighted rows. Filter by fill color, keep original formatting, and download as Excel or CSV.',
+    metaKeywords: 'excel highlighted row extractor,color filter excel,conditional formatting export,excel row highlighter'
+  });
+});
+
 export default router;

@@ -61,6 +61,10 @@ app.use(
 app.use('/highlighted-text-extractor', express.static(path.join(__dirname, 'apps/highlighted-text-extractor')));
 app.use('/color-extractor', express.static(path.join(__dirname, 'apps/color-extractor/wwwroot')));
 app.use('/table-data-extractor', express.static(path.join(__dirname, 'apps/table-data-extractor/wwwroot')));
+app.use(
+  '/excel-highlighted-row-extractor',
+  express.static(path.join(__dirname, 'apps/excel-highlighted-row-extractor/wwwroot'))
+);
 app.use(morgan('dev'));
 
 app.use(
