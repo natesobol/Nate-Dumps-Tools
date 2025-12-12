@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Repetitive Phrase & Sentence Finder</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="stylesheet" href="/css/webapp-theme.css" />
+  <script src="/js/site-chrome.js" defer></script>
+</head>
+<body>
+  <main>
+    <header class="app-header">
+      <p class="pill">Multi-file C# utility • Redundancy checker</p>
+      <h1>Extract repetitive phrases or sentences from text files.</h1>
+      <p class="muted">Drop in .txt, .docx, .rtf, or .html files—or paste text directly. The tool finds repeated sentences and multi-word phrases, showing how often they occur and which lines they appear on.</p>
+    </header>
+
+    <section class="card">
+      <form id="analyze-form">
+        <label for="text">Optional inline text</label>
+        <textarea id="text" name="text" placeholder="Paste long-form content to spot repeated wording..."></textarea>
+
+        <label for="files" style="margin-top: 1rem;">Upload files (.txt, .docx, .rtf, .html)</label>
+        <input type="file" id="files" name="files" accept=".txt,.docx,.rtf,.html,.htm" multiple />
+        <small class="muted">Files are read in-memory only—nothing is stored.</small>
+
+        <div class="grid" style="margin-top: 1rem; align-items: flex-end;">
+          <div>
+            <p class="muted">The analyzer flags sentences (5+ words) and phrases (3-8 words) that repeat at least twice.</p>
+          </div>
+          <div style="text-align: right;">
+            <button type="submit">Find repetitions</button>
+            <div id="error" class="error" style="display:none; margin-top:0.5rem;"></div>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <section class="card" style="margin-top: 1.25rem;">
+      <div id="results" style="display:none;">
+        <p class="success" id="summary"></p>
+        <div id="items" class="grid" style="gap: 1rem;"></div>
+      </div>
+      <div id="empty" class="muted">Upload documents or paste text to see repeated sentences and phrases.</div>
+    </section>
+  </main>
+
+  <template id="result-template">
+    <div class="stat">
+      <strong class="source"></strong>
+      <p class="muted kind"></p>
+      <div class="pill-bar metrics"></div>
+      <div class="section">
+        <h3>Repeated sentences</h3>
+        <div class="list sentences"></div>
+      </div>
+      <div class="section" style="margin-top: 0.75rem;">
+        <h3>Repeated phrases</h3>
+        <div class="list phrases"></div>
+      </div>
+      <div class="error" style="display:none;"></div>
+    </div>
+  </template>
+
+  <template id="repetition-template">
+    <div class="pill" style="display:inline-block; margin-bottom: 0.35rem;"></div>
+    <pre class="muted" style="white-space: pre-wrap; word-break: break-word;"></pre>
+    <small class="muted lines"></small>
+    <hr />
+  </template>
+
+  <script>
+    const form = document.getElementById('analyze-form');
+    const errorBox = document.getElementById('error');
+    const results = document.getElementById('results');
+    const summary = document.getElementById('summary');
+    const items = document.getElementById('items');
+    const emptyState = document.getElementById('empty');
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      errorBox.style.display = 'none';
+      results.style.display = 'none';
+      emptyState.style.display = 'none';
+      items.innerHTML = '';
+
+      const data = new FormData();
+      const files = document.getElementById('files').files;
+      for (const file of files) {
+        data.append('files', file);
+      }
+      data.set('text', document.getElementById('text').value);
+
+      try {
+        const response = await fetch('/api/analyze', { method: 'POST', body: data });
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.error || 'Analysis failed.');
+        }
+
+        summary.textContent = `Found ${payload.totalRepetitions} repeated items across ${payload.results.length} inputs.`;
+
+        payload.results.forEach((result) => {
+          const node = document.getElementById('result-template').content.cloneNode(true);
+          node.querySelector('.source').textContent = result.source;
+          node.querySelector('.kind').textContent = result.kind.toUpperCase();
+
+          const metrics = node.querySelector('.metrics');
+          const hasAnalysis = result.analysis;
+          if (hasAnalysis) {
+            metrics.appendChild(createPill(`${result.analysis.sentences.length} repeated sentences`));
+            metrics.appendChild(createPill(`${result.analysis.phrases.length} repeated phrases`));
+          }
+
+          if (result.error) {
+            const errorEl = node.querySelector('.error');
+            errorEl.textContent = result.error;
+            errorEl.style.display = 'block';
+          } else if (hasAnalysis) {
+            renderRepetitions(node.querySelector('.sentences'), result.analysis.sentences);
+            renderRepetitions(node.querySelector('.phrases'), result.analysis.phrases);
+          }
+
+          items.appendChild(node);
+        });
+
+        results.style.display = 'block';
+      } catch (error) {
+        errorBox.textContent = error.message;
+        errorBox.style.display = 'block';
+        emptyState.style.display = 'block';
+      }
+    });
+
+    function createPill(text) {
+      const pill = document.createElement('span');
+      pill.className = 'pill';
+      pill.textContent = text;
+      return pill;
+    }
+
+    function renderRepetitions(target, repetitions) {
+      if (!repetitions || repetitions.length === 0) {
+        const note = document.createElement('p');
+        note.className = 'muted';
+        note.textContent = 'No repeats found here.';
+        target.appendChild(note);
+        return;
+      }
+
+      repetitions.forEach((rep) => {
+        const template = document.getElementById('repetition-template').content.cloneNode(true);
+        template.querySelector('.pill').textContent = `${rep.count}×`;
+        template.querySelector('pre').textContent = rep.text;
+        template.querySelector('.lines').textContent = `Lines: ${rep.lines.join(', ')}`;
+        target.appendChild(template);
+      });
+    }
+  </script>
+</body>
+</html>
