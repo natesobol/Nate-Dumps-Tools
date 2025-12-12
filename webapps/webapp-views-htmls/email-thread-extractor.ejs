@@ -1,0 +1,28 @@
+<%- include('../../views/partials/page-top', {
+  title: 'Email Thread Extractor',
+  metaDescription: 'Upload .eml, .msg, or .mbox files to extract sender, recipient, timestamp, attachments, and thread bodies with CSV exports.',
+  canonicalUrl: 'https://natesobol.github.io/Nates-Free-Tools/email-thread-extractor',
+  ogTitle: 'Email Thread Extractor',
+  ogDescription: 'Parse email threads, export CSV metadata, and download attachments from EML, MSG, or MBOX uploads.'
+}) %>
+<section class="tool-hero">
+  <div>
+    <p class="eyebrow">Inbox investigation</p>
+    <h1>Extract threaded email metadata in one pass.</h1>
+    <p class="lede">
+      Upload raw email files to instantly pull sender, recipient, timestamp, subject, and attachment details from every message in
+      the thread. Export metadata to CSV and a plain-text transcript to speed up reviews or ingestion.
+    </p>
+    <ul class="trust-points">
+      <li>Accepts .eml, .msg, and .mbox files with reply-aware parsing.</li>
+      <li>Optional base64 attachment payloads for targeted downloads.</li>
+      <li>One-click CSV and text exports for audits or AI prompts.</li>
+    </ul>
+    <a class="button primary btn btn-primary btn-modern" href="/email-thread-extractor" target="_blank">Open extractor</a>
+  </div>
+  <div class="converter-card">
+    <p class="help-text">The tool runs in your browser and processes uploads on the fly. Attachments are only kept in memory while you download them.</p>
+    <p class="help-text">Use the link above to launch the extractor UI with drag-and-drop uploads and export buttons.</p>
+  </div>
+</section>
+<%- include('../../views/partials/page-bottom') %>

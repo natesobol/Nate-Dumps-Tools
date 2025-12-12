@@ -55,4 +55,13 @@ router.get('/tabify-untabify', (req, res) => {
   });
 });
 
+router.get('/email-thread-extractor', (req, res) => {
+  res.render('email-thread-extractor', {
+    title: 'Email Thread Extractor',
+    metaDescription:
+      'Upload .eml, .msg, or .mbox files to extract sender, recipient, timestamp, attachment, and body text details from threaded replies.',
+    metaKeywords: 'eml to csv,email thread extractor,msg parser,mbox parser,email metadata export'
+  });
+});
+
 export default router;

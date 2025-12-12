@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Email Thread Extractor</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b1021;
+        --panel: #101833;
+        --border: rgba(255, 255, 255, 0.1);
+        --accent: #38bdf8;
+        --muted: #cbd5e1;
+      }
+
+      body {
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.08), transparent 25%),
+          radial-gradient(circle at 80% 10%, rgba(96, 165, 250, 0.08), transparent 30%),
+          var(--bg);
+        color: #e2e8f0;
+        margin: 0;
+        padding: 0;
+      }
+
+      header,
+      main {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 1.5rem;
+        align-items: center;
+        margin-bottom: 1.5rem;
+      }
+
+      h1 {
+        margin: 0 0 0.5rem;
+        font-size: clamp(2rem, 5vw, 2.7rem);
+      }
+
+      p.lede {
+        color: var(--muted);
+        font-size: 1.05rem;
+        line-height: 1.6;
+        margin-top: 0;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1.25rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      }
+
+      label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+      }
+
+      input[type="file"],
+      input[type="checkbox"],
+      button {
+        font: inherit;
+      }
+
+      .toggle-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .dropzone {
+        border: 1px dashed var(--border);
+        padding: 1.25rem;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.02);
+        transition: all 0.2s ease;
+      }
+
+      .dropzone.dragover {
+        border-color: var(--accent);
+        background: rgba(56, 189, 248, 0.08);
+      }
+
+      .button {
+        background: linear-gradient(135deg, #38bdf8, #6366f1);
+        color: #0b1021;
+        font-weight: 700;
+        border: none;
+        border-radius: 10px;
+        padding: 0.85rem 1.2rem;
+        cursor: pointer;
+        width: 100%;
+      }
+
+      .button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .results-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 1rem;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(56, 189, 248, 0.15);
+        color: #e0f2fe;
+        padding: 0.35rem 0.65rem;
+        border-radius: 999px;
+        font-size: 0.9rem;
+      }
+
+      .meta {
+        font-size: 0.95rem;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      .attachments {
+        margin: 0.5rem 0 0;
+        padding-left: 1rem;
+      }
+
+      .attachments button {
+        margin-top: 0.35rem;
+        padding: 0.4rem 0.65rem;
+        font-size: 0.9rem;
+      }
+
+      pre {
+        background: #0b1226;
+        border-radius: 10px;
+        padding: 0.75rem;
+        white-space: pre-wrap;
+        word-break: break-word;
+        border: 1px solid var(--border);
+      }
+
+      .error {
+        background: rgba(248, 113, 113, 0.1);
+        color: #fecaca;
+        border: 1px solid rgba(248, 113, 113, 0.3);
+        border-radius: 10px;
+        padding: 0.75rem;
+        margin-top: 0.75rem;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 0.75rem;
+      }
+
+      .pill {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 999px;
+        padding: 0.35rem 0.7rem;
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <div>
+        <p class="pill">Threaded email intelligence</p>
+        <h1>Email Thread Extractor</h1>
+        <p class="lede">
+          Upload .eml, .msg, or .mbox files to pull sender, recipients, timestamps, and attachment details from each reply in the
+          thread. Export metadata to CSV and plain text bodies for downstream review or ingestion.
+        </p>
+        <ul>
+          <li>Attachment-aware parsing with optional base64 downloads.</li>
+          <li>CSV export for senders, recipients, subjects, and dates.</li>
+          <li>Plain text transcript builder for the entire thread.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <form id="extract-form" enctype="multipart/form-data">
+          <label for="files">Upload email files</label>
+          <div id="dropzone" class="dropzone">
+            <p>Drop .eml, .msg, or .mbox files here</p>
+            <input id="files" name="files" type="file" accept=".eml,.msg,.mbox,.txt" multiple />
+          </div>
+
+          <div class="toggle-row">
+            <input type="checkbox" id="includeAttachments" name="includeAttachments" />
+            <label for="includeAttachments">Include attachment payloads (base64) in the response</label>
+          </div>
+
+          <button class="button" type="submit" id="submit-button">Extract metadata</button>
+          <div class="error" id="error" style="display: none"></div>
+        </form>
+      </div>
+    </header>
+
+    <main>
+      <div class="panel" id="summary" style="display: none">
+        <div class="actions">
+          <span class="badge" id="message-count"></span>
+          <button class="button" type="button" id="download-csv">Download CSV</button>
+          <button class="button" type="button" id="download-text">Download thread text</button>
+        </div>
+      </div>
+
+      <div class="results-grid" id="results"></div>
+    </main>
+
+    <script>
+      const form = document.getElementById('extract-form');
+      const filesInput = document.getElementById('files');
+      const errorBox = document.getElementById('error');
+      const submitButton = document.getElementById('submit-button');
+      const summary = document.getElementById('summary');
+      const messageCount = document.getElementById('message-count');
+      const results = document.getElementById('results');
+      const downloadCsv = document.getElementById('download-csv');
+      const downloadText = document.getElementById('download-text');
+      const dropzone = document.getElementById('dropzone');
+
+      dropzone.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        dropzone.classList.add('dragover');
+      });
+
+      dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+      dropzone.addEventListener('drop', (event) => {
+        event.preventDefault();
+        dropzone.classList.remove('dragover');
+        if (event.dataTransfer?.files?.length) {
+          filesInput.files = event.dataTransfer.files;
+        }
+      });
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        errorBox.style.display = 'none';
+        results.innerHTML = '';
+        summary.style.display = 'none';
+
+        const data = new FormData();
+        [...filesInput.files].forEach((file) => data.append('files', file));
+        data.append('includeAttachments', document.getElementById('includeAttachments').checked);
+
+        if (filesInput.files.length === 0) {
+          showError('Please choose at least one .eml, .msg, or .mbox file.');
+          return;
+        }
+
+        submitButton.disabled = true;
+        submitButton.textContent = 'Extracting…';
+
+        try {
+          const response = await fetch('/api/extract', { method: 'POST', body: data });
+          const payload = await response.json();
+
+          if (!response.ok) {
+            throw new Error(payload.error || 'Extraction failed');
+          }
+
+          renderSummary(payload);
+          renderFiles(payload.files || []);
+        } catch (error) {
+          showError(error.message);
+        } finally {
+          submitButton.disabled = false;
+          submitButton.textContent = 'Extract metadata';
+        }
+      });
+
+      downloadCsv.addEventListener('click', () => downloadBlob('email-metadata.csv', window.__lastCsv || ''));
+      downloadText.addEventListener('click', () => downloadBlob('email-thread.txt', window.__lastBody || ''));
+
+      function renderSummary(payload) {
+        window.__lastCsv = payload.csv || '';
+        window.__lastBody = payload.bodyText || '';
+        messageCount.textContent = `${payload.messageCount || 0} messages parsed`;
+        summary.style.display = 'block';
+      }
+
+      function renderFiles(files) {
+        results.innerHTML = '';
+
+        files.forEach((file) => {
+          const card = document.createElement('article');
+          card.classList.add('card');
+
+          const title = document.createElement('h3');
+          title.textContent = file.fileName || 'Email file';
+          card.appendChild(title);
+
+          if (file.error) {
+            const alert = document.createElement('div');
+            alert.classList.add('error');
+            alert.textContent = file.error;
+            card.appendChild(alert);
+            results.appendChild(card);
+            return;
+          }
+
+          (file.messages || []).forEach((message, index) => {
+            const badge = document.createElement('div');
+            badge.classList.add('badge');
+            badge.textContent = `Message ${index + 1}`;
+            card.appendChild(badge);
+
+            const meta = document.createElement('div');
+            meta.classList.add('meta');
+            meta.innerHTML = `
+              <div><strong>Subject:</strong> ${escapeHtml(message.subject || '')}</div>
+              <div><strong>From:</strong> ${escapeHtml(message.sender || '')}</div>
+              <div><strong>To:</strong> ${escapeHtml((message.recipients?.to || []).join('; '))}</div>
+              ${message.recipients?.cc?.length ? `<div><strong>Cc:</strong> ${escapeHtml(message.recipients.cc.join('; '))}</div>` : ''}
+              ${message.recipients?.bcc?.length ? `<div><strong>Bcc:</strong> ${escapeHtml(message.recipients.bcc.join('; '))}</div>` : ''}
+              ${message.timestamp ? `<div><strong>Date:</strong> ${escapeHtml(message.timestamp)}</div>` : ''}
+            `;
+            card.appendChild(meta);
+
+            if (message.attachments?.length) {
+              const attachments = document.createElement('ul');
+              attachments.classList.add('attachments');
+              message.attachments.forEach((attachment) => {
+                const item = document.createElement('li');
+                const name = document.createElement('div');
+                name.textContent = `${attachment.fileName} (${humanSize(attachment.size)})`;
+                item.appendChild(name);
+
+                if (attachment.base64Data) {
+                  const btn = document.createElement('button');
+                  btn.textContent = 'Download';
+                  btn.type = 'button';
+                  btn.classList.add('button');
+                  btn.style.width = 'auto';
+                  btn.addEventListener('click', () => downloadAttachment(attachment));
+                  item.appendChild(btn);
+                }
+
+                attachments.appendChild(item);
+              });
+              card.appendChild(attachments);
+            }
+
+            const body = document.createElement('pre');
+            body.textContent = message.bodyText || '';
+            card.appendChild(body);
+          });
+
+          results.appendChild(card);
+        });
+      }
+
+      function downloadAttachment(attachment) {
+        const bytes = Uint8Array.from(atob(attachment.base64Data), (c) => c.charCodeAt(0));
+        const blob = new Blob([bytes], { type: attachment.contentType || 'application/octet-stream' });
+        downloadBlob(attachment.fileName || 'attachment', blob);
+      }
+
+      function downloadBlob(filename, content) {
+        const blob = content instanceof Blob ? content : new Blob([content], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = filename;
+        anchor.click();
+        URL.revokeObjectURL(url);
+      }
+
+      function showError(message) {
+        errorBox.textContent = message;
+        errorBox.style.display = 'block';
+      }
+
+      function humanSize(bytes) {
+        if (!bytes) return '0 B';
+        const units = ['B', 'KB', 'MB', 'GB'];
+        const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+        const value = bytes / Math.pow(1024, exponent);
+        return `${value.toFixed(value >= 10 ? 0 : 1)} ${units[exponent]}`;
+      }
+
+      function escapeHtml(value) {
+        return (value || '').replace(/[&<>"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
+      }
+    </script>
+  </body>
+</html>

@@ -44,6 +44,7 @@ app.use(
 app.use('/list-comparison', express.static(path.join(__dirname, 'apps/list-comparison/wwwroot')));
 app.use('/html-tag-cleaner', express.static(path.join(__dirname, 'apps/html-tag-cleaner/wwwroot')));
 app.use('/tabify-untabify', express.static(path.join(__dirname, 'apps/tabify-untabify/wwwroot')));
+app.use('/email-thread-extractor', express.static(path.join(__dirname, 'apps/email-thread-extractor/wwwroot')));
 app.use(morgan('dev'));
 
 app.use(
