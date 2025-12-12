@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script id="asset-base-loader">
+      (function () {
+        const segments = window.location.pathname.split('/').filter(Boolean);
+        const repoIndex = segments.indexOf('Nates-Free-Tools');
+        const baseHref = repoIndex !== -1 ? '/' + segments.slice(0, repoIndex + 1).join('/') + '/' : '/';
+        let baseTag = document.querySelector('base');
+        if (!baseTag) {
+          baseTag = document.createElement('base');
+          document.head.prepend(baseTag);
+        }
+        baseTag.href = baseHref;
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hyperlinked Text Extractor | Monetize Hub Tools</title>
+    <link rel="stylesheet" href="css/webapps-unified.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <script src="js/site-chrome.js" defer></script>
+    <style>
+      .drop-zone {
+        border: 2px dashed var(--border-subtle);
+        border-radius: 14px;
+        padding: 32px;
+        background: rgba(255, 255, 255, 0.4);
+        transition: border-color 0.2s ease, background 0.2s ease;
+      }
+      .drop-zone.dragover {
+        border-color: var(--primary-color);
+        background: rgba(99, 102, 241, 0.06);
+      }
+      .results-table thead {
+        position: sticky;
+        top: 0;
+        background: #fff;
+        box-shadow: 0 1px 0 var(--border-subtle);
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #eef2ff;
+        color: #4338ca;
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      .export-buttons button {
+        min-width: 140px;
+      }
+      .table-responsive {
+        max-height: 420px;
+      }
+    </style>
+  </head>
+  <body class="tool-page">
+    <header class="site-header">
+      <div class="header-top">
+        <a class="brand" href="../../../index.html">
+          <img src="../../../public/logo.png" alt="Monetize Hub" class="brand-logo" />
+          <div class="brand-text">
+            <span class="brand-name">Monetize Hub</span>
+            <span class="brand-tagline">Launch, host, and grow your webapps</span>
+          </div>
+        </a>
+        <details class="nav-dropdown user-dropdown" open>
+          <summary class="nav-link nav-dropdown-toggle">
+            <span class="user-label">Account</span>
+            <span aria-hidden="true">▾</span>
+          </summary>
+          <div class="nav-dropdown-menu">
+            <a href="../../../login.html" class="dropdown-link">Login</a>
+            <a href="../../../register.html" class="dropdown-link">Create Account</a>
+            <a href="../../../admin.html" class="dropdown-link">Admin Dashboard</a>
+          </div>
+        </details>
+      </div>
+      <nav class="main-nav">
+        <a href="../../../index.html" class="nav-link">Home</a>
+        <a href="../../../about.html" class="nav-link">About</a>
+        <details class="nav-dropdown" open>
+          <summary class="nav-link nav-dropdown-toggle">Webapps <span aria-hidden="true">▾</span></summary>
+          <div class="nav-dropdown-menu">
+            <a href="../../../apps/excel-to-json/index.html" class="dropdown-link">Excel → JSON</a>
+            <a href="../../../apps/json-to-excel/wwwroot/index.html" class="dropdown-link">JSON → Excel</a>
+            <a href="../../../apps/xml-json-translator/index.html" class="dropdown-link">XML ⇄ JSON Translator</a>
+            <a href="../../../apps/yaml-json-converter/index.html" class="dropdown-link">YAML ↔ JSON Converter</a>
+            <a href="../../../apps/json-combiner/wwwroot/index.html" class="dropdown-link">JSON Combiner</a>
+            <a href="../../../apps/find-and-replace/wwwroot/index.html" class="dropdown-link">Find &amp; Replace</a>
+            <a href="../../../apps/csv-xml-converter/index.html" class="dropdown-link">CSV/XML Converter</a>
+            <a href="../../../apps/list-comparison/wwwroot/index.html" class="dropdown-link">List Comparison</a>
+            <a href="../../../apps/pdf-splitter/wwwroot/index.html" class="dropdown-link">PDF Splitter</a>
+            <a href="../../../apps/pdf-link-extractor/wwwroot/index.html" class="dropdown-link">PDF Link Extractor</a>
+            <a href="../../../apps/hyperlink-text-extractor/wwwroot/index.html" class="dropdown-link active">Hyperlinked Text Extractor</a>
+          </div>
+        </details>
+      </nav>
+    </header>
+
+    <main class="container py-5">
+      <div class="hero">
+        <div>
+          <div class="eyebrow">SEO &amp; Content Ops</div>
+          <h1>Hyperlinked Text Extractor</h1>
+          <p class="lead">
+            Extract every visible link label and URL from docs or web-like files and export a backlink-ready inventory.
+          </p>
+          <div class="actions mt-3">
+            <div class="pill" aria-live="polite">
+              <span class="dot"></span>
+              Supports .docx, .pdf, .html, .md, .txt
+            </div>
+            <div class="pill">Export CSV · TXT · HTML Preview</div>
+          </div>
+        </div>
+        <div class="hero-card">
+          <h2>Upload documents</h2>
+          <p class="mb-3">Drag multiple files or click to browse.</p>
+          <div class="drop-zone" id="dropZone" tabindex="0">
+            <p class="fw-semibold mb-1">Drop files here</p>
+            <p class="text-muted small mb-2">Or click to choose</p>
+            <input type="file" id="fileInput" class="form-control" multiple accept=".docx,.pdf,.html,.htm,.md,.markdown,.txt" />
+          </div>
+          <div class="mt-3 d-flex gap-2 align-items-center">
+            <label class="form-label m-0" for="domain">Internal domain</label>
+            <input type="text" id="domain" class="form-control" placeholder="example.com" />
+          </div>
+          <div class="mt-2 d-flex gap-2">
+            <select id="filter" class="form-select">
+              <option value="all">Show all links</option>
+              <option value="internal">Internal only</option>
+              <option value="external">External only</option>
+            </select>
+            <button class="btn btn-primary" id="extractBtn">Extract links</button>
+          </div>
+          <p class="hint mt-2">Internal detection uses relative URLs plus host matches against your domain.</p>
+        </div>
+      </div>
+
+      <section class="card mt-4">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <div>
+              <h3 class="h5 mb-1">Results</h3>
+              <p class="text-muted mb-0" id="summary">No files processed yet.</p>
+            </div>
+            <div class="export-buttons d-flex flex-wrap gap-2">
+              <button class="btn btn-outline-primary" id="downloadCsv" disabled>Download CSV</button>
+              <button class="btn btn-outline-secondary" id="downloadTxt" disabled>Download TXT</button>
+              <button class="btn btn-outline-success" id="openHtml" disabled>Open HTML Preview</button>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover results-table" id="resultsTable">
+              <thead>
+                <tr>
+                  <th>Link Text</th>
+                  <th>URL</th>
+                  <th>Source File</th>
+                  <th>Type</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="info-grid mt-4">
+        <div class="info-card">
+          <h3>Filter internal vs external</h3>
+          <p>Set your canonical domain to focus on in-site links or outbound references. Relative paths always count as internal.</p>
+        </div>
+        <div class="info-card">
+          <h3>Built for SEO workflows</h3>
+          <p>Quickly build backlink maps, QA content migrations, or audit UTM usage without opening each file manually.</p>
+        </div>
+        <div class="info-card">
+          <h3>Shareable exports</h3>
+          <p>Download tidy CSV/TXT reports or pop open an HTML view with clickable URLs for fast handoff to editors.</p>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const dropZone = document.getElementById('dropZone');
+      const fileInput = document.getElementById('fileInput');
+      const extractBtn = document.getElementById('extractBtn');
+      const filterSelect = document.getElementById('filter');
+      const domainInput = document.getElementById('domain');
+      const summary = document.getElementById('summary');
+      const resultsBody = document.querySelector('#resultsTable tbody');
+      const downloadCsv = document.getElementById('downloadCsv');
+      const downloadTxt = document.getElementById('downloadTxt');
+      const openHtml = document.getElementById('openHtml');
+
+      let currentResults = [];
+
+      dropZone.addEventListener('click', () => fileInput.click());
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      });
+      dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        fileInput.files = e.dataTransfer.files;
+      });
+
+      extractBtn.addEventListener('click', async () => {
+        if (!fileInput.files.length) {
+          alert('Upload at least one supported file.');
+          return;
+        }
+
+        summary.textContent = 'Extracting links…';
+        resultsBody.innerHTML = '';
+        currentResults = [];
+        toggleExports(false);
+
+        const formData = new FormData();
+        for (const file of fileInput.files) {
+          formData.append('files', file);
+        }
+        formData.append('filter', filterSelect.value);
+        formData.append('domain', domainInput.value.trim());
+
+        try {
+          const response = await fetch('/api/extract', {
+            method: 'POST',
+            body: formData,
+          });
+
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.error || 'Extraction failed');
+          }
+
+          currentResults = data.links || [];
+          renderResults(currentResults);
+          const internal = data.totals?.internalCount ?? 0;
+          const external = data.totals?.externalCount ?? 0;
+          summary.textContent = `${data.totals?.all ?? 0} links · ${internal} internal · ${external} external`;
+          toggleExports(currentResults.length > 0);
+        } catch (error) {
+          console.error(error);
+          summary.textContent = error.message;
+          alert(error.message);
+        }
+      });
+
+      function renderResults(items) {
+        resultsBody.innerHTML = '';
+        if (!items.length) {
+          const row = document.createElement('tr');
+          row.innerHTML = '<td colspan="4" class="text-center text-muted">No links found.</td>';
+          resultsBody.appendChild(row);
+          return;
+        }
+
+        for (const item of items) {
+          const row = document.createElement('tr');
+          const safeText = item.text || '(no text)';
+          row.innerHTML = `
+            <td>${escapeHtml(safeText)}</td>
+            <td><a href="${escapeAttribute(item.url)}" target="_blank" rel="noopener">${escapeHtml(item.url)}</a></td>
+            <td>${escapeHtml(item.sourceFile)}</td>
+            <td><span class="badge bg-${item.isInternal ? 'primary' : 'secondary'}">${item.isInternal ? 'Internal' : 'External'}</span></td>
+          `;
+          resultsBody.appendChild(row);
+        }
+      }
+
+      function toggleExports(enabled) {
+        downloadCsv.disabled = !enabled;
+        downloadTxt.disabled = !enabled;
+        openHtml.disabled = !enabled;
+      }
+
+      downloadCsv.addEventListener('click', () => exportCsv(currentResults));
+      downloadTxt.addEventListener('click', () => exportTxt(currentResults));
+      openHtml.addEventListener('click', () => openHtmlPreview(currentResults));
+
+      function exportCsv(items) {
+        const header = ['Link Text', 'URL', 'Source File', 'Type'];
+        const rows = items.map((item) => [item.text, item.url, item.sourceFile, item.isInternal ? 'Internal' : 'External']);
+        const csv = [header, ...rows]
+          .map((row) => row.map((value) => `"${String(value || '').replace(/"/g, '""')}"`).join(','))
+          .join('\n');
+        downloadFile(csv, 'hyperlinked-texts.csv', 'text/csv');
+      }
+
+      function exportTxt(items) {
+        const lines = items.map((item) => `${item.text || item.url} | ${item.url} | ${item.sourceFile}`);
+        downloadFile(lines.join('\n'), 'hyperlinked-texts.txt', 'text/plain');
+      }
+
+      function openHtmlPreview(items) {
+        const rows = items
+          .map(
+            (item) =>
+              `<tr><td>${escapeHtml(item.text || '(no text)')}</td><td><a href="${escapeAttribute(item.url)}" target="_blank" rel="noopener">${escapeHtml(item.url)}</a></td><td>${escapeHtml(item.sourceFile)}</td><td>${item.isInternal ? 'Internal' : 'External'}</td></tr>`
+          )
+          .join('');
+        const html = `
+          <html><head><title>Hyperlinked Text Preview</title>
+          <style>body{font-family:Arial,sans-serif;padding:16px;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #ddd;padding:8px;} th{background:#f5f5f5;position:sticky;top:0;}</style>
+          </head><body>
+          <h2>Extracted Hyperlinks (${items.length})</h2>
+          <table><thead><tr><th>Link Text</th><th>URL</th><th>Source File</th><th>Type</th></tr></thead><tbody>${rows}</tbody></table>
+          </body></html>`;
+        const blob = new Blob([html], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+      }
+
+      function downloadFile(content, filename, type) {
+        const blob = new Blob([content], { type });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      function escapeHtml(value) {
+        return String(value || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function escapeAttribute(value) {
+        return String(value || '').replace(/"/g, '&quot;');
+      }
+    </script>
+  </body>
+</html>
