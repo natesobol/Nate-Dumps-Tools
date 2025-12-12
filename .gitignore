@@ -2,3 +2,8 @@ node_modules
 .env
 npm-debug.log*
 data/*.db
+# .NET build output
+bin/
+obj/
+**/bin/
+**/obj/
