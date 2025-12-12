@@ -37,6 +37,15 @@ router.get('/json-key-flattener', (req, res) => {
   });
 });
 
+router.get('/html-metadata-extractor', (req, res) => {
+  res.render('html-metadata-extractor', {
+    title: 'HTML Metadata Extractor',
+    metaDescription:
+      'Upload HTML, HTM, or XML files to extract filenames, page titles, meta descriptions, keywords, canonicals, and Open Graph tags in bulk.',
+    metaKeywords: 'html metadata extractor,meta description audit,open graph scraper,title tag checker'
+  });
+});
+
 router.get('/html-tag-cleaner', (req, res) => {
   res.render('html-tag-cleaner', {
     title: 'HTML Tag Cleaner',
@@ -106,6 +115,21 @@ router.get('/color-extractor', (req, res) => {
     metaDescription:
       'Upload CSS, HTML, SVG, or Figma JSON exports to pull every hex, rgb(), rgba(), or named color with usage counts and a palette preview.',
     metaKeywords: 'color extractor,css palette finder,figma color audit,svg color parser'
+  });
+});
+
+router.get('/excel-highlighted-row-extractor', (req, res) => {
+  res.render('excel-highlighted-row-extractor', {
+    title: 'Extract Highlighted or Color-Coded Rows from Excel',
+    metaDescription:
+      'Upload .xlsx or .xlsm files and export only the highlighted rows. Filter by fill color, keep original formatting, and download as Excel or CSV.',
+    metaKeywords: 'excel highlighted row extractor,color filter excel,conditional formatting export,excel row highlighter'
+router.get('/domain-name-extractor', (req, res) => {
+  res.render('domain-name-extractor', {
+    title: 'Extract Domain Names and URLs From Files',
+    metaDescription:
+      'Upload TXT, DOCX, CSV, JSON, or HTML files—or paste text—to find every domain and URL with root-only filters, subdomain exclusion, and grouping.',
+    metaKeywords: 'domain extractor,url finder,root domain parser,brand monitoring urls'
   });
 });
 

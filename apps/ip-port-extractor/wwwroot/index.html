@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IP & Port Extractor | Parse logs and configs for address exposure</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #0b1224;
+      --card: #0f172a;
+      --muted: #94a3b8;
+      --border: #1f2937;
+      --accent: #22d3ee;
+      --accent-strong: #06b6d4;
+      --text: #e2e8f0;
+      --shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at 8% 20%, rgba(34, 211, 238, 0.07), transparent 28%),
+        radial-gradient(circle at 72% 8%, rgba(6, 182, 212, 0.12), transparent 26%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 32px 14px 64px;
+    }
+
+    header {
+      max-width: 1100px;
+      margin: 0 auto 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 40px);
+      letter-spacing: -0.02em;
+    }
+
+    .lede {
+      color: var(--muted);
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.6;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+
+    .card {
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .layout {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    }
+
+    label { font-weight: 600; display: block; margin-bottom: 6px; }
+
+    input[type="file"] { display: none; }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--border);
+      background: linear-gradient(120deg, rgba(34,211,238,0.22), rgba(6,182,212,0.28));
+      color: var(--text);
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.12s ease, border-color 0.12s ease;
+    }
+
+    .button:hover { transform: translateY(-1px); border-color: var(--accent-strong); }
+
+    .muted { color: var(--muted); font-size: 14px; }
+
+    .dropzone {
+      border: 1.5px dashed var(--border);
+      padding: 16px;
+      border-radius: 12px;
+      text-align: center;
+      transition: border-color 0.12s ease, background 0.12s ease;
+    }
+
+    .dropzone.active {
+      border-color: var(--accent);
+      background: rgba(34, 211, 238, 0.08);
+    }
+
+    select, textarea {
+      width: 100%;
+      background: #0b162e;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 15px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(34, 211, 238, 0.16);
+      color: var(--text);
+      font-size: 13px;
+      gap: 6px;
+    }
+
+    .results {
+      display: grid;
+      gap: 12px;
+    }
+
+    .file-result {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(12, 19, 36, 0.85);
+    }
+
+    .file-header {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 14px;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--border);
+      padding: 8px 6px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th { color: var(--muted); font-weight: 600; }
+
+    code {
+      background: rgba(255,255,255,0.06);
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-family: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Cousine", monospace;
+      font-size: 13px;
+    }
+
+    .badge {
+      padding: 4px 8px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 12px;
+      display: inline-block;
+    }
+
+    .badge-green { background: rgba(74, 222, 128, 0.18); color: #4ade80; }
+    .badge-yellow { background: rgba(234, 179, 8, 0.18); color: #facc15; }
+    .badge-red { background: rgba(248, 113, 113, 0.18); color: #f87171; }
+
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    @media (max-width: 640px) {
+      .actions { flex-direction: column; align-items: stretch; }
+      .button { justify-content: center; width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <p class="pill">Network hygiene • Quick audits</p>
+    <h1>IP &amp; Port Extractor</h1>
+    <p class="lede">Upload log or config files to detect every IPv4/IPv6 address, optional ports, and the lines they came from. Filter public vs private ranges and export the findings to CSV for firewall reviews or incident playbooks.</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <div class="layout">
+        <div>
+          <label>Upload logs or configs</label>
+          <div id="dropzone" class="dropzone">
+            <p class="muted">Drag and drop files here or</p>
+            <button class="button" type="button" id="pickFiles">Select files</button>
+            <p class="muted" style="margin-top: 10px;">Accepted: .txt, .log, .conf, .json, .xml</p>
+            <input id="fileInput" type="file" accept=".txt,.log,.conf,.json,.xml" multiple />
+          </div>
+        </div>
+        <div>
+          <label for="filter">Address scope</label>
+          <select id="filter">
+            <option value="all" selected>All addresses</option>
+            <option value="public">Public only</option>
+            <option value="private">Private/reserved only</option>
+          </select>
+          <p class="muted" style="margin-top: 8px;">Toggle between public cloud endpoints and internal-only ranges (RFC1918, loopback, link-local, and unique local IPv6).</p>
+          <div class="actions">
+            <button class="button" id="scanBtn">Scan for IPs &amp; ports</button>
+            <button class="button" id="exportBtn" disabled>Export CSV</button>
+            <span id="status" class="muted">Waiting for files...</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="file-header">
+        <div>
+          <h3 style="margin: 0;">Results</h3>
+          <p class="muted" id="summary">No scans yet.</p>
+        </div>
+        <div class="pill" id="totals">0 matches</div>
+      </div>
+      <div class="results" id="results"></div>
+    </section>
+  </main>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const dropzone = document.getElementById('dropzone');
+    const pickFiles = document.getElementById('pickFiles');
+    const filter = document.getElementById('filter');
+    const scanBtn = document.getElementById('scanBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const statusEl = document.getElementById('status');
+    const resultsEl = document.getElementById('results');
+    const summaryEl = document.getElementById('summary');
+    const totalsEl = document.getElementById('totals');
+
+    let lastResults = [];
+
+    pickFiles.addEventListener('click', () => fileInput.click());
+
+    ;['dragenter', 'dragover'].forEach(evt => {
+      dropzone.addEventListener(evt, e => {
+        e.preventDefault();
+        dropzone.classList.add('active');
+      });
+    });
+
+    ;['dragleave', 'drop'].forEach(evt => {
+      dropzone.addEventListener(evt, e => {
+        e.preventDefault();
+        if (evt === 'drop') return;
+        dropzone.classList.remove('active');
+      });
+    });
+
+    dropzone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropzone.classList.remove('active');
+      if (!e.dataTransfer?.files?.length) return;
+      fileInput.files = e.dataTransfer.files;
+      statusEl.textContent = `${fileInput.files.length} file(s) ready.`;
+    });
+
+    fileInput.addEventListener('change', () => {
+      statusEl.textContent = fileInput.files.length ? `${fileInput.files.length} file(s) ready.` : 'Waiting for files...';
+    });
+
+    scanBtn.addEventListener('click', async () => {
+      if (!fileInput.files.length) {
+        statusEl.textContent = 'Please choose at least one file.';
+        return;
+      }
+
+      scanBtn.disabled = true;
+      exportBtn.disabled = true;
+      statusEl.textContent = 'Scanning...';
+      resultsEl.innerHTML = '';
+
+      const formData = new FormData();
+      Array.from(fileInput.files).forEach(file => formData.append('files', file));
+      formData.append('filter', filter.value);
+
+      try {
+        const response = await fetch('/api/extract', { method: 'POST', body: formData });
+        const data = await response.json();
+
+        if (!response.ok) {
+          statusEl.textContent = data.error || 'Scan failed.';
+          return;
+        }
+
+        renderResults(data);
+        statusEl.textContent = 'Scan complete.';
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = 'Something went wrong during the scan.';
+      } finally {
+        scanBtn.disabled = false;
+      }
+    });
+
+    exportBtn.addEventListener('click', () => {
+      if (!lastResults.length) return;
+      const rows = [['Source File', 'IP Address', 'Port', 'Version', 'Type', 'Line', 'Timestamp', 'Snippet']];
+
+      lastResults.forEach(file => {
+        (file.matches || []).forEach(match => {
+          rows.push([
+            file.source,
+            match.address,
+            match.port ?? '',
+            match.version,
+            match.isPrivate ? 'Private/Reserved' : 'Public',
+            match.line,
+            match.timestamp ?? '',
+            match.snippet?.replace(/\n/g, ' ')
+          ]);
+        });
+      });
+
+      const csv = rows.map(r => r.map(value => `"${String(value ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `ip-port-extract-${Date.now()}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+    });
+
+    function renderResults(data) {
+      lastResults = data.results || [];
+      const total = data.totalMatches || 0;
+      totalsEl.textContent = `${total} match${total === 1 ? '' : 'es'}`;
+      summaryEl.textContent = `${data.filesProcessed || 0} file(s) processed • Filter: ${data.filter}`;
+
+      resultsEl.innerHTML = '';
+
+      if (!lastResults.length || !total) {
+        resultsEl.innerHTML = '<p class="muted">No IP addresses found in the uploaded files.</p>';
+        exportBtn.disabled = true;
+        return;
+      }
+
+      exportBtn.disabled = false;
+
+      lastResults.forEach(file => {
+        const container = document.createElement('div');
+        container.className = 'file-result';
+
+        const header = document.createElement('div');
+        header.className = 'file-header';
+        const title = document.createElement('div');
+        title.innerHTML = `<strong>${file.source}</strong> <span class="muted">(${file.kind || 'unknown'})</span>`;
+
+        const badge = document.createElement('span');
+        badge.className = 'badge ' + (file.error ? 'badge-red' : (file.matches?.length ? 'badge-green' : 'badge-yellow'));
+        badge.textContent = file.error ? 'Error' : `${file.matches?.length || 0} match${(file.matches?.length || 0) === 1 ? '' : 'es'}`;
+
+        header.appendChild(title);
+        header.appendChild(badge);
+        container.appendChild(header);
+
+        if (file.error) {
+          const err = document.createElement('p');
+          err.className = 'muted';
+          err.textContent = file.error;
+          container.appendChild(err);
+          resultsEl.appendChild(container);
+          return;
+        }
+
+        if (!file.matches?.length) {
+          const none = document.createElement('p');
+          none.className = 'muted';
+          none.textContent = 'No matches in this file.';
+          container.appendChild(none);
+          resultsEl.appendChild(container);
+          return;
+        }
+
+        const table = document.createElement('table');
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th>IP</th>
+              <th>Port</th>
+              <th>Version</th>
+              <th>Scope</th>
+              <th>Line</th>
+              <th>Timestamp</th>
+              <th>Snippet</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${file.matches.map(m => `
+              <tr>
+                <td><code>${m.address}</code></td>
+                <td>${m.port ?? ''}</td>
+                <td>${m.version}</td>
+                <td>${m.isPrivate ? 'Private/Reserved' : 'Public'}</td>
+                <td>${m.line}</td>
+                <td>${m.timestamp ?? ''}</td>
+                <td>${escapeHtml(m.snippet || '')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        `;
+
+        container.appendChild(table);
+        resultsEl.appendChild(container);
+      });
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+  </script>
+</body>
+</html>

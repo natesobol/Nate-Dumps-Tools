@@ -1,0 +1,229 @@
+<%- include('../../views/partials/page-top', {
+  title: 'HTML Metadata Extractor',
+  metaDescription: 'Bulk extract <title>, meta descriptions, canonicals, keywords, and Open Graph tags from HTML, HTM, or XML exports.',
+  canonicalUrl: 'https://natesobol.github.io/Nates-Free-Tools/html-metadata-extractor',
+  ogTitle: 'HTML Metadata Extractor',
+  ogDescription: 'Upload multiple HTML or XML pages to audit titles, descriptions, and Open Graph tags with CSV export.'
+}) %>
+<section class="tool-hero">
+  <div>
+    <p class="eyebrow">SEO metadata audit helper</p>
+    <h1>Batch HTML Metadata Extractor</h1>
+    <p class="lede">
+      Upload HTML, HTM, or XML exports from a crawl or CMS. The extractor pulls filenames, page titles, meta descriptions,
+      canonical URLs, language hints, optional keywords, and Open Graph tags so you can spot missing or duplicate metadata fast.
+    </p>
+    <ul class="trust-points">
+      <li>Supports drag-and-drop for multiple files at once.</li>
+      <li>Optional keywords and Open Graph columns for social cards.</li>
+      <li>CSV download plus on-page HTML preview.</li>
+    </ul>
+  </div>
+  <div class="converter-card">
+    <form id="extract-form" enctype="multipart/form-data">
+      <label class="mt-0" for="files">Upload HTML/HTM/XML files</label>
+      <div class="dropzone mt-1" id="dropzone">
+        <p class="mb-2">Drag and drop files here</p>
+        <input id="files" name="files" type="file" class="form-control" accept=".html,.htm,.xml" multiple />
+      </div>
+      <div class="form-check mt-3">
+        <input class="form-check-input" type="checkbox" value="true" id="includeKeywords" name="includeKeywords" />
+        <label class="form-check-label" for="includeKeywords">Include meta keywords</label>
+      </div>
+      <div class="form-check mt-2">
+        <input class="form-check-input" type="checkbox" value="true" id="includeOpenGraph" name="includeOpenGraph" checked />
+        <label class="form-check-label" for="includeOpenGraph">Include Open Graph tags</label>
+      </div>
+      <p class="help-text">Always extracts filename, title, meta description, canonical URL, and language when present.</p>
+      <button type="submit" class="button primary btn btn-primary btn-modern full-width">Extract metadata</button>
+      <div class="flash flash-error mt-2" id="error" style="display:none;"></div>
+    </form>
+  </div>
+</section>
+
+<section class="result-panel">
+  <div class="result-card" id="results" style="display:none;">
+    <div class="result-header">
+      <div>
+        <p class="eyebrow">Results</p>
+        <h2 id="summary">Metadata preview</h2>
+      </div>
+      <button id="downloadCsv" class="button secondary">Download CSV</button>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead id="result-head"></thead>
+        <tbody id="result-body"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="result-card">
+    <h2>Best for</h2>
+    <ul class="checklist">
+      <li>SEO audits to confirm every page has a solid title and description.</li>
+      <li>Migration QA when moving CMS content or static exports.</li>
+      <li>Checking Open Graph and canonical tags before social or sitemap submissions.</li>
+    </ul>
+  </div>
+</section>
+
+<script>
+  const form = document.getElementById('extract-form');
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('files');
+  const errorBox = document.getElementById('error');
+  const resultsBox = document.getElementById('results');
+  const resultHead = document.getElementById('result-head');
+  const resultBody = document.getElementById('result-body');
+  const summary = document.getElementById('summary');
+  const downloadCsv = document.getElementById('downloadCsv');
+  let currentResults = [];
+
+  dropzone.addEventListener('dragover', (event) => {
+    event.preventDefault();
+    dropzone.classList.add('dragover');
+  });
+
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+  dropzone.addEventListener('drop', (event) => {
+    event.preventDefault();
+    dropzone.classList.remove('dragover');
+    if (event.dataTransfer?.files?.length) {
+      fileInput.files = event.dataTransfer.files;
+    }
+  });
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    errorBox.style.display = 'none';
+    resultsBox.style.display = 'none';
+    resultHead.innerHTML = '';
+    resultBody.innerHTML = '';
+    currentResults = [];
+
+    const data = new FormData();
+    for (const file of fileInput.files) {
+      data.append('files', file);
+    }
+    data.set('includeKeywords', document.getElementById('includeKeywords').checked);
+    data.set('includeOpenGraph', document.getElementById('includeOpenGraph').checked);
+
+    if (!fileInput.files.length) {
+      errorBox.textContent = 'Please add at least one HTML, HTM, or XML file to scan.';
+      errorBox.style.display = 'block';
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/extract', { method: 'POST', body: data });
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload.error || 'Extraction failed.');
+      }
+
+      currentResults = payload.results || [];
+      renderTable(currentResults, payload.includeKeywords, payload.includeOpenGraph);
+      summary.textContent = `${payload.extracted || 0} file(s) processed.`;
+      resultsBox.style.display = 'block';
+      downloadCsv.disabled = currentResults.length === 0;
+    } catch (error) {
+      errorBox.textContent = error.message;
+      errorBox.style.display = 'block';
+    }
+  });
+
+  downloadCsv.addEventListener('click', () => {
+    if (!currentResults.length) return;
+    const includeKeywords = document.getElementById('includeKeywords').checked;
+    const includeOpenGraph = document.getElementById('includeOpenGraph').checked;
+    const csv = buildCsv(currentResults, includeKeywords, includeOpenGraph);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'html-metadata.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  });
+
+  function renderTable(results, includeKeywords, includeOpenGraph) {
+    const headers = ['File', 'Title', 'Description', 'Canonical', 'Language'];
+    if (includeKeywords) headers.push('Keywords');
+    if (includeOpenGraph) headers.push('OG Title', 'OG Description', 'OG URL', 'OG Image', 'OG Type');
+    headers.push('Error');
+
+    resultHead.innerHTML = `<tr>${headers.map((h) => `<th>${h}</th>`).join('')}</tr>`;
+
+    resultBody.innerHTML = '';
+    results.forEach((item) => {
+      const row = document.createElement('tr');
+      const og = item.openGraph || item.OpenGraph || {};
+      const cells = [
+        item.file || '',
+        item.title || item.Title || '',
+        item.description || item.Description || '',
+        item.canonical || item.Canonical || '',
+        item.language || item.Language || ''
+      ];
+
+      if (includeKeywords) {
+        cells.push(item.keywords || item.Keywords || '');
+      }
+
+      if (includeOpenGraph) {
+        cells.push(
+          og.title || og.Title || '',
+          og.description || og.Description || '',
+          og.url || og.Url || '',
+          og.image || og.Image || '',
+          og.type || og.Type || ''
+        );
+      }
+
+      cells.push(item.error || item.Error || '');
+      cells.forEach((value) => {
+        const cell = document.createElement('td');
+        cell.textContent = value || '';
+        row.appendChild(cell);
+      });
+      resultBody.appendChild(row);
+    });
+  }
+
+  function buildCsv(results, includeKeywords, includeOpenGraph) {
+    const headers = ['File', 'Title', 'Description', 'Canonical', 'Language'];
+    if (includeKeywords) headers.push('Keywords');
+    if (includeOpenGraph) headers.push('OG Title', 'OG Description', 'OG URL', 'OG Image', 'OG Type');
+    headers.push('Error');
+
+    const rows = [headers];
+
+    results.forEach((item) => {
+      const og = item.openGraph || item.OpenGraph || {};
+      const row = [
+        item.file || '',
+        item.title || item.Title || '',
+        item.description || item.Description || '',
+        item.canonical || item.Canonical || '',
+        item.language || item.Language || ''
+      ];
+
+      if (includeKeywords) {
+        row.push(item.keywords || item.Keywords || '');
+      }
+
+      if (includeOpenGraph) {
+        row.push(og.title || og.Title || '', og.description || og.Description || '', og.url || og.Url || '', og.image || og.Image || '', og.type || og.Type || '');
+      }
+
+      row.push(item.error || item.Error || '');
+      rows.push(row.map((value) => `"${String(value || '').replace(/"/g, '""')}"`));
+    });
+
+    return rows.map((row) => row.join(',')).join('\n');
+  }
+</script>
+<%- include('../../views/partials/page-bottom') %>

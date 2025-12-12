@@ -1,0 +1,26 @@
+<%- include('../../views/partials/page-top', {
+  title: 'Extract Highlighted or Color-Coded Rows from Excel',
+  metaDescription: 'Upload .xlsx or .xlsm files and export only the highlighted rows. Filter by fill color, keep original formatting, and download as Excel or CSV.',
+  canonicalUrl: 'https://natesobol.github.io/Nates-Free-Tools/excel-highlighted-row-extractor',
+  ogTitle: 'Excel Highlighted Row Extractor',
+  ogDescription: 'Pull only the highlighted, color-coded rows from spreadsheets and export them as XLSX or CSV.'
+}) %>
+<section class="tool-hero">
+  <div>
+    <p class="eyebrow">Excel QA helper</p>
+    <h1>Export only the highlighted rows from Excel.</h1>
+    <p class="lede">
+      Filter by fill color, choose XLSX or CSV output, and optionally keep the highlight fills for accounting reviews, QA sheets, and project trackers.
+    </p>
+    <ul class="trust-points">
+      <li>Detects both manual fills and conditional formatting that apply background colors.</li>
+      <li>Optional hex filter to pull only a specific highlight color.</li>
+      <li>Exports XLSX with preserved fills or CSV with sheet and row context.</li>
+    </ul>
+  </div>
+  <div class="converter-card">
+    <p class="help-text">This is a static mirror. Use the hosted app below to upload files.</p>
+    <a class="button primary btn btn-primary btn-modern full-width" href="/excel-highlighted-row-extractor/" aria-label="Open the Excel highlighted row extractor app">Open the app</a>
+  </div>
+</section>
+<%- include('../../views/partials/page-bottom') %>

@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script id="asset-base-loader">
+      (function() {
+        const segments = window.location.pathname.split('/').filter(Boolean);
+        const repoIndex = segments.indexOf('Nates-Free-Tools');
+        const baseHref = repoIndex !== -1 ? '/' + segments.slice(0, repoIndex + 1).join('/') + '/' : '/';
+        let baseTag = document.querySelector('base');
+        if (!baseTag) {
+          baseTag = document.createElement('base');
+          document.head.prepend(baseTag);
+        }
+        baseTag.href = baseHref;
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Code Block Extractor | Monetize Hub Tools</title>
+    <link rel="stylesheet" href="css/webapps-unified.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <style>
+      .drop-zone {
+        border: 2px dashed var(--border-subtle);
+        border-radius: 12px;
+        padding: 26px;
+        background: rgba(255, 255, 255, 0.65);
+        transition: border-color 0.2s ease, background 0.2s ease;
+      }
+      .drop-zone.dragover {
+        border-color: var(--primary-color);
+        background: rgba(99, 102, 241, 0.06);
+      }
+      .file-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: #eef2ff;
+        color: #312e81;
+        font-weight: 600;
+      }
+      .result-card {
+        border: 1px solid var(--border-subtle);
+        border-radius: 12px;
+        padding: 14px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.82) 100%);
+      }
+      .code-preview {
+        white-space: pre-wrap;
+        background: #0b1021;
+        color: #e3e7ff;
+        border-radius: 10px;
+        padding: 12px;
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        max-height: 320px;
+        overflow: auto;
+        border: 1px solid #1f2937;
+      }
+      .options-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+      }
+    </style>
+    <script src="js/site-chrome.js" defer></script>
+  </head>
+  <body class="tool-page">
+    <header class="site-header">
+      <div class="header-top">
+        <a class="brand" href="../../../index.html">
+          <img src="../../../public/logo.png" alt="Monetize Hub" class="brand-logo" />
+          <div class="brand-text">
+            <span class="brand-name">Monetize Hub</span>
+            <span class="brand-tagline">Launch, host, and grow your webapps</span>
+          </div>
+        </a>
+        <details class="nav-dropdown user-dropdown" open>
+          <summary class="nav-link nav-dropdown-toggle">
+            <span class="user-label">Account</span>
+            <span aria-hidden="true">▾</span>
+          </summary>
+          <div class="nav-dropdown-menu">
+            <a href="../../../login.html" class="dropdown-link">Login</a>
+            <a href="../../../register.html" class="dropdown-link">Create Account</a>
+            <a href="../../../admin.html" class="dropdown-link">Admin Dashboard</a>
+          </div>
+        </details>
+      </div>
+      <nav class="main-nav">
+        <a href="../../../index.html" class="nav-link">Home</a>
+        <a href="../../../about.html" class="nav-link">About</a>
+        <details class="nav-dropdown" open>
+          <summary class="nav-link nav-dropdown-toggle">Webapps <span aria-hidden="true">▾</span></summary>
+          <div class="nav-dropdown-menu">
+            <a href="../../../apps/excel-to-json/index.html" class="dropdown-link">Excel → JSON</a>
+            <a href="../../../apps/json-to-excel/wwwroot/index.html" class="dropdown-link">JSON → Excel</a>
+            <a href="../../../apps/xml-json-translator/index.html" class="dropdown-link">XML ⇄ JSON Translator</a>
+            <a href="../../../apps/yaml-json-converter/index.html" class="dropdown-link">YAML ↔ JSON Converter</a>
+            <a href="../../../apps/json-combiner/wwwroot/index.html" class="dropdown-link">JSON Combiner</a>
+            <a href="../../../apps/find-and-replace/wwwroot/index.html" class="dropdown-link">Find & Replace</a>
+            <a href="../../../apps/csv-xml-converter/index.html" class="dropdown-link">CSV/XML Converter</a>
+            <a href="../../../apps/list-comparison/wwwroot/index.html" class="dropdown-link">List Comparison / Diff Checker</a>
+            <a href="../../../apps/html-tag-cleaner/wwwroot/index.html" class="dropdown-link">HTML Tag Cleaner</a>
+            <a href="../../../apps/tabify-untabify/wwwroot/index.html" class="dropdown-link">Tabify or Untabify</a>
+            <a href="../../../apps/extract-text-inside-quotes/wwwroot/index.html" class="dropdown-link">Extract Text Inside Quotes</a>
+            <a href="../../../apps/pdf-splitter/wwwroot/index.html" class="dropdown-link">PDF Splitter</a>
+            <a href="../../../apps/powerpoint-to-pdf/wwwroot/index.html" class="dropdown-link">PowerPoint → PDF</a>
+            <a href="../../../apps/powerpoint-image-extractor/wwwroot/index.html" class="dropdown-link">PowerPoint Image Extractor</a>
+            <a href="../../../apps/pdf-link-extractor/wwwroot/index.html" class="dropdown-link">PDF Link Extractor</a>
+            <a href="../../../apps/bullet-list-extractor/wwwroot/index.html" class="dropdown-link">Bullet List Extractor</a>
+            <a href="../../../apps/code-block-extractor/wwwroot/index.html" class="dropdown-link active">Code Block Extractor</a>
+          </div>
+        </details>
+      </nav>
+    </header>
+
+    <main class="tool-shell">
+      <div class="app-shell">
+        <header class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-3">
+          <div>
+            <p class="badge-pill mb-2">Upload .md, .txt, .docx, .html, or .pdf</p>
+            <h1 class="page-title mb-1">Code Block Extractor</h1>
+            <p class="muted mb-0">
+              Pull fenced, inline, or indented code snippets out of documentation and notes, then export them as ready-to-reuse text files.
+            </p>
+          </div>
+          <img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f4dc.svg" width="64" height="64" alt="Notebook" />
+        </header>
+
+        <div class="card-gradient mb-4">
+          <div class="row g-3 align-items-stretch">
+            <div class="col-lg-7">
+              <label class="form-label fw-semibold">Drop files or browse</label>
+              <div id="dropZone" class="drop-zone" role="button" tabindex="0">
+                <p class="mb-2">Drag and drop files here or</p>
+                <input
+                  id="fileInput"
+                  class="form-control"
+                  type="file"
+                  accept=".md,.markdown,.txt,.docx,.html,.htm,.pdf"
+                  multiple
+                />
+                <small class="text-secondary">Files stay on your machine; the API only reads content to find code blocks.</small>
+              </div>
+            </div>
+            <div class="col-lg-5">
+              <div class="control-card h-100">
+                <label class="form-label">Status</label>
+                <p id="status" class="muted mb-2">Waiting for uploads.</p>
+                <p class="mb-1"><span class="stat" id="blockCount">0</span> code blocks detected.</p>
+                <small class="text-secondary">Markdown fences, inline ticks, and indented code are all supported.</small>
+              </div>
+            </div>
+          </div>
+          <div class="options-grid mt-3">
+            <label class="form-check">
+              <input class="form-check-input" type="checkbox" id="includeInline" checked />
+              <span class="form-check-label">Include inline backtick code</span>
+            </label>
+            <label class="form-check">
+              <input class="form-check-input" type="checkbox" id="consolidate" />
+              <span class="form-check-label">Build consolidated export</span>
+            </label>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <button id="extractBtn" class="btn btn-primary" type="button">Extract Code</button>
+              <button id="clearBtn" class="btn btn-outline-secondary" type="button">Clear</button>
+              <span id="selectedFiles" class="muted">No files selected yet.</span>
+            </div>
+          </div>
+          <div id="toast" class="toast mt-3" role="status" style="display: none"></div>
+        </div>
+
+        <section aria-live="polite" class="mb-4">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <h2 class="h5 mb-0">Extracted Code Blocks</h2>
+            <small class="muted">Download any block or copy it to your clipboard.</small>
+          </div>
+          <div id="results" class="d-flex flex-column gap-3"></div>
+          <p id="emptyState" class="muted">No results yet. Add files and click Extract Code.</p>
+        </section>
+
+        <div id="consolidatedCard" class="result-card" style="display: none;">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <div>
+              <h3 class="h6 mb-1">Consolidated export</h3>
+              <small class="muted">A single file containing every extracted block.</small>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+              <button id="downloadConsolidated" class="btn btn-outline-primary btn-sm" type="button">Download</button>
+              <button id="copyConsolidated" class="btn btn-outline-secondary btn-sm" type="button">Copy</button>
+            </div>
+          </div>
+          <pre class="code-preview" id="consolidatedPreview"></pre>
+        </div>
+
+        <div class="notice">
+          <strong>Tip:</strong> Use this to gather reusable samples for README files, onboarding docs, lesson plans, or snippet libraries without hand-copying each block.
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const dropZone = document.getElementById('dropZone');
+      const fileInput = document.getElementById('fileInput');
+      const extractBtn = document.getElementById('extractBtn');
+      const clearBtn = document.getElementById('clearBtn');
+      const statusEl = document.getElementById('status');
+      const blockCountEl = document.getElementById('blockCount');
+      const selectedFilesEl = document.getElementById('selectedFiles');
+      const includeInlineEl = document.getElementById('includeInline');
+      const consolidateEl = document.getElementById('consolidate');
+      const resultsEl = document.getElementById('results');
+      const emptyStateEl = document.getElementById('emptyState');
+      const toastEl = document.getElementById('toast');
+      const consolidatedCard = document.getElementById('consolidatedCard');
+      const consolidatedPreview = document.getElementById('consolidatedPreview');
+      const downloadConsolidated = document.getElementById('downloadConsolidated');
+      const copyConsolidated = document.getElementById('copyConsolidated');
+
+      let selectedFiles = [];
+      let consolidatedText = '';
+
+      function showToast(message, variant = 'primary') {
+        toastEl.textContent = message;
+        toastEl.className = `toast show text-bg-${variant}`;
+        toastEl.style.display = 'block';
+        setTimeout(() => (toastEl.style.display = 'none'), 2500);
+      }
+
+      function updateSelectedFilesText() {
+        if (selectedFiles.length === 0) {
+          selectedFilesEl.textContent = 'No files selected yet.';
+          return;
+        }
+        const names = selectedFiles.map((f) => f.name).join(', ');
+        selectedFilesEl.textContent = `${selectedFiles.length} file(s): ${names}`;
+      }
+
+      function resetUI() {
+        selectedFiles = [];
+        fileInput.value = '';
+        resultsEl.innerHTML = '';
+        blockCountEl.textContent = '0';
+        statusEl.textContent = 'Waiting for uploads.';
+        emptyStateEl.style.display = 'block';
+        consolidatedCard.style.display = 'none';
+        consolidatedPreview.textContent = '';
+        consolidatedText = '';
+        updateSelectedFilesText();
+      }
+
+      fileInput.addEventListener('change', (e) => {
+        selectedFiles = Array.from(e.target.files || []);
+        updateSelectedFilesText();
+      });
+
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      });
+
+      dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        if (e.dataTransfer?.files?.length) {
+          selectedFiles = Array.from(e.dataTransfer.files);
+          fileInput.files = e.dataTransfer.files;
+          updateSelectedFilesText();
+        }
+      });
+
+      extractBtn.addEventListener('click', async () => {
+        if (selectedFiles.length === 0) {
+          showToast('Please add at least one file.', 'warning');
+          return;
+        }
+
+        statusEl.textContent = 'Extracting…';
+        extractBtn.disabled = true;
+        clearBtn.disabled = true;
+
+        try {
+          const formData = new FormData();
+          selectedFiles.forEach((file) => formData.append('files', file));
+          formData.append('includeInline', includeInlineEl.checked);
+          formData.append('consolidate', consolidateEl.checked);
+
+          const response = await fetch('/api/extract', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.error || 'Extraction failed.');
+          }
+
+          const data = await response.json();
+          renderResults(data);
+          statusEl.textContent = `Processed ${data.filesProcessed} file(s).`;
+          blockCountEl.textContent = data.totalBlocks;
+          showToast('Extraction complete!', 'success');
+        } catch (error) {
+          console.error(error);
+          showToast(error.message || 'Something went wrong.', 'danger');
+          statusEl.textContent = 'Extraction failed.';
+        } finally {
+          extractBtn.disabled = false;
+          clearBtn.disabled = false;
+        }
+      });
+
+      clearBtn.addEventListener('click', resetUI);
+
+      function renderResults(data) {
+        resultsEl.innerHTML = '';
+        emptyStateEl.style.display = data.totalBlocks === 0 ? 'block' : 'none';
+
+        data.results.forEach((file) => {
+          const fileCard = document.createElement('div');
+          fileCard.className = 'result-card';
+
+          const header = document.createElement('div');
+          header.className = 'd-flex align-items-center justify-content-between mb-2 flex-wrap gap-2';
+          header.innerHTML = `
+            <div>
+              <h3 class="h6 mb-0">${file.source}</h3>
+              <small class="muted">${file.kind} • ${file.blocks.length} block(s)</small>
+            </div>
+            ${file.error ? `<span class="text-danger">${file.error}</span>` : ''}
+          `;
+          fileCard.appendChild(header);
+
+          if (file.error) {
+            resultsEl.appendChild(fileCard);
+            return;
+          }
+
+          const list = document.createElement('div');
+          list.className = 'd-flex flex-column gap-3';
+
+          file.blocks.forEach((block) => {
+            const item = document.createElement('div');
+            item.className = 'border rounded p-3 bg-white shadow-sm';
+            item.innerHTML = `
+              <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap mb-2">
+                <div>
+                  <span class="badge text-bg-primary me-2">${block.type}</span>
+                  <strong>${block.language || 'Language: auto'}</strong>
+                  <small class="text-secondary ms-2">${block.length} chars</small>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                  <button class="btn btn-outline-secondary btn-sm" data-action="copy">Copy</button>
+                  <button class="btn btn-outline-primary btn-sm" data-action="download">Download</button>
+                </div>
+              </div>
+              <pre class="code-preview">${escapeHtml(block.content)}</pre>
+            `;
+
+            item.querySelector('[data-action="copy"]').addEventListener('click', async () => {
+              await navigator.clipboard.writeText(block.content);
+              showToast('Code block copied!', 'primary');
+            });
+
+            item.querySelector('[data-action="download"]').addEventListener('click', () => {
+              const blob = new Blob([block.content], { type: 'text/plain' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `${sanitizeFilename(file.source)}-block-${block.index}.txt`;
+              a.click();
+              URL.revokeObjectURL(url);
+            });
+
+            list.appendChild(item);
+          });
+
+          fileCard.appendChild(list);
+          resultsEl.appendChild(fileCard);
+        });
+
+        consolidatedText = data.consolidated || '';
+        if (consolidatedText) {
+          consolidatedCard.style.display = 'block';
+          consolidatedPreview.textContent = consolidatedText.slice(0, 2000) + (consolidatedText.length > 2000 ? '\n…' : '');
+        } else {
+          consolidatedCard.style.display = 'none';
+          consolidatedPreview.textContent = '';
+        }
+      }
+
+      function escapeHtml(str) {
+        return str
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+      }
+
+      function sanitizeFilename(name) {
+        return name.replace(/[^a-z0-9-_]+/gi, '-');
+      }
+
+      downloadConsolidated.addEventListener('click', () => {
+        if (!consolidatedText) return;
+        const blob = new Blob([consolidatedText], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'code-blocks.txt';
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      copyConsolidated.addEventListener('click', async () => {
+        if (!consolidatedText) return;
+        await navigator.clipboard.writeText(consolidatedText);
+        showToast('Consolidated export copied.', 'primary');
+      });
+
+      resetUI();
+    </script>
+  </body>
+</html>

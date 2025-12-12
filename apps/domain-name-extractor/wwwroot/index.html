@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script id="asset-base-loader">
+    (function() {
+      const segments = window.location.pathname.split('/').filter(Boolean);
+      const repoIndex = segments.indexOf('Nates-Free-Tools');
+      const baseHref = repoIndex !== -1 ? '/' + segments.slice(0, repoIndex + 1).join('/') + '/' : '/';
+      let baseTag = document.querySelector('base');
+      if (!baseTag) {
+        baseTag = document.createElement('base');
+        document.head.prepend(baseTag);
+      }
+      baseTag.href = baseHref;
+    })();
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Domain Name Extractor</title>
+  <link rel="stylesheet" href="css/webapps-unified.css" />
+  <script src="js/site-chrome.js" defer></script>
+</head>
+<body>
+  <main>
+    <header class="app-header">
+      <p class="pill">C# utility • Domain intelligence</p>
+      <h1>Extract domains and URLs from text, DOCX, CSV, JSON, and HTML files.</h1>
+      <p class="muted">Scan marketing briefs, scraped pages, or QA exports to find every domain reference. Toggle root-domain only filtering, drop subdomains, and group mentions with frequency counts.</p>
+    </header>
+
+    <section class="card">
+      <form id="extract-form">
+        <label for="text">Optional inline text</label>
+        <textarea id="text" name="text" placeholder="Traffic sources: https://analytics.example.com and blog.example.org."></textarea>
+
+        <label for="files" style="margin-top: 1rem;">Upload files (.txt, .docx, .csv, .json, .html)</label>
+        <input type="file" id="files" name="files" accept=".txt,.docx,.csv,.json,.html" multiple />
+        <small class="muted">Files stay in memory only—nothing is stored.</small>
+
+        <div class="grid" style="margin-top: 1rem;">
+          <div>
+            <label><input type="checkbox" id="onlyRootDomains" name="onlyRootDomains" /> Only root domains</label>
+            <label><input type="checkbox" id="excludeSubdomains" name="excludeSubdomains" /> Exclude subdomains entirely</label>
+          </div>
+          <div>
+            <label><input type="checkbox" id="groupByDomain" name="groupByDomain" checked /> Group by domain with context samples</label>
+            <p class="muted">Great for brand monitoring or link QA.</p>
+            <button type="submit" style="margin-top: 0.5rem;">Extract domains</button>
+            <div id="error" class="error" style="display:none; margin-top:0.5rem;"></div>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <section class="card" style="margin-top: 1.25rem;">
+      <div id="results" style="display:none;">
+        <div class="grid" style="align-items: center;">
+          <p class="success" id="summary"></p>
+          <div style="text-align: right;">
+            <button id="download-csv" class="secondary" type="button">Download CSV</button>
+            <p class="muted" style="margin-top: 0.25rem;">Exports include domain, host, and original context.</p>
+          </div>
+        </div>
+
+        <div class="grid" style="gap: 1rem; margin-top: 1rem;">
+          <div class="stat">
+            <h3>Frequencies</h3>
+            <ul id="freq-list" class="muted"></ul>
+          </div>
+          <div class="stat">
+            <h3>Grouped contexts</h3>
+            <div id="grouped"></div>
+          </div>
+        </div>
+
+        <h3 style="margin-top: 1rem;">Per-file details</h3>
+        <div id="items" class="grid" style="gap: 1rem;"></div>
+      </div>
+      <div id="empty" class="muted">Upload files or paste text to see extracted domains.</div>
+    </section>
+  </main>
+
+  <template id="result-template">
+    <div class="stat">
+      <strong class="source"></strong>
+      <p class="muted kind"></p>
+      <div class="pill-bar metrics"></div>
+      <pre class="values"></pre>
+      <div class="error" style="display:none;"></div>
+    </div>
+  </template>
+
+  <template id="group-template">
+    <div class="pill-bar" style="margin-bottom: 0.5rem;"></div>
+    <ul class="muted context-list"></ul>
+  </template>
+
+  <script>
+    const form = document.getElementById('extract-form');
+    const errorBox = document.getElementById('error');
+    const results = document.getElementById('results');
+    const summary = document.getElementById('summary');
+    const items = document.getElementById('items');
+    const emptyState = document.getElementById('empty');
+    const freqList = document.getElementById('freq-list');
+    const grouped = document.getElementById('grouped');
+    const downloadBtn = document.getElementById('download-csv');
+    let csvCache = '';
+
+    downloadBtn.addEventListener('click', () => {
+      if (!csvCache) return;
+      const blob = new Blob([csvCache], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'domain-extraction.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      errorBox.style.display = 'none';
+      results.style.display = 'none';
+      emptyState.style.display = 'none';
+      items.innerHTML = '';
+      freqList.innerHTML = '';
+      grouped.innerHTML = '';
+      csvCache = '';
+
+      const data = new FormData();
+      const files = document.getElementById('files').files;
+      for (const file of files) {
+        data.append('files', file);
+      }
+
+      data.set('text', document.getElementById('text').value);
+      data.set('onlyRootDomains', document.getElementById('onlyRootDomains').checked);
+      data.set('excludeSubdomains', document.getElementById('excludeSubdomains').checked);
+      data.set('groupByDomain', document.getElementById('groupByDomain').checked);
+
+      try {
+        const response = await fetch('/api/extract', { method: 'POST', body: data });
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.error || 'Extraction failed.');
+        }
+
+        csvCache = payload.csv || '';
+        summary.textContent = `Found ${payload.totalMentions} mentions across ${payload.uniqueDomains} unique domains.`;
+
+        payload.frequencies.forEach((item) => {
+          const li = document.createElement('li');
+          li.textContent = `${item.domain} — ${item.count}`;
+          freqList.appendChild(li);
+        });
+
+        if (payload.grouped.length === 0) {
+          grouped.innerHTML = '<p class="muted">Grouping is off or no matches found.</p>';
+        } else {
+          payload.grouped.forEach((entry) => {
+            const node = document.getElementById('group-template').content.cloneNode(true);
+            const pillBar = node.querySelector('.pill-bar');
+            pillBar.appendChild(createPill(entry.domain));
+            pillBar.appendChild(createPill(`${entry.count} mentions`));
+
+            const list = node.querySelector('.context-list');
+            entry.samples.forEach((sample) => {
+              const li = document.createElement('li');
+              li.textContent = sample;
+              list.appendChild(li);
+            });
+
+            const wrapper = document.createElement('div');
+            wrapper.classList.add('stat');
+            wrapper.appendChild(node);
+            grouped.appendChild(wrapper);
+          });
+        }
+
+        payload.results.forEach((result) => {
+          const node = document.getElementById('result-template').content.cloneNode(true);
+          node.querySelector('.source').textContent = result.source;
+          node.querySelector('.kind').textContent = result.kind.toUpperCase();
+
+          const pillBar = node.querySelector('.metrics');
+          pillBar.appendChild(createPill(`${result.count} mentions`));
+
+          if (result.error) {
+            const errorEl = node.querySelector('.error');
+            errorEl.textContent = result.error;
+            errorEl.style.display = 'block';
+          } else {
+            const pre = node.querySelector('.values');
+            pre.textContent = result.domains.length ? result.domains.map((d) => `${d.domain} (${d.original})`).join('\n') : 'No domains found.';
+          }
+
+          items.appendChild(node);
+        });
+
+        results.style.display = 'block';
+      } catch (error) {
+        errorBox.textContent = error.message;
+        errorBox.style.display = 'block';
+        emptyState.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

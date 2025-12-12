@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script id="asset-base-loader">
+      (function() {
+        const segments = window.location.pathname.split('/').filter(Boolean);
+        const repoIndex = segments.indexOf('Nates-Free-Tools');
+        const baseHref = repoIndex !== -1 ? '/' + segments.slice(0, repoIndex + 1).join('/') + '/' : '/';
+        let baseTag = document.querySelector('base');
+        if (!baseTag) {
+          baseTag = document.createElement('base');
+          document.head.prepend(baseTag);
+        }
+        baseTag.href = baseHref;
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Excel Highlighted Row Extractor | Monetize Hub Tools</title>
+    <link rel="stylesheet" href="css/webapps-unified.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <style>
+      .drop-zone {
+        border: 2px dashed var(--border-subtle);
+        border-radius: 12px;
+        padding: 28px;
+        background: rgba(255, 255, 255, 0.55);
+        transition: border-color 0.2s ease, background 0.2s ease;
+      }
+      .drop-zone.dragover {
+        border-color: var(--primary-color);
+        background: rgba(99, 102, 241, 0.06);
+      }
+      .badge-stack {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: #eef2ff;
+        color: #312e81;
+        font-weight: 600;
+        font-size: 14px;
+      }
+      .preview-list {
+        list-style: none;
+        padding-left: 0;
+        display: grid;
+        gap: 12px;
+      }
+      .preview-item {
+        border: 1px solid var(--border-subtle);
+        border-radius: 10px;
+        padding: 12px;
+        background: rgba(255,255,255,0.8);
+      }
+      .color-chip {
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        border: 1px solid #d4d4d8;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container py-4">
+      <header class="mb-4">
+        <p class="eyebrow">Excel QA helper</p>
+        <h1>Export only the highlighted rows from Excel.</h1>
+        <p class="lede">
+          Upload .xlsx or .xlsm workbooks, filter by highlight color, and export just the flagged rows as a new workbook or CSV
+          for reviewers, accountants, and QA teams.
+        </p>
+      </header>
+
+      <section class="row g-4 align-items-start">
+        <div class="col-lg-7">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <form id="extract-form">
+                <label class="form-label" for="file">Upload Excel file (.xlsx or .xlsm)</label>
+                <div class="drop-zone mb-3" id="drop-zone">
+                  <input type="file" class="form-control" id="file" name="file" accept=".xlsx,.xlsm" required />
+                  <p class="small text-muted mb-0 mt-2">Maximum 50 MB. We never store your uploads.</p>
+                </div>
+
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label for="filterColor" class="form-label">Filter by color (optional)</label>
+                    <div class="d-flex gap-2 align-items-center">
+                      <input type="color" id="colorPicker" value="#ffff00" class="form-control form-control-color" title="Pick a highlight color" />
+                      <input type="text" id="filterColor" name="filterColor" class="form-control" placeholder="#FFFF00" />
+                    </div>
+                    <div class="form-text">Leave blank to capture every colored row.</div>
+                  </div>
+                  <div class="col-md-4">
+                    <label for="outputFormat" class="form-label">Export format</label>
+                    <select id="outputFormat" name="outputFormat" class="form-select">
+                      <option value="xlsx">Excel (.xlsx)</option>
+                      <option value="csv">CSV</option>
+                    </select>
+                    <div class="form-check mt-2">
+                      <input class="form-check-input" type="checkbox" id="exportFormatting" name="exportFormatting" checked />
+                      <label class="form-check-label" for="exportFormatting">Keep highlight fills</label>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">What counts as a highlight?</label>
+                    <ul class="small mb-0 ps-3">
+                      <li>Manual fill colors (e.g., yellow, red)</li>
+                      <li>Conditional formatting that applies a background fill</li>
+                      <li>Matches only rows that contain at least one colored cell</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
+                  <button class="btn btn-primary btn-modern" type="submit">Extract highlighted rows</button>
+                  <div class="flash flash-error" id="error" style="display:none;"></div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-5">
+          <div class="card h-100 shadow-sm">
+            <div class="card-body">
+              <h2 class="h5">Why people use this</h2>
+              <ul class="preview-list">
+                <li class="preview-item">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <strong>Accounting review sheets</strong>
+                    <span class="color-chip" style="background:#fef08a"></span>
+                  </div>
+                  <p class="small mb-0">Export only the yellow rows marked for escalation or adjustments.</p>
+                </li>
+                <li class="preview-item">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <strong>QA or audit logs</strong>
+                    <span class="color-chip" style="background:#fecdd3"></span>
+                  </div>
+                  <p class="small mb-0">Capture red/amber flags without shipping the entire spreadsheet.</p>
+                </li>
+                <li class="preview-item">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <strong>Project trackers</strong>
+                    <span class="color-chip" style="background:#bbf7d0"></span>
+                  </div>
+                  <p class="small mb-0">Share only the green "done" rows with stakeholders.</p>
+                </li>
+              </ul>
+              <div class="badge-stack" id="stats" style="display:none;"></div>
+              <a class="btn btn-outline-secondary mt-3 w-100" id="downloadBtn" style="display:none;">Download filtered file</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById('extract-form');
+      const errorBox = document.getElementById('error');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const stats = document.getElementById('stats');
+      const filterInput = document.getElementById('filterColor');
+      const colorPicker = document.getElementById('colorPicker');
+      const dropZone = document.getElementById('drop-zone');
+      const fileInput = document.getElementById('file');
+
+      const syncColorFields = (value) => {
+        if (!value) return;
+        const normalized = value.startsWith('#') ? value : `#${value}`;
+        colorPicker.value = normalized;
+        filterInput.value = normalized.toUpperCase();
+      };
+
+      colorPicker.addEventListener('input', (e) => {
+        filterInput.value = e.target.value.toUpperCase();
+      });
+
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      });
+
+      dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
+          fileInput.files = e.dataTransfer.files;
+        }
+      });
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        errorBox.style.display = 'none';
+        downloadBtn.style.display = 'none';
+        stats.style.display = 'none';
+        stats.innerHTML = '';
+
+        if (!fileInput.files.length) {
+          errorBox.textContent = 'Upload an .xlsx or .xlsm file first.';
+          errorBox.style.display = 'block';
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        if (filterInput.value.trim()) {
+          formData.append('filterColor', filterInput.value.trim());
+        }
+        formData.append('outputFormat', document.getElementById('outputFormat').value);
+        formData.append('exportFormatting', document.getElementById('exportFormatting').checked);
+
+        try {
+          const response = await fetch('/api/extract-highlighted-rows', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!response.ok) {
+            const payload = await response.json().catch(() => ({}));
+            throw new Error(payload.error || 'Failed to extract highlighted rows.');
+          }
+
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          const filename = response.headers.get('Content-Disposition')?.split('filename=')[1]?.replaceAll('"', '') || 'highlighted-rows';
+
+          downloadBtn.href = url;
+          downloadBtn.download = filename;
+          downloadBtn.textContent = `Download ${filename}`;
+          downloadBtn.style.display = 'inline-flex';
+
+          const colorFilter = filterInput.value.trim() || 'Any color';
+          const format = document.getElementById('outputFormat').value.toUpperCase();
+          const keepFormat = document.getElementById('exportFormatting').checked ? 'keeps fills' : 'values only';
+
+          [
+            `Filter: ${colorFilter}`,
+            `Export: ${format}`,
+            keepFormat
+          ].forEach((text) => {
+            const pill = document.createElement('span');
+            pill.className = 'pill';
+            pill.textContent = text;
+            stats.appendChild(pill);
+          });
+
+          stats.style.display = 'flex';
+        } catch (err) {
+          errorBox.textContent = err.message;
+          errorBox.style.display = 'block';
+        }
+      });
+    </script>
+  </body>
+</html>

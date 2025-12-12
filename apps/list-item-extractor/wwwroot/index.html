@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <script id="asset-base-loader">
+      (function() {
+        const segments = window.location.pathname.split('/').filter(Boolean);
+        const repoIndex = segments.indexOf('Nates-Free-Tools');
+        const baseHref = repoIndex !== -1 ? '/' + segments.slice(0, repoIndex + 1).join('/') + '/' : '/';
+        let baseTag = document.querySelector('base');
+        if (!baseTag) {
+          baseTag = document.createElement('base');
+          document.head.prepend(baseTag);
+        }
+        baseTag.href = baseHref;
+      })();
+    </script>
+
+    <link rel="stylesheet" href="css/webapps-unified.css" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>List Item Extractor</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b1021;
+        --panel: #101833;
+        --panel-2: #0f172a;
+        --border: rgba(255, 255, 255, 0.08);
+        --accent: #38bdf8;
+        --muted: #cbd5e1;
+        --success: #4ade80;
+      }
+
+      body {
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.08), transparent 24%),
+          radial-gradient(circle at 80% 8%, rgba(94, 234, 212, 0.08), transparent 28%),
+          var(--bg);
+        color: #e2e8f0;
+        margin: 0;
+      }
+
+      header,
+      main {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1.5rem;
+      }
+
+      h1 {
+        margin: 0 0 0.5rem;
+        font-size: clamp(2rem, 5vw, 2.8rem);
+      }
+
+      p.lede {
+        color: var(--muted);
+        margin: 0;
+        font-size: 1.02rem;
+        line-height: 1.6;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1rem;
+        box-shadow: 0 20px 80px rgba(0, 0, 0, 0.35);
+      }
+
+      .panel h2 {
+        margin-top: 0;
+        margin-bottom: 0.35rem;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+      }
+
+      .dropzone {
+        border: 1px dashed var(--border);
+        padding: 1.1rem;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.02);
+        text-align: center;
+        transition: all 0.2s ease;
+      }
+
+      .dropzone.dragover {
+        border-color: var(--accent);
+        background: rgba(56, 189, 248, 0.08);
+      }
+
+      .controls {
+        display: grid;
+        gap: 0.75rem;
+      }
+
+      button.primary {
+        background: linear-gradient(135deg, #38bdf8, #6366f1);
+        color: #0b1021;
+        font-weight: 700;
+        border: none;
+        border-radius: 10px;
+        padding: 0.85rem 1rem;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: rgba(255, 255, 255, 0.06);
+        color: #e2e8f0;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 0.65rem 0.9rem;
+        cursor: pointer;
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .results-panel {
+        display: grid;
+        gap: 1rem;
+      }
+
+      .summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+      }
+
+      .badge {
+        padding: 0.5rem 0.75rem;
+        border-radius: 999px;
+        background: rgba(56, 189, 248, 0.18);
+        border: 1px solid var(--border);
+        color: #e0f2fe;
+        font-weight: 600;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--panel-2);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+      }
+
+      th,
+      td {
+        padding: 0.7rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+        text-align: left;
+        font-size: 0.95rem;
+      }
+
+      th {
+        background: rgba(255, 255, 255, 0.04);
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        font-size: 0.82rem;
+      }
+
+      tr:last-child td {
+        border-bottom: none;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.25rem 0.55rem;
+        border-radius: 999px;
+        background: rgba(74, 222, 128, 0.14);
+        color: #bbf7d0;
+        font-weight: 600;
+      }
+
+      .muted {
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>List Item Extractor</h1>
+      <p class="lede">
+        Upload .docx, .pdf, .txt, or .md files to automatically extract bulleted and numbered lists, including nested
+        levels and parent headings. Export the structured items to CSV, JSON, or flattened text.
+      </p>
+    </header>
+
+    <main class="layout">
+      <section class="panel">
+        <h2>Upload files</h2>
+        <p class="muted">
+          Supports bulleted and numbered lists with indentation-based nesting. We'll map each item to the closest heading.
+        </p>
+
+        <div id="dropzone" class="dropzone">
+          <p><strong>Drop files here</strong> or click to browse.</p>
+          <p class="muted">Accepted: .docx, .pdf, .txt, .md</p>
+          <input id="file-input" type="file" multiple accept=".docx,.pdf,.txt,.md" style="display: none" />
+        </div>
+
+        <div class="controls">
+          <div>
+            <label for="export-format">Export format</label>
+            <select id="export-format">
+              <option value="json">JSON</option>
+              <option value="csv">CSV</option>
+              <option value="txt">Flattened text</option>
+            </select>
+          </div>
+          <button id="extract-btn" class="primary">Extract list items</button>
+          <button id="download-btn" class="secondary" disabled>Download results</button>
+          <p id="status" class="muted"></p>
+        </div>
+      </section>
+
+      <section class="panel results-panel">
+        <div class="summary">
+          <span class="badge" id="file-count">0 files</span>
+          <span class="badge" id="item-count">0 items</span>
+        </div>
+        <div class="table-wrapper">
+          <table id="results-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>List Level</th>
+                <th>Parent Heading</th>
+                <th>File</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="4" class="muted">No results yet.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const dropzone = document.getElementById('dropzone');
+      const fileInput = document.getElementById('file-input');
+      const extractBtn = document.getElementById('extract-btn');
+      const downloadBtn = document.getElementById('download-btn');
+      const statusEl = document.getElementById('status');
+      const itemBadge = document.getElementById('item-count');
+      const fileBadge = document.getElementById('file-count');
+      const resultsTable = document.getElementById('results-table').querySelector('tbody');
+      const formatSelect = document.getElementById('export-format');
+
+      let selectedFiles = [];
+      let lastResults = [];
+
+      dropzone.addEventListener('click', () => fileInput.click());
+
+      dropzone.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        dropzone.classList.add('dragover');
+      });
+
+      dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+      dropzone.addEventListener('drop', (event) => {
+        event.preventDefault();
+        dropzone.classList.remove('dragover');
+        const files = Array.from(event.dataTransfer.files || []);
+        handleFiles(files);
+      });
+
+      fileInput.addEventListener('change', (event) => {
+        const files = Array.from(event.target.files || []);
+        handleFiles(files);
+      });
+
+      function handleFiles(files) {
+        selectedFiles = files;
+        statusEl.textContent = `${files.length} file(s) ready.`;
+      }
+
+      extractBtn.addEventListener('click', async () => {
+        if (!selectedFiles.length) {
+          statusEl.textContent = 'Add at least one file to begin.';
+          return;
+        }
+
+        const formData = new FormData();
+        selectedFiles.forEach((file) => formData.append('files', file));
+
+        extractBtn.disabled = true;
+        downloadBtn.disabled = true;
+        statusEl.textContent = 'Processing...';
+
+        try {
+          const response = await fetch('/api/list-item-extractor', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to process files.');
+          }
+
+          const data = await response.json();
+          renderResults(data.files || []);
+          statusEl.textContent = 'Extraction complete.';
+        } catch (error) {
+          console.error(error);
+          statusEl.textContent = 'Something went wrong while extracting.';
+          renderResults([]);
+        } finally {
+          extractBtn.disabled = false;
+        }
+      });
+
+      downloadBtn.addEventListener('click', () => {
+        const format = formatSelect.value;
+        const blob = formatResults(lastResults, format);
+        const url = URL.createObjectURL(blob);
+        const extension = format === 'txt' ? 'txt' : format;
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `list-items.${extension}`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      function renderResults(files) {
+        lastResults = [];
+        resultsTable.innerHTML = '';
+
+        files.forEach((file) => {
+          if (file.error) {
+            const row = document.createElement('tr');
+            row.innerHTML = `<td colspan="4" class="muted">${file.fileName}: ${file.error}</td>`;
+            resultsTable.appendChild(row);
+            return;
+          }
+
+          (file.items || []).forEach((item) => {
+            lastResults.push({ ...item, fileName: file.fileName });
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${escapeHtml(item.item)}</td>
+              <td><span class="pill">Level ${item.listLevel}</span></td>
+              <td>${escapeHtml(item.parentHeading || '—')}</td>
+              <td class="muted">${escapeHtml(file.fileName)}</td>
+            `;
+            resultsTable.appendChild(row);
+          });
+        });
+
+        if (!lastResults.length) {
+          const row = document.createElement('tr');
+          row.innerHTML = '<td colspan="4" class="muted">No list items found.</td>';
+          resultsTable.appendChild(row);
+        }
+
+        const fileCount = files.length;
+        const itemCount = lastResults.length;
+        fileBadge.textContent = `${fileCount} file${fileCount === 1 ? '' : 's'}`;
+        itemBadge.textContent = `${itemCount} item${itemCount === 1 ? '' : 's'}`;
+        downloadBtn.disabled = lastResults.length === 0;
+      }
+
+      function formatResults(items, format) {
+        if (format === 'csv') {
+          const header = 'Item,List Level,Parent Heading,File';
+          const rows = items.map((i) =>
+            [i.item, i.listLevel, i.parentHeading || '', i.fileName]
+              .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+              .join(',')
+          );
+          return new Blob([header + '\n' + rows.join('\n')], { type: 'text/csv' });
+        }
+
+        if (format === 'txt') {
+          const lines = items.map((i) => `${'  '.repeat(i.listLevel)}- ${i.item} (${i.parentHeading || 'No heading'}) [${i.fileName}]`);
+          return new Blob([lines.join('\n')], { type: 'text/plain' });
+        }
+
+        return new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' });
+      }
+
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+    </script>
+  </body>
+</html>
