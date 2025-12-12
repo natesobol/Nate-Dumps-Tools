@@ -14,6 +14,7 @@ A starter website for hosting webapps with monetization in mind. It provides a h
 - List Comparison / Diff Checker: `/apps/list-comparison/wwwroot/index.html`
 - Extract Text Inside Quotes: `/apps/extract-text-inside-quotes/wwwroot/index.html`
 - PDF Splitter: `/apps/pdf-splitter/wwwroot/index.html`
+- Bullet List Extractor: `/apps/bullet-list-extractor/wwwroot/index.html`
 - PowerPoint → PDF: `/apps/powerpoint-to-pdf/wwwroot/index.html`
 - PowerPoint Image Extractor: `/apps/powerpoint-image-extractor/wwwroot/index.html`
 - JSON to Excel Creator: `/apps/json-to-excel/wwwroot/index.html`
@@ -234,6 +235,18 @@ Located in `apps/pdf-splitter/`, this C#-hosted webapp splits one or more PDFs e
 **Server Route:** `/pdf-splitter`
 **Static Version:** `/apps/pdf-splitter/wwwroot/index.html`
 
+### Bullet List Extractor
+Located in `apps/bullet-list-extractor/`, this .NET 8 minimal API pulls bulleted and numbered lists from uploaded documents.
+
+**Features:**
+- Upload multiple `.docx`, `.pdf`, or `.txt` files at once
+- Preserves bullet symbols and numbering formats from Word files
+- Detects indented list items in PDFs and plain text
+- Returns per-file results plus a total count for easy exports
+
+**Server Route:** `/bullet-list-extractor`
+**Static Version:** `/apps/bullet-list-extractor/wwwroot/index.html`
+
 ### PDF Link Extractor
 Located in `apps/pdf-link-extractor/`, this C#-hosted webapp extracts every URL from PDFs by scanning both visible text and link annotations.
 
@@ -348,7 +361,7 @@ apps/
 - Supabase for user data with SQLite session storage
 - EJS for server-rendered views
 - Helmet and secure session defaults for baseline security
-- C# .NET (JSON Combiner, JSON to Excel, PDF Splitter, PDF Link Extractor, List Comparison, Find & Replace, Batch File Renamer, and PowerPoint Image Extractor webapps)
+- C# .NET (JSON Combiner, JSON to Excel, PDF Splitter, PDF Link Extractor, Bullet List Extractor, List Comparison, Find & Replace, Batch File Renamer, and PowerPoint Image Extractor webapps)
 
 ## Notes
 - User passwords are managed by Supabase Auth
