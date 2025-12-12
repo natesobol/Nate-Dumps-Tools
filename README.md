@@ -10,6 +10,7 @@ A starter website for hosting webapps with monetization in mind. It provides a h
   - YAML/JSON Converter: `/apps/yaml-json-converter/index.html`
   - JSON Combiner: `/apps/json-combiner/wwwroot/index.html`
   - CSV/XML Converter: `/apps/csv-xml-converter/index.html`
+  - List Comparison / Diff Checker: `/apps/list-comparison/wwwroot/index.html`
   - PDF Splitter: `/apps/pdf-splitter/wwwroot/index.html`
   - PowerPoint → PDF: `/apps/powerpoint-to-pdf/wwwroot/index.html`
   - JSON to Excel Creator: `/apps/json-to-excel/wwwroot/index.html`
@@ -22,6 +23,7 @@ A starter website for hosting webapps with monetization in mind. It provides a h
 - Admin-only dashboard for reviewing all profiles stored in Supabase
 - Excel-to-JSON converter webapp with upload, preview, and JSON download
 - CSV/XML converter that handles both directions with previews
+- List comparison/diff checker with text, HTML, DOCX, and code-friendly inputs
 - Browser-based PDF splitter for page- or size-based slicing
 - Supabase database for user data plus SQLite-backed session storage
 - EJS templating with responsive styling
@@ -124,6 +126,18 @@ Located in `apps/csv-xml-converter/`, this tool converts CSV to XML and XML back
 **Server Route:** `/csv-xml-converter`
 **Static Version:** `/apps/csv-xml-converter/index.html`
 
+### List Comparison / Diff Checker
+Located in `apps/list-comparison/`, this C# minimal app compares two lists from pasted text or uploaded documents.
+
+**Features:**
+- Accepts TXT/CSV/JSON, HTML/HTM, DOCX, and common source-code files for each list
+- Toggle case sensitivity, trimming, and blank-line filtering before comparing
+- Returns overlaps plus items unique to List A or List B with counts
+- Extracts plain text from DOCX and HTML uploads server-side
+
+**Server Route:** `/list-comparison`
+**Static Version:** `/apps/list-comparison/wwwroot/index.html`
+
 ### PDF Splitter
 Located in `apps/pdf-splitter/`, this C#-hosted webapp splits one or more PDFs entirely in the browser.
 
@@ -164,6 +178,11 @@ apps/
 │   ├── src/routes/         # Express routes
 │   ├── views/              # EJS templates
 │   └── index.html          # Static version
+├── list-comparison/        # List comparison/diff checker webapp
+│   ├── Program.cs          # Minimal API and document ingestion
+│   ├── list-comparison.csproj
+│   ├── wwwroot/            # Static UI assets
+│   └── README.md
 ├── pdf-splitter/           # Browser-based PDF splitter webapp
 │   ├── Program.cs          # Minimal API hosting the static UI
 │   ├── pdf-splitter.csproj # .NET project file
@@ -188,7 +207,7 @@ apps/
 - Supabase for user data with SQLite session storage
 - EJS for server-rendered views
 - Helmet and secure session defaults for baseline security
-- C# .NET (JSON Combiner, JSON to Excel, and PDF Splitter webapps)
+- C# .NET (JSON Combiner, JSON to Excel, PDF Splitter, and List Comparison webapps)
 
 ## Notes
 - User passwords are managed by Supabase Auth

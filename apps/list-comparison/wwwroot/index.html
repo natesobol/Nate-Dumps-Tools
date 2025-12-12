@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>List Comparison / Diff Checker</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1.5.10/css/pico.min.css">
+    <style>
+        body { background: linear-gradient(135deg, #0f172a, #111827); color: #e5e7eb; }
+        main { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem 3rem; }
+        .card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 1.5rem; box-shadow: 0 20px 50px rgba(0,0,0,0.35); }
+        h1, h2 { color: #f8fafc; }
+        textarea { min-height: 160px; resize: vertical; background: #0b1224; color: #e5e7eb; border-color: #1f2937; }
+        input[type="file"] { color: #e5e7eb; }
+        .pill { display: inline-flex; gap: 0.25rem; align-items: center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 0.35rem 0.75rem; border-radius: 999px; font-size: 0.9rem; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem; }
+        .muted { color: #9ca3af; }
+        .badge { background: #10b981; color: #041014; padding: 0.35rem 0.75rem; border-radius: 999px; font-weight: 700; }
+        .error { background: rgba(239,68,68,0.15); color: #fecdd3; border: 1px solid rgba(239,68,68,0.3); padding: 0.75rem; border-radius: 8px; }
+        pre { background: #0b1224; border-radius: 8px; padding: 0.75rem; white-space: pre-wrap; word-break: break-word; }
+    </style>
+</head>
+<body>
+<main>
+    <header style="text-align:center; margin-bottom: 1.5rem;">
+        <p class="pill">Inspired by Sobolsoft’s Compare Two Lists for Matches</p>
+        <h1>List Comparison / Diff Checker</h1>
+        <p class="muted">Paste lists or upload text, HTML, Word documents, or code files. Get overlaps and unique entries in seconds.</p>
+    </header>
+
+    <section class="card">
+        <form id="compare-form">
+            <div class="grid">
+                <div>
+                    <label for="listA">List A</label>
+                    <textarea id="listA" name="listA" placeholder="Paste one item per line or leave empty to upload a file..."></textarea>
+                    <label>Upload file for List A
+                        <input type="file" name="fileA" accept=".txt,.csv,.json,.xml,.html,.htm,.md,.cs,.js,.ts,.py,.java,.rb,.go,.php,.cpp,.c,.docx,.yml,.yaml">
+                    </label>
+                </div>
+                <div>
+                    <label for="listB">List B</label>
+                    <textarea id="listB" name="listB" placeholder="Paste one item per line or leave empty to upload a file..."></textarea>
+                    <label>Upload file for List B
+                        <input type="file" name="fileB" accept=".txt,.csv,.json,.xml,.html,.htm,.md,.cs,.js,.ts,.py,.java,.rb,.go,.php,.cpp,.c,.docx,.yml,.yaml">
+                    </label>
+                </div>
+            </div>
+
+            <div class="grid" style="margin-top: 1rem;">
+                <label><input type="checkbox" name="ignoreCase" checked> Ignore case</label>
+                <label><input type="checkbox" name="trimEntries" checked> Trim whitespace</label>
+                <label><input type="checkbox" name="skipEmpty" checked> Skip blank lines</label>
+            </div>
+
+            <div style="margin-top: 1rem; display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                <button type="submit">Compare Lists</button>
+                <span class="muted">Supported: TXT, CSV, JSON, HTML, DOCX, code files, and more.</span>
+            </div>
+        </form>
+    </section>
+
+    <section class="card" style="margin-top: 1.5rem;">
+        <div id="error" class="error" style="display:none;"></div>
+        <div id="results" style="display:none;">
+            <div style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-bottom: 1rem;">
+                <span class="badge" id="count-overlap">Overlap: 0</span>
+                <span class="badge" id="count-uniqueA">Only in A: 0</span>
+                <span class="badge" id="count-uniqueB">Only in B: 0</span>
+            </div>
+            <div class="grid">
+                <div>
+                    <h2>Overlaps</h2>
+                    <pre id="overlaps">—</pre>
+                </div>
+                <div>
+                    <h2>Only in A</h2>
+                    <pre id="onlyA">—</pre>
+                </div>
+                <div>
+                    <h2>Only in B</h2>
+                    <pre id="onlyB">—</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script>
+const form = document.getElementById('compare-form');
+const errorBox = document.getElementById('error');
+const resultBox = document.getElementById('results');
+
+form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    errorBox.style.display = 'none';
+    resultBox.style.display = 'none';
+
+    const data = new FormData(form);
+    data.set('ignoreCase', form.ignoreCase.checked);
+    data.set('trimEntries', form.trimEntries.checked);
+    data.set('skipEmpty', form.skipEmpty.checked);
+
+    try {
+        const response = await fetch('/api/compare', {
+            method: 'POST',
+            body: data
+        });
+
+        const payload = await response.json();
+
+        if (!response.ok) {
+            throw new Error(payload.error || 'Comparison failed');
+        }
+
+        document.getElementById('count-overlap').textContent = `Overlap: ${payload.counts.overlap}`;
+        document.getElementById('count-uniqueA').textContent = `Only in A: ${payload.counts.uniqueA}`;
+        document.getElementById('count-uniqueB').textContent = `Only in B: ${payload.counts.uniqueB}`;
+
+        document.getElementById('overlaps').textContent = formatList(payload.overlaps);
+        document.getElementById('onlyA').textContent = formatList(payload.onlyA);
+        document.getElementById('onlyB').textContent = formatList(payload.onlyB);
+
+        resultBox.style.display = 'block';
+    } catch (err) {
+        errorBox.textContent = err.message;
+        errorBox.style.display = 'block';
+    }
+});
+
+function formatList(items) {
+    if (!items || items.length === 0) return '—';
+    return items.join('\n');
+}
+</script>
+</body>
+</html>
