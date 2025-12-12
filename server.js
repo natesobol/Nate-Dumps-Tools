@@ -68,6 +68,7 @@ app.use(
 app.use('/highlighted-text-extractor', express.static(path.join(__dirname, 'apps/highlighted-text-extractor')));
 >>>>>>> 2874c92d8d1d62b6987f0122324d905d1516cb40
 app.use('/color-extractor', express.static(path.join(__dirname, 'apps/color-extractor/wwwroot')));
+app.use('/domain-name-extractor', express.static(path.join(__dirname, 'apps/domain-name-extractor/wwwroot')));
 app.use('/csv-xml-converter', express.static(path.join(__dirname, 'apps/csv-xml-converter')));
 app.use('/email-thread-extractor', express.static(path.join(__dirname, 'apps/email-thread-extractor/wwwroot')));
 app.use('/excel-to-json', express.static(path.join(__dirname, 'apps/excel-to-json')));
