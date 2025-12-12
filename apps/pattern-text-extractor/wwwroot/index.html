@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pattern Text Extractor | Monetize Hub Tools</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="../../../public/css/styles.css" />
+    <link rel="stylesheet" href="../../../public/css/webapp-theme.css" />
+    <style>
+      .drop-zone {
+        border: 2px dashed var(--border-subtle);
+        border-radius: 14px;
+        padding: 26px;
+        background: rgba(255, 255, 255, 0.7);
+        transition: border-color 0.2s ease, background 0.2s ease;
+      }
+      .drop-zone.dragover {
+        border-color: var(--primary-color);
+        background: rgba(99, 102, 241, 0.06);
+      }
+      .file-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: #eef2ff;
+        color: #312e81;
+        font-weight: 600;
+      }
+      .result-card {
+        border: 1px solid var(--border-subtle);
+        border-radius: 12px;
+        padding: 14px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.85) 100%);
+      }
+      .match-row {
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: #f8fafc;
+        border: 1px solid var(--border-subtle);
+      }
+      .badge-soft {
+        background: rgba(99, 102, 241, 0.1);
+        color: #4338ca;
+        font-weight: 700;
+      }
+      .pill-btn {
+        border: 1px solid var(--border-subtle);
+        border-radius: 999px;
+        padding: 6px 12px;
+        background: white;
+        cursor: pointer;
+        transition: background 0.15s ease, transform 0.15s ease;
+      }
+      .pill-btn:hover {
+        background: #eef2ff;
+        transform: translateY(-1px);
+      }
+      code.pattern {
+        background: #0f172a;
+        color: #e2e8f0;
+        padding: 3px 6px;
+        border-radius: 8px;
+      }
+    </style>
+  </head>
+  <body class="tool-page">
+    <header class="site-header">
+      <div class="header-top">
+        <a class="brand" href="../../../index.html">
+          <img src="../../../public/logo.png" alt="Monetize Hub" class="brand-logo" />
+          <div class="brand-text">
+            <span class="brand-name">Monetize Hub</span>
+            <span class="brand-tagline">Launch, host, and grow your webapps</span>
+          </div>
+        </a>
+        <details class="nav-dropdown user-dropdown" open>
+          <summary class="nav-link nav-dropdown-toggle">
+            <span class="user-label">Account</span>
+            <span aria-hidden="true">▾</span>
+          </summary>
+          <div class="nav-dropdown-menu">
+            <a href="../../../login.html" class="dropdown-link">Login</a>
+            <a href="../../../register.html" class="dropdown-link">Create Account</a>
+            <a href="../../../admin.html" class="dropdown-link">Admin Dashboard</a>
+          </div>
+        </details>
+      </div>
+      <nav class="main-nav">
+        <a href="../../../index.html" class="nav-link">Home</a>
+        <a href="../../../about.html" class="nav-link">About</a>
+        <details class="nav-dropdown" open>
+          <summary class="nav-link nav-dropdown-toggle">Webapps <span aria-hidden="true">▾</span></summary>
+          <div class="nav-dropdown-menu">
+            <a href="../../../apps/excel-to-json/index.html" class="dropdown-link">Excel → JSON</a>
+            <a href="../../../apps/json-to-excel/wwwroot/index.html" class="dropdown-link">JSON → Excel</a>
+            <a href="../../../apps/xml-json-translator/index.html" class="dropdown-link">XML ⇄ JSON Translator</a>
+            <a href="../../../apps/yaml-json-converter/index.html" class="dropdown-link">YAML ↔ JSON Converter</a>
+            <a href="../../../apps/json-combiner/wwwroot/index.html" class="dropdown-link">JSON Combiner</a>
+            <a href="../../../apps/find-and-replace/wwwroot/index.html" class="dropdown-link">Find & Replace</a>
+            <a href="../../../apps/csv-xml-converter/index.html" class="dropdown-link">CSV/XML Converter</a>
+            <a href="../../../apps/list-comparison/wwwroot/index.html" class="dropdown-link">List Comparison / Diff Checker</a>
+            <a href="../../../apps/html-tag-cleaner/wwwroot/index.html" class="dropdown-link">HTML Tag Cleaner</a>
+            <a href="../../../apps/tabify-untabify/wwwroot/index.html" class="dropdown-link">Tabify or Untabify</a>
+            <a href="../../../apps/phone-number-extractor/wwwroot/index.html" class="dropdown-link">Phone Number Extractor</a>
+            <a href="../../../apps/email-thread-extractor/wwwroot/index.html" class="dropdown-link">Email Thread Extractor</a>
+            <a href="../../../apps/product-sku-extractor/wwwroot/index.html" class="dropdown-link">Product SKU Extractor</a>
+            <a href="../../../apps/pattern-text-extractor/wwwroot/index.html" class="dropdown-link active">Pattern Text Extractor</a>
+          </div>
+        </details>
+      </nav>
+    </header>
+
+    <main class="tool-shell">
+      <div class="app-shell">
+        <header class="d-flex align-items-center justify-content-between mb-3">
+          <div>
+            <p class="badge-pill mb-2">Upload .txt, .csv, .html, .docx</p>
+            <h1 class="page-title mb-1">Pattern Text Extractor</h1>
+            <p class="muted mb-0">
+              Extract every regex or keyword hit from mixed file types and see the line that triggered it—perfect for audits, log reviews, or structured scraping.
+            </p>
+          </div>
+          <img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f50d.svg" width="64" height="64" alt="Magnifying glass" />
+        </header>
+
+        <div class="card-gradient mb-4">
+          <div class="row g-3 align-items-stretch">
+            <div class="col-lg-7">
+              <label class="form-label fw-semibold">Pattern</label>
+              <textarea id="pattern" class="form-control" rows="3" placeholder="Enter regex or keywords (comma, semicolon, or newline separated)"></textarea>
+              <div class="d-flex flex-wrap gap-2 mt-2">
+                <button class="pill-btn" type="button" data-preset="[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}">Email regex</button>
+                <button class="pill-btn" type="button" data-preset="\\+?\d[\d\s().-]{6,}\d">Phone regex</button>
+                <button class="pill-btn" type="button" data-preset="error,failed,exception">Error keywords</button>
+              </div>
+            </div>
+            <div class="col-lg-5">
+              <label class="form-label fw-semibold">Modes</label>
+              <div class="d-flex flex-wrap gap-3">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" role="switch" id="regexToggle" />
+                  <label class="form-check-label" for="regexToggle">Regex mode</label>
+                </div>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" role="switch" id="caseToggle" />
+                  <label class="form-check-label" for="caseToggle">Case sensitive</label>
+                </div>
+              </div>
+              <div class="mt-3">
+                <span class="badge rounded-pill bg-primary" id="status">Waiting for uploads.</span>
+                <p class="mb-0"><span id="totalCount" class="fw-bold">0</span> matches found.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-3 mt-3 align-items-stretch">
+            <div class="col-lg-7">
+              <label class="form-label fw-semibold">Drop files or browse</label>
+              <div id="dropZone" class="drop-zone" role="button" tabindex="0">
+                <p class="mb-2">Drag and drop .txt, .csv, .html, or .docx files here, or</p>
+                <input id="fileInput" class="form-control" type="file" accept=".txt,.csv,.html,.htm,.docx" multiple />
+                <small class="text-secondary">Files are processed by the API and never leave this session.</small>
+              </div>
+            </div>
+            <div class="col-lg-5">
+              <div class="control-card h-100">
+                <label class="form-label fw-semibold">Selected files</label>
+                <div id="selectedFiles" class="d-flex flex-wrap gap-2 muted">No files selected yet.</div>
+                <button id="extractBtn" class="btn btn-primary btn-lg mt-3" type="button">Extract Matches</button>
+                <div id="toast" class="toast mt-3" role="status" style="display: none"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <section aria-live="polite" class="mb-4">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <h2 class="h5 mb-0">Results</h2>
+            <small class="muted">Shows every match plus the line it came from.</small>
+          </div>
+          <div id="results" class="d-flex flex-column gap-3"></div>
+          <p id="emptyState" class="muted">No results yet. Add files and click Extract Matches.</p>
+        </section>
+
+        <div class="alert alert-info" role="note">
+          <strong>Tip:</strong> Use regex mode for formats (emails, phone numbers) or keyword mode to scan logs for repeated terms.
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const dropZone = document.getElementById('dropZone');
+      const fileInput = document.getElementById('fileInput');
+      const extractBtn = document.getElementById('extractBtn');
+      const selectedFiles = document.getElementById('selectedFiles');
+      const toast = document.getElementById('toast');
+      const results = document.getElementById('results');
+      const emptyState = document.getElementById('emptyState');
+      const statusEl = document.getElementById('status');
+      const totalCount = document.getElementById('totalCount');
+      const patternField = document.getElementById('pattern');
+      const regexToggle = document.getElementById('regexToggle');
+      const caseToggle = document.getElementById('caseToggle');
+
+      let files = [];
+
+      document.querySelectorAll('[data-preset]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          patternField.value = btn.dataset.preset;
+          if (btn.dataset.preset.includes('\\\d') || btn.dataset.preset.includes('[')) {
+            regexToggle.checked = true;
+          }
+        });
+      });
+
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      });
+
+      dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        if (e.dataTransfer?.files?.length) {
+          addFiles(e.dataTransfer.files);
+        }
+      });
+
+      dropZone.addEventListener('click', () => fileInput.click());
+      dropZone.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          fileInput.click();
+        }
+      });
+
+      fileInput.addEventListener('change', (e) => addFiles(e.target.files));
+
+      function addFiles(fileList) {
+        files = Array.from(fileList);
+        if (files.length === 0) {
+          selectedFiles.textContent = 'No files selected yet.';
+          return;
+        }
+
+        selectedFiles.innerHTML = '';
+        files.forEach((file) => {
+          const pill = document.createElement('span');
+          pill.className = 'file-pill';
+          pill.textContent = `${file.name} (${Math.round(file.size / 1024)} KB)`;
+          selectedFiles.appendChild(pill);
+        });
+      }
+
+      extractBtn.addEventListener('click', async () => {
+        if (!patternField.value.trim()) {
+          showToast('Enter a regex or keyword pattern.');
+          return;
+        }
+
+        if (files.length === 0) {
+          showToast('Please add at least one file.');
+          return;
+        }
+
+        statusEl.textContent = 'Extracting...';
+        extractBtn.disabled = true;
+
+        const formData = new FormData();
+        formData.append('pattern', patternField.value.trim());
+        formData.append('useRegex', regexToggle.checked);
+        formData.append('caseSensitive', caseToggle.checked);
+        files.forEach((file) => formData.append('files', file));
+
+        try {
+          const response = await fetch('/api/extract', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to extract patterns.');
+          }
+
+          const data = await response.json();
+          renderResults(data);
+          statusEl.textContent = `${data.totalMatches} total matches`;
+        } catch (error) {
+          showToast(error.message || 'Something went wrong.');
+          statusEl.textContent = 'Waiting for uploads.';
+        } finally {
+          extractBtn.disabled = false;
+        }
+      });
+
+      function renderResults(data) {
+        results.innerHTML = '';
+        totalCount.textContent = data.totalMatches ?? 0;
+        emptyState.style.display = data.files && data.files.length ? 'none' : 'block';
+
+        (data.files || []).forEach((file) => {
+          const card = document.createElement('div');
+          card.className = 'result-card';
+
+          const header = document.createElement('div');
+          header.className = 'd-flex align-items-center justify-content-between mb-2 flex-wrap gap-2';
+          header.innerHTML = `
+            <div>
+              <h3 class="h6 mb-0">${escapeHtml(file.file)}</h3>
+              <small class="text-secondary">.${escapeHtml(file.extension)} · ${file.matchCount} matches</small>
+            </div>
+            ${file.error ? `<span class="badge text-bg-danger">${escapeHtml(file.error)}</span>` : `<span class="badge badge-soft">${file.matchCount} hits</span>`}
+          `;
+
+          card.appendChild(header);
+
+          if (file.matches && file.matches.length) {
+            const list = document.createElement('div');
+            list.className = 'd-flex flex-column gap-2';
+
+            file.matches.forEach((match) => {
+              const row = document.createElement('div');
+              row.className = 'match-row';
+              row.innerHTML = `
+                <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
+                  <span class="badge text-bg-secondary">Line ${match.lineNumber}</span>
+                  <code class="pattern">${escapeHtml(match.value)}</code>
+                </div>
+                <div>${highlightMatch(match.context, match.value)}</div>
+              `;
+              list.appendChild(row);
+            });
+
+            card.appendChild(list);
+          }
+
+          results.appendChild(card);
+        });
+
+        if (!results.children.length) {
+          emptyState.style.display = 'block';
+        }
+      }
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.style.display = 'block';
+        toast.className = 'toast show text-bg-warning';
+        setTimeout(() => (toast.style.display = 'none'), 3000);
+      }
+
+      function escapeHtml(str) {
+        return (str || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function highlightMatch(context, value) {
+        if (!context || !value) return escapeHtml(context || '');
+        const escapedValue = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(escapedValue, 'gi');
+        return escapeHtml(context).replace(regex, (m) => `<mark>${escapeHtml(m)}</mark>`);
+      }
+    </script>
+  </body>
+</html>
