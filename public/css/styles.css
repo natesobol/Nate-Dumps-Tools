@@ -227,6 +227,21 @@ a:hover {
   text-transform: uppercase;
   color: var(--muted);
   margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dropdown-icon {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 50%;
+  font-size: 12px;
+  border: 1px solid var(--border);
 }
 
 .dropdown-links-grid {
