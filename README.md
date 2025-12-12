@@ -18,6 +18,7 @@ A starter website for hosting webapps with monetization in mind. It provides a h
 - JSON to Excel Creator: `/apps/json-to-excel/wwwroot/index.html`
 - Multi-CSV Column Merger: `/apps/multi-csv-column-merger/wwwroot/index.html`
 - Phone Number Extractor: `/apps/phone-number-extractor/wwwroot/index.html`
+- PDF Link Extractor: `/apps/pdf-link-extractor/wwwroot/index.html`
 - Dynamic features (login, admin, server-backed Excel conversion) require running the Node.js server locally or on a host that supports server-side rendering.
 
 ## Features
@@ -202,6 +203,18 @@ Located in `apps/pdf-splitter/`, this C#-hosted webapp splits one or more PDFs e
 **Server Route:** `/pdf-splitter`
 **Static Version:** `/apps/pdf-splitter/wwwroot/index.html`
 
+### PDF Link Extractor
+Located in `apps/pdf-link-extractor/`, this C#-hosted webapp extracts every URL from PDFs by scanning both visible text and link annotations.
+
+**Features:**
+- Upload one or more PDFs and parse them locally in the browser
+- Captures URLs embedded in text plus clickable link annotations
+- Shows pages and source types for each link
+- Export results to TXT, CSV, or a clickable HTML index
+
+**Server Route:** `/pdf-link-extractor`
+**Static Version:** `/apps/pdf-link-extractor/wwwroot/index.html`
+
 ### Batch PDF Text Extractor
 Located in `apps/batch-pdf-text-extractor/`, this .NET 8 minimal API extracts text from many PDFs at once with layered fallbacks.
 
@@ -268,6 +281,11 @@ apps/
 │   ├── pdf-splitter.csproj # .NET project file
 │   ├── wwwroot/            # Static web files (served at /pdf-splitter)
 │   └── README.md
+├── pdf-link-extractor/     # Browser-based PDF link extractor webapp
+│   ├── Program.cs          # Minimal API hosting the static UI
+│   ├── pdf-link-extractor.csproj
+│   ├── wwwroot/            # Static web files (served at /pdf-link-extractor)
+│   └── README.md
 ├── powerpoint-image-extractor/ # .NET PPTX image extractor
 │   ├── Program.cs              # Minimal API handling validation and ZIP packaging
 │   ├── powerpoint-image-extractor.csproj
@@ -299,7 +317,7 @@ apps/
 - Supabase for user data with SQLite session storage
 - EJS for server-rendered views
 - Helmet and secure session defaults for baseline security
-- C# .NET (JSON Combiner, JSON to Excel, PDF Splitter, List Comparison, Find & Replace, Batch File Renamer, and PowerPoint Image Extractor webapps)
+- C# .NET (JSON Combiner, JSON to Excel, PDF Splitter, PDF Link Extractor, List Comparison, Find & Replace, Batch File Renamer, and PowerPoint Image Extractor webapps)
 
 ## Notes
 - User passwords are managed by Supabase Auth
