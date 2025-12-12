@@ -1,6 +1,6 @@
 # Email Thread Extractor
 
-A .NET 8 minimal API that accepts `.eml`, `.msg`, or `.mbox` uploads, extracts sender/recipient metadata, threaded replies, and attachment details, then returns CSV metadata plus concatenated body text exports.
+A .NET 8 minimal API that accepts `.eml`, `.msg`, or `.mbox` uploads, extracts sender/recipient metadata, threaded replies, and attachment details, then returns CSV metadata plus concatenated body text exports. Messages are normalized by subject line (stripping `Re:`/`Fwd:` prefixes) and grouped into chronological threads so you can export entire conversations as CSV or TXT.
 
 ## Running locally
 
@@ -16,7 +16,7 @@ The app defaults to `http://localhost:5000`. Visit the root URL in your browser 
 
 - **POST** `/api/extract`
   - Form fields: `includeAttachments` (`true|false`) and one or more files (accepts `.eml`, `.msg`, `.mbox`).
-  - Response: JSON with per-file messages, attachment metadata, CSV export text, and body export text.
+  - Response: JSON with per-file messages, attachment metadata, CSV export text, body export text, subject-thread groupings (normalized by subject line), and conversation-level CSV/TXT exports.
 
 - **GET** `/health`: lightweight readiness check.
 
