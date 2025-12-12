@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Extract URLs from Text Files</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #0f172a;
+      --card: #111827;
+      --border: #1f2937;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-strong: #0ea5e9;
+      --text: #e2e8f0;
+      --shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.12), transparent 25%),
+        radial-gradient(circle at 80% 0%, rgba(14, 165, 233, 0.1), transparent 22%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 32px 16px 64px;
+    }
+
+    header {
+      max-width: 1050px;
+      margin: 0 auto 28px;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 40px);
+      letter-spacing: -0.02em;
+    }
+
+    p.lede {
+      color: var(--muted);
+      margin: 10px 0 0;
+      font-size: 17px;
+    }
+
+    main {
+      max-width: 1050px;
+      margin: 0 auto;
+      display: grid;
+      gap: 20px;
+    }
+
+    .card {
+      background: rgba(15, 23, 42, 0.82);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .inputs {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 10px;
+      align-items: center;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 14px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      border: none;
+      border-radius: 12px;
+      color: #0b1224;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 120ms ease, box-shadow 120ms ease;
+      width: 100%;
+    }
+
+    .button.secondary {
+      background: rgba(148, 163, 184, 0.14);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .button:active {
+      transform: translateY(1px);
+    }
+
+    .button input {
+      display: none;
+    }
+
+    .dropzone {
+      border: 1.5px dashed rgba(148, 163, 184, 0.35);
+      border-radius: 14px;
+      padding: 18px;
+      text-align: center;
+      color: var(--muted);
+      background: rgba(148, 163, 184, 0.06);
+      transition: border-color 120ms ease, background 120ms ease;
+    }
+
+    .dropzone.dragover {
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.08);
+    }
+
+    .options {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    label.option {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    input[type="text"], select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.6);
+      color: var(--text);
+    }
+
+    input[type="checkbox"] {
+      accent-color: var(--accent-strong);
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(148, 163, 184, 0.12);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      font-size: 14px;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 14px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .url {
+      color: var(--accent);
+      word-break: break-all;
+    }
+
+    .badge {
+      background: rgba(56, 189, 248, 0.16);
+      color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      margin-top: 24px;
+      font-size: 13px;
+    }
+
+    @media (max-width: 640px) {
+      body { padding: 24px 12px; }
+      .actions { flex-direction: column; align-items: stretch; }
+      .button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Extract URLs from Text Files</h1>
+    <p class="lede">Scan folders or multiple text-based files to pull out valid hyperlinks. Filter by domain and optionally return only matching subpaths.</p>
+  </header>
+
+  <main>
+    <section class="card stack">
+      <div class="inputs">
+        <label class="button" for="fileInput">
+          <span>Upload text files</span>
+          <input id="fileInput" type="file" multiple accept=".txt,.md,.log,.json,.csv,.xml,.yaml,.yml,text/plain,application/json" />
+        </label>
+        <label class="button secondary" for="folderInput">
+          <span>Scan a folder</span>
+          <input id="folderInput" type="file" webkitdirectory directory multiple />
+        </label>
+      </div>
+      <div id="dropZone" class="dropzone">Drag and drop .txt, .md, .log, .json, and other text-friendly files here</div>
+      <div class="options">
+        <div class="stack">
+          <label for="domainFilter" class="option" style="flex-direction: column; align-items: flex-start; gap: 6px; color: var(--text);">
+            <span>Domain filter (optional)</span>
+            <input id="domainFilter" type="text" placeholder="example.com" />
+            <small class="muted">Only URLs whose host matches this domain (or its subdomains) will be kept.</small>
+          </label>
+        </div>
+        <label class="option">
+          <input id="subpathOnly" type="checkbox" disabled />
+          <div>
+            <div>Return subpaths only</div>
+            <small class="muted">When a domain is set, strip scheme + host so you only get paths like <code>/docs/page</code>.</small>
+          </div>
+        </label>
+        <label class="option">
+          <input id="dedupe" type="checkbox" checked />
+          <div>
+            <div>Deduplicate URLs</div>
+            <small class="muted">Combine identical URLs even if they appear across multiple files.</small>
+          </div>
+        </label>
+      </div>
+      <div class="actions">
+        <button id="extractBtn" class="button secondary" disabled>Extract URLs</button>
+        <div class="pill" id="fileCount">No files selected</div>
+        <div class="pill">Supported: .txt .md .log .json .csv .xml .yaml</div>
+      </div>
+    </section>
+
+    <section class="card stack">
+      <div class="actions">
+        <div class="pill">Found URLs: <strong id="urlTotal">0</strong></div>
+        <div class="pill">Files scanned: <strong id="scannedTotal">0</strong></div>
+        <button id="copyBtn" class="button secondary" disabled>Copy URLs</button>
+        <button id="downloadBtn" class="button secondary" disabled>Download CSV</button>
+      </div>
+      <div id="summary" class="muted">Load files and click Extract to see results.</div>
+      <div id="results"></div>
+    </section>
+  </main>
+
+  <footer>
+    All processing runs in your browser. No files are uploaded.
+  </footer>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const folderInput = document.getElementById('folderInput');
+    const dropZone = document.getElementById('dropZone');
+    const extractBtn = document.getElementById('extractBtn');
+    const fileCount = document.getElementById('fileCount');
+    const domainFilter = document.getElementById('domainFilter');
+    const subpathOnly = document.getElementById('subpathOnly');
+    const dedupe = document.getElementById('dedupe');
+    const summary = document.getElementById('summary');
+    const results = document.getElementById('results');
+    const urlTotal = document.getElementById('urlTotal');
+    const scannedTotal = document.getElementById('scannedTotal');
+    const copyBtn = document.getElementById('copyBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    const supportedExtensions = ['.txt', '.md', '.log', '.json', '.csv', '.xml', '.yaml', '.yml'];
+    let pendingFiles = [];
+    let latestResults = [];
+
+    function isSupported(file) {
+      const lower = file.name.toLowerCase();
+      return file.type.startsWith('text') || supportedExtensions.some(ext => lower.endsWith(ext));
+    }
+
+    function updateFileCount() {
+      if (!pendingFiles.length) {
+        fileCount.textContent = 'No files selected';
+        extractBtn.disabled = true;
+        return;
+      }
+      fileCount.textContent = `${pendingFiles.length} file${pendingFiles.length === 1 ? '' : 's'} ready`;
+      extractBtn.disabled = false;
+    }
+
+    function addFiles(fileList) {
+      const valid = Array.from(fileList).filter(isSupported);
+      const existingNames = new Set(pendingFiles.map(f => f.name + f.lastModified + f.size));
+      valid.forEach(file => {
+        const key = file.name + file.lastModified + file.size;
+        if (!existingNames.has(key)) pendingFiles.push(file);
+      });
+      updateFileCount();
+    }
+
+    fileInput.addEventListener('change', (e) => {
+      addFiles(e.target.files);
+      fileInput.value = '';
+    });
+
+    folderInput.addEventListener('change', (e) => {
+      addFiles(e.target.files);
+      folderInput.value = '';
+    });
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      addFiles(e.dataTransfer.files);
+    });
+
+    domainFilter.addEventListener('input', () => {
+      const hasValue = domainFilter.value.trim().length > 0;
+      subpathOnly.disabled = !hasValue;
+      if (!hasValue) subpathOnly.checked = false;
+    });
+
+    function cleanUrl(raw) {
+      if (!raw) return null;
+      let trimmed = raw.trim();
+      trimmed = trimmed.replace(/^["'\(\[]+/, '');
+      while (/[\]\)\.,;!?]$/.test(trimmed)) {
+        trimmed = trimmed.slice(0, -1);
+      }
+      return trimmed;
+    }
+
+    function matchesDomain(urlObj, domain) {
+      if (!domain) return true;
+      const host = urlObj.hostname.toLowerCase();
+      const target = domain.toLowerCase();
+      return host === target || host.endsWith('.' + target);
+    }
+
+    function toSubpath(urlObj) {
+      const path = urlObj.pathname && urlObj.pathname !== '/' ? urlObj.pathname : '/';
+      return `${path}${urlObj.search}${urlObj.hash}` || '/';
+    }
+
+    function extractLinksFromText(text, options) {
+      const pattern = /\b(?:(?:https?|ftp):\/\/)[^\s<>"]+/gi;
+      const matches = text.match(pattern) || [];
+      const found = [];
+
+      for (const match of matches) {
+        const cleaned = cleanUrl(match);
+        if (!cleaned) continue;
+        let urlObj;
+        try {
+          urlObj = new URL(cleaned);
+        } catch (err) {
+          continue;
+        }
+        if (!matchesDomain(urlObj, options.domain)) continue;
+        const formatted = options.domain && options.subpathOnly ? toSubpath(urlObj) : urlObj.href;
+        found.push(formatted);
+      }
+
+      return found;
+    }
+
+    async function readFiles(files) {
+      const readers = files.map(file => new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve({ file, text: reader.result || '' });
+        reader.onerror = () => resolve(null);
+        reader.readAsText(file);
+      }));
+      const results = await Promise.all(readers);
+      return results.filter(Boolean);
+    }
+
+    function renderResults(entries, perFile) {
+      if (!entries.length) {
+        results.innerHTML = '<p class="muted">No URLs found. Try loosening your filters.</p>';
+        summary.textContent = '';
+        copyBtn.disabled = true;
+        downloadBtn.disabled = true;
+        urlTotal.textContent = '0';
+        return;
+      }
+
+      urlTotal.textContent = entries.length.toLocaleString();
+      const fileSummary = perFile
+        .map(item => `${item.file}: ${item.count}`)
+        .join(' • ');
+      summary.textContent = fileSummary || 'URLs extracted.';
+
+      const rows = entries
+        .map((entry, idx) => `
+          <tr>
+            <td>${idx + 1}</td>
+            <td class="url">${entry.url}</td>
+            <td>${entry.sources.join(', ')}</td>
+          </tr>
+        `)
+        .join('');
+
+      results.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>URL</th>
+              <th>Source files</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+
+      copyBtn.disabled = false;
+      downloadBtn.disabled = false;
+    }
+
+    function buildEntryMap(rawEntries) {
+      const map = new Map();
+      for (const { url, fileName } of rawEntries) {
+        if (!map.has(url)) map.set(url, new Set());
+        map.get(url).add(fileName);
+      }
+      return Array.from(map.entries()).map(([url, sources]) => ({ url, sources: Array.from(sources) }));
+    }
+
+    function downloadCsv(entries) {
+      const header = 'url,sources';
+      const lines = entries.map(e => {
+        const sourceList = '"' + e.sources.join('; ') + '"';
+        return `${e.url.replace(/"/g, '""')},${sourceList}`;
+      });
+      const blob = new Blob([header + '\n' + lines.join('\n')], { type: 'text/csv' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'extracted-urls.csv';
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    async function extract() {
+      extractBtn.disabled = true;
+      summary.textContent = 'Reading files...';
+      results.innerHTML = '';
+      urlTotal.textContent = '0';
+      copyBtn.disabled = true;
+      downloadBtn.disabled = true;
+
+      const files = await readFiles(pendingFiles);
+      scannedTotal.textContent = files.length.toString();
+
+      const domain = domainFilter.value.trim();
+      const options = { domain, subpathOnly: !!domain && subpathOnly.checked };
+      const raw = [];
+      const perFile = [];
+
+      for (const { file, text } of files) {
+        const urls = extractLinksFromText(text, options);
+        urls.forEach(url => raw.push({ url, fileName: file.name }));
+        perFile.push({ file: file.name, count: urls.length });
+      }
+
+      latestResults = dedupe.checked ? buildEntryMap(raw) : raw.map(item => ({ url: item.url, sources: [item.fileName] }));
+      renderResults(latestResults, perFile);
+      extractBtn.disabled = false;
+    }
+
+    extractBtn.addEventListener('click', extract);
+
+    copyBtn.addEventListener('click', async () => {
+      if (!latestResults.length) return;
+      const text = latestResults.map(r => r.url).join('\n');
+      await navigator.clipboard.writeText(text);
+      copyBtn.textContent = 'Copied!';
+      setTimeout(() => (copyBtn.textContent = 'Copy URLs'), 1200);
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      if (!latestResults.length) return;
+      downloadCsv(latestResults);
+    });
+  </script>
+</body>
+</html>
