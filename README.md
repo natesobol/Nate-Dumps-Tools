@@ -9,6 +9,7 @@ A starter website for hosting webapps with monetization in mind. It provides a h
   - Excel to JSON: `/apps/excel-to-json/index.html`
   - JSON Combiner: `/apps/json-combiner/wwwroot/index.html`
   - CSV/XML Converter: `/apps/csv-xml-converter/index.html`
+  - PDF Merger: `/apps/pdf-merger/index.html`
 - Dynamic features (login, admin, server-backed Excel conversion) require running the Node.js server locally or on a host that supports server-side rendering.
 
 ## Features
@@ -78,6 +79,17 @@ Located in `apps/csv-xml-converter/`, this tool converts CSV to XML and XML back
 
 **Server Route:** `/csv-xml-converter`
 **Static Version:** `/apps/csv-xml-converter/index.html`
+
+### PDF Merger
+Located in `apps/pdf-merger/`, this tool vertically appends multiple PDF files into a single document entirely in the browser.
+
+**Features:**
+- Select and reorder 2–10 PDF files for merging.
+- Client-side processing powered by PDF-LIB—no uploads are stored or sent to a server.
+- Shows merge summaries and a timestamped download for quick sharing.
+
+**Server Route:** `/pdf-merger`
+**Static Version:** `/apps/pdf-merger/index.html`
 
 ## Project Structure
 
