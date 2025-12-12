@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Presentation Heading Extractor</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(0,123,255,0.08), transparent 40%),
+                  radial-gradient(circle at 80% 10%, rgba(255,193,7,0.1), transparent 35%),
+                  radial-gradient(circle at 50% 80%, rgba(40,167,69,0.1), transparent 45%),
+                  #0b1724;
+      color: #e9ecef;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: rgba(16, 24, 40, 0.85);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      padding: 24px;
+      max-width: 960px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+      backdrop-filter: blur(10px);
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: 28px;
+      color: #f8f9fa;
+      letter-spacing: -0.5px;
+    }
+
+    p {
+      margin: 0 0 12px;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+
+    label {
+      display: block;
+      margin: 12px 0 6px;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+
+    input[type="file"], select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
+      color: #f8fafc;
+      font-size: 15px;
+    }
+
+    .actions {
+      margin-top: 18px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    button {
+      background: linear-gradient(120deg, #2563eb, #22d3ee);
+      color: #fff;
+      border: none;
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.2s ease;
+      box-shadow: 0 12px 30px rgba(37,99,235,0.35);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.05);
+      font-size: 12px;
+      color: #cbd5e1;
+      margin-right: 6px;
+    }
+
+    .status {
+      margin-top: 12px;
+      min-height: 24px;
+      color: #f8fafc;
+      font-weight: 600;
+    }
+
+    pre {
+      background: rgba(255,255,255,0.05);
+      padding: 14px;
+      border-radius: 12px;
+      overflow: auto;
+      border: 1px solid rgba(255,255,255,0.08);
+      color: #e2e8f0;
+      max-height: 360px;
+      line-height: 1.5;
+    }
+
+    .results {
+      margin-top: 18px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .slide {
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+      padding: 12px;
+    }
+
+    .slide h3 {
+      margin: 0 0 6px;
+      font-size: 17px;
+      color: #f8f9fa;
+    }
+
+    .slide ul {
+      margin: 0;
+      padding-left: 18px;
+      color: #cbd5e1;
+    }
+
+    @media (max-width: 640px) {
+      body { padding: 14px; }
+      .card { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="pill">Supports .pptx · .key · .pdf · .odp</div>
+    <h1>Presentation Heading Extractor</h1>
+    <p>Extract slide titles, bullet headers, and section dividers from your decks. Choose whether to preview a structured outline or download the results as TXT, CSV, or DOCX.</p>
+
+    <form id="extract-form">
+      <label for="file">Upload presentation</label>
+      <input id="file" name="file" type="file" accept=".pptx,.key,.pdf,.odp" required>
+
+      <label for="mode">Output style</label>
+      <select id="mode" name="mode">
+        <option value="outline">Outline (slide-by-slide)</option>
+        <option value="summary">Summary (key points)</option>
+      </select>
+
+      <label for="export">Export format</label>
+      <select id="export" name="export">
+        <option value="json">Preview JSON (no download)</option>
+        <option value="txt">Download .txt</option>
+        <option value="csv">Download .csv</option>
+        <option value="docx">Download .docx</option>
+      </select>
+
+      <div class="actions">
+        <button type="submit">Extract headings</button>
+        <span class="status" id="status"></span>
+      </div>
+    </form>
+
+    <div class="results" id="results" hidden>
+      <h2 style="margin: 12px 0 6px;">Preview</h2>
+      <div id="slides"></div>
+      <pre id="json"></pre>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('extract-form');
+    const statusEl = document.getElementById('status');
+    const results = document.getElementById('results');
+    const slidesContainer = document.getElementById('slides');
+    const jsonPre = document.getElementById('json');
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      statusEl.textContent = 'Processing...';
+      results.hidden = true;
+      slidesContainer.innerHTML = '';
+      jsonPre.textContent = '';
+
+      const data = new FormData(form);
+      const exportFormat = data.get('export');
+
+      try {
+        const response = await fetch('/api/extract', {
+          method: 'POST',
+          body: data
+        });
+
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({ error: 'Extraction failed.' }));
+          statusEl.textContent = error.error || 'Something went wrong.';
+          return;
+        }
+
+        const contentType = response.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const payload = await response.json();
+          statusEl.textContent = `Found ${payload.slides.length} slide(s).`;
+          renderSlides(payload.slides);
+          jsonPre.textContent = JSON.stringify(payload, null, 2);
+          results.hidden = false;
+        } else {
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          const extension = exportFormat === 'txt' ? 'txt' : exportFormat === 'csv' ? 'csv' : 'docx';
+          const filename = `headings.${extension}`;
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = filename;
+          link.click();
+          URL.revokeObjectURL(url);
+          statusEl.textContent = 'Download ready.';
+        }
+      } catch (err) {
+        statusEl.textContent = 'Extraction failed.';
+      }
+    });
+
+    function renderSlides(slides) {
+      slidesContainer.innerHTML = '';
+      slides.forEach(slide => {
+        const card = document.createElement('div');
+        card.className = 'slide';
+        const title = document.createElement('h3');
+        title.textContent = `Slide ${slide.slideNumber}: ${slide.title}`;
+        card.appendChild(title);
+
+        if (slide.subheadings && slide.subheadings.length) {
+          const list = document.createElement('ul');
+          slide.subheadings.forEach(item => {
+            const li = document.createElement('li');
+            li.textContent = item;
+            list.appendChild(li);
+          });
+          card.appendChild(list);
+        }
+
+        slidesContainer.appendChild(card);
+      });
+    }
+  </script>
+</body>
+</html>
