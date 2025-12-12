@@ -70,6 +70,7 @@
             <a href="${basePath}/find-and-replace" class="dropdown-link">Find &amp; Replace</a>
             <a href="${basePath}/csv-xml-converter" class="dropdown-link">CSV/XML Converter</a>
             <a href="${basePath}/list-comparison" class="dropdown-link">List Comparison / Diff Checker</a>
+            <a href="${basePath}/html-metadata-extractor" class="dropdown-link">HTML Metadata Extractor</a>
             <a href="${basePath}/html-tag-cleaner" class="dropdown-link">HTML Tag Cleaner</a>
             <a href="${basePath}/tabify-untabify" class="dropdown-link">Tabify or Untabify</a>
             <a href="${basePath}/extract-text-inside-quotes" class="dropdown-link">Extract Text Inside Quotes</a>

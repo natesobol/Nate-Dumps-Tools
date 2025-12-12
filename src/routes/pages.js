@@ -37,6 +37,15 @@ router.get('/json-key-flattener', (req, res) => {
   });
 });
 
+router.get('/html-metadata-extractor', (req, res) => {
+  res.render('html-metadata-extractor', {
+    title: 'HTML Metadata Extractor',
+    metaDescription:
+      'Upload HTML, HTM, or XML files to extract filenames, page titles, meta descriptions, keywords, canonicals, and Open Graph tags in bulk.',
+    metaKeywords: 'html metadata extractor,meta description audit,open graph scraper,title tag checker'
+  });
+});
+
 router.get('/html-tag-cleaner', (req, res) => {
   res.render('html-tag-cleaner', {
     title: 'HTML Tag Cleaner',

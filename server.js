@@ -39,36 +39,11 @@ app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use('/batch-file-renamer', express.static(path.join(__dirname, 'apps/batch-file-renamer/wwwroot')));
 app.use('/batch-pdf-text-extractor', express.static(path.join(__dirname, 'apps/batch-pdf-text-extractor/wwwroot')));
 app.use('/bullet-list-extractor', express.static(path.join(__dirname, 'apps/bullet-list-extractor/wwwroot')));
-<<<<<<< HEAD
 app.use('/capitalized-phrase-extractor', express.static(path.join(__dirname, 'apps/capitalized-phrase-extractor/wwwroot')));
-=======
-app.use(
-  '/powerpoint-image-extractor',
-  express.static(path.join(__dirname, 'apps/powerpoint-image-extractor/wwwroot'))
-);
-app.use('/list-comparison', express.static(path.join(__dirname, 'apps/list-comparison/wwwroot')));
-app.use('/html-tag-cleaner', express.static(path.join(__dirname, 'apps/html-tag-cleaner/wwwroot')));
-app.use('/tabify-untabify', express.static(path.join(__dirname, 'apps/tabify-untabify/wwwroot')));
-app.use('/email-thread-extractor', express.static(path.join(__dirname, 'apps/email-thread-extractor/wwwroot')));
-app.use(
-  '/resume-contact-extractor',
-  express.static(path.join(__dirname, 'apps/resume-contact-extractor/wwwroot'))
-);
-app.use('/number-extractor', express.static(path.join(__dirname, 'apps/number-extractor/wwwroot')));
-app.use('/image-path-extractor', express.static(path.join(__dirname, 'apps/image-path-extractor/wwwroot')));
-app.use('/file-path-extractor', express.static(path.join(__dirname, 'apps/file-path-extractor/wwwroot')));
-app.use(
-  '/hashtag-mention-extractor',
-  express.static(path.join(__dirname, 'apps/hashtag-mention-extractor/wwwroot'))
-);
-app.use(
-  '/email-signature-extractor',
-  express.static(path.join(__dirname, 'apps/email-signature-extractor/wwwroot'))
-);
-app.use('/highlighted-text-extractor', express.static(path.join(__dirname, 'apps/highlighted-text-extractor')));
->>>>>>> 2874c92d8d1d62b6987f0122324d905d1516cb40
 app.use('/color-extractor', express.static(path.join(__dirname, 'apps/color-extractor/wwwroot')));
 app.use('/csv-xml-converter', express.static(path.join(__dirname, 'apps/csv-xml-converter')));
+app.use('/currency-percent-sentence-extractor', express.static(path.join(__dirname, 'apps/currency-percent-sentence-extractor/wwwroot')));
+app.use('/email-signature-extractor', express.static(path.join(__dirname, 'apps/email-signature-extractor/wwwroot')));
 app.use('/email-thread-extractor', express.static(path.join(__dirname, 'apps/email-thread-extractor/wwwroot')));
 app.use('/excel-to-json', express.static(path.join(__dirname, 'apps/excel-to-json')));
 app.use('/extract-text-inside-quotes', express.static(path.join(__dirname, 'apps/extract-text-inside-quotes/wwwroot')));
@@ -76,6 +51,7 @@ app.use('/file-path-extractor', express.static(path.join(__dirname, 'apps/file-p
 app.use('/find-and-replace', express.static(path.join(__dirname, 'apps/find-and-replace/wwwroot')));
 app.use('/hashtag-mention-extractor', express.static(path.join(__dirname, 'apps/hashtag-mention-extractor/wwwroot')));
 app.use('/highlighted-text-extractor', express.static(path.join(__dirname, 'apps/highlighted-text-extractor')));
+app.use('/html-metadata-extractor', express.static(path.join(__dirname, 'apps/html-metadata-extractor/wwwroot')));
 app.use('/html-tag-cleaner', express.static(path.join(__dirname, 'apps/html-tag-cleaner/wwwroot')));
 app.use('/image-path-extractor', express.static(path.join(__dirname, 'apps/image-path-extractor/wwwroot')));
 app.use('/json-combiner', express.static(path.join(__dirname, 'apps/json-combiner/wwwroot')));
@@ -99,19 +75,11 @@ app.use('/resume-contact-extractor', express.static(path.join(__dirname, 'apps/r
 app.use('/sentence-keyword-extractor', express.static(path.join(__dirname, 'apps/sentence-keyword-extractor/wwwroot')));
 app.use('/tabify-untabify', express.static(path.join(__dirname, 'apps/tabify-untabify/wwwroot')));
 app.use('/table-data-extractor', express.static(path.join(__dirname, 'apps/table-data-extractor/wwwroot')));
-<<<<<<< HEAD
 app.use('/table-of-contents-extractor', express.static(path.join(__dirname, 'apps/table-of-contents-extractor/wwwroot')));
 app.use('/text-url-extractor', express.static(path.join(__dirname, 'apps/text-url-extractor/wwwroot')));
 app.use('/timestamp-extractor', express.static(path.join(__dirname, 'apps/timestamp-extractor/wwwroot')));
 app.use('/xml-json-translator', express.static(path.join(__dirname, 'apps/xml-json-translator')));
 app.use('/yaml-json-converter', express.static(path.join(__dirname, 'apps/yaml-json-converter')));
-
-=======
-app.use(
-  '/currency-percent-sentence-extractor',
-  express.static(path.join(__dirname, 'apps/currency-percent-sentence-extractor/wwwroot'))
-);
->>>>>>> 2874c92d8d1d62b6987f0122324d905d1516cb40
 app.use(morgan('dev'));
 
 app.use(

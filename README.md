@@ -16,6 +16,7 @@ A starter website for hosting webapps with monetization in mind. It provides a h
 - PDF Splitter: `/apps/pdf-splitter/wwwroot/index.html`
 - Table Data Extractor: `/apps/table-data-extractor/wwwroot/index.html`
 - Bullet List Extractor: `/apps/bullet-list-extractor/wwwroot/index.html`
+- HTML Metadata Extractor: `/apps/html-metadata-extractor/wwwroot/index.html`
 - PowerPoint → PDF: `/apps/powerpoint-to-pdf/wwwroot/index.html`
 - PowerPoint Image Extractor: `/apps/powerpoint-image-extractor/wwwroot/index.html`
 - JSON to Excel Creator: `/apps/json-to-excel/wwwroot/index.html`
