@@ -1,0 +1,219 @@
+<%- include('../../views/partials/page-top', {
+  title: 'Extract IP Addresses and Ports from Logs or Configs',
+  metaDescription: 'Upload TXT, LOG, CONF, JSON, or XML files (or paste text) to detect IPv4/IPv6 endpoints with optional ports. Filter private/public ranges and export to CSV.',
+  canonicalUrl: 'https://natesobol.github.io/Nates-Free-Tools/ip-port-extractor',
+  ogTitle: 'IP and Port Extractor',
+  ogDescription: 'Find IPv4/IPv6 addresses plus ports in logs or config files, with scope filtering and CSV export.'
+}) %>
+<section class="tool-hero">
+  <div>
+    <p class="eyebrow">Network audit & firewall prep</p>
+    <h1>Extract IP addresses and ports from logs or config files.</h1>
+    <p class="lede">
+      Upload .txt, .log, .conf, .json, or .xml files—or paste inline text—to capture IPv4/IPv6 endpoints with optional port numbers. Filter for public or private ranges and export everything to CSV for reviews or rule creation.
+    </p>
+    <ul class="trust-points">
+      <li>Regex detection for IPv4/IPv6 plus ports like <code>192.168.1.1:443</code> or <code>[2001:db8::5]:8443</code>.</li>
+      <li>Scope filter for public-only or private-only ranges, including RFC1918, link-local, and ULA blocks.</li>
+      <li>CSV export with timestamps (when present) for quick firewall tickets.</li>
+    </ul>
+  </div>
+  <div class="converter-card">
+    <form id="extract-form" enctype="multipart/form-data">
+      <label for="text">Inline text or sample logs</label>
+      <textarea id="text" name="text" class="form-control" rows="6" placeholder="2024-11-05T01:23:45Z connection from 192.0.2.44:8443 to 10.0.10.5:22
+Oct 11 08:14:10 firewall allowed tcp [2001:db8::5]:443"></textarea>
+
+      <label for="files" class="mt-3">Upload files (.txt, .log, .conf, .json, .xml)</label>
+      <input id="files" name="files" type="file" class="form-control" accept=".txt,.log,.conf,.json,.xml" multiple />
+      <p class="help-text">Files are processed in-memory only—nothing is persisted.</p>
+
+      <label for="scope" class="mt-2">Address scope</label>
+      <select id="scope" name="scope" class="form-control">
+        <option value="all" selected>All (public + private)</option>
+        <option value="public">Public only</option>
+        <option value="private">Private only</option>
+      </select>
+      <p class="help-text">Private includes RFC1918, link-local, CGNAT, loopback, and ULA ranges.</p>
+
+      <div class="pill-bar mt-2">
+        <span class="pill">IPv4 & IPv6</span>
+        <span class="pill">Ports optional</span>
+        <span class="pill">CSV export</span>
+      </div>
+
+      <div class="button-row">
+        <button type="submit" class="button primary btn btn-primary btn-modern">Extract endpoints</button>
+        <button type="button" class="button secondary" id="download-csv" style="display:none;">Download CSV</button>
+      </div>
+      <div class="flash flash-error mt-2" id="error" style="display:none;"></div>
+    </form>
+  </div>
+</section>
+
+<section class="result-panel">
+  <div class="result-card" id="results" style="display:none;">
+    <h2>Detected endpoints</h2>
+    <p class="help-text" id="summary"></p>
+    <div id="items" class="result-grid"></div>
+  </div>
+  <div class="result-card">
+    <h2>How this helps</h2>
+    <ul class="checklist">
+      <li>Quickly pull all endpoints referenced in app configs or infra change logs.</li>
+      <li>Filter to public IPs for perimeter firewall rules or to private IPs for VPC reviews.</li>
+      <li>CSV download includes timestamps (when present) to tie back to incident timelines.</li>
+    </ul>
+    <p class="help-text">Processing stays scoped to memory while the app is running.</p>
+  </div>
+</section>
+
+<script>
+  const form = document.getElementById('extract-form');
+  const errorBox = document.getElementById('error');
+  const results = document.getElementById('results');
+  const summary = document.getElementById('summary');
+  const items = document.getElementById('items');
+  const downloadButton = document.getElementById('download-csv');
+
+  let latestPayload = null;
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    errorBox.style.display = 'none';
+    results.style.display = 'none';
+    items.innerHTML = '';
+    downloadButton.style.display = 'none';
+
+    const data = new FormData();
+    const files = document.getElementById('files').files;
+    for (const file of files) {
+      data.append('files', file);
+    }
+
+    data.set('text', document.getElementById('text').value);
+    data.set('scope', document.getElementById('scope').value);
+
+    try {
+      const response = await fetch('/api/extract', { method: 'POST', body: data });
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.error || 'Extraction failed.');
+      }
+
+      latestPayload = payload;
+      renderResults(payload);
+      downloadButton.style.display = payload.totalMatches > 0 ? 'inline-flex' : 'none';
+    } catch (error) {
+      errorBox.textContent = error.message;
+      errorBox.style.display = 'block';
+    }
+  });
+
+  downloadButton.addEventListener('click', () => {
+    if (!latestPayload || !latestPayload.results) return;
+
+    const rows = [['Source', 'Kind', 'IP', 'Port', 'Version', 'Scope', 'Timestamp', 'Line']];
+    latestPayload.results.forEach((result) => {
+      if (!result.matches) return;
+      result.matches.forEach((match) => {
+        rows.push([
+          result.source,
+          result.kind,
+          match.address,
+          match.port ?? '',
+          match.version,
+          match.scope,
+          match.timestamp ?? '',
+          match.line
+        ]);
+      });
+    });
+
+    const csv = rows
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'ip-port-extractor.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+  });
+
+  function renderResults(payload) {
+    const scopeLabel = payload.scope === 'public' ? 'public addresses only' : payload.scope === 'private' ? 'private addresses only' : 'all addresses';
+    summary.textContent = `Found ${payload.totalMatches} matches across ${payload.results.length} inputs (${scopeLabel}).`;
+
+    payload.results.forEach((result) => {
+      const card = document.createElement('article');
+      card.classList.add('result-card');
+
+      const title = document.createElement('h3');
+      title.textContent = result.source;
+      card.appendChild(title);
+
+      const pillBar = document.createElement('div');
+      pillBar.classList.add('pill-bar');
+      pillBar.appendChild(createPill(`${result.count} matches`));
+      card.appendChild(pillBar);
+
+      if (result.error) {
+        const alert = document.createElement('div');
+        alert.classList.add('flash', 'flash-error');
+        alert.textContent = result.error;
+        card.appendChild(alert);
+      } else if (result.matches && result.matches.length) {
+        const table = document.createElement('table');
+        table.classList.add('data-table');
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th>IP</th>
+              <th>Port</th>
+              <th>Version</th>
+              <th>Scope</th>
+              <th>Timestamp</th>
+              <th>Line</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        `;
+
+        const tbody = table.querySelector('tbody');
+        result.matches.forEach((match) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td><code>${match.address}</code></td>
+            <td>${match.port ?? '—'}</td>
+            <td>${match.version}</td>
+            <td><span class="pill">${match.scope}</span></td>
+            <td>${match.timestamp ?? '—'}</td>
+            <td>${match.line}</td>
+          `;
+          tbody.appendChild(row);
+        });
+
+        card.appendChild(table);
+      } else {
+        const empty = document.createElement('p');
+        empty.classList.add('help-text');
+        empty.textContent = 'No matches found.';
+        card.appendChild(empty);
+      }
+
+      items.appendChild(card);
+    });
+
+    results.style.display = 'block';
+  }
+
+  function createPill(text) {
+    const pill = document.createElement('span');
+    pill.classList.add('pill');
+    pill.textContent = text;
+    return pill;
+  }
+</script>
