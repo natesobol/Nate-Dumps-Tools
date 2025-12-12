@@ -1,0 +1,170 @@
+<%- include('partials/page-top', {
+  title: 'YAML/JSON Converter',
+  metaDescription:
+    'Convert YAML configuration to JSON or reverse JSON into YAML instantly. Paste text, pick a direction, and copy cleanly formatted results.',
+  canonicalUrl: 'https://natesobol.github.io/Nates-Free-Tools/apps/yaml-json-converter/index.html',
+  ogTitle: 'YAML ↔ JSON Converter',
+  ogDescription: 'Paste YAML or JSON and switch formats in one click for API payloads and config files.'
+}) %>
+<section class="tool-hero">
+  <div>
+    <p class="eyebrow">YAML ⇄ JSON Converter</p>
+    <h1>Convert YAML to JSON or back again without losing structure.</h1>
+    <p class="lede">
+      Keep GitHub Actions, Kubernetes manifests, and API requests aligned. Drop YAML or JSON into the editor, choose your
+      direction, and get a neatly formatted conversion that is ready to paste into your pipeline.
+    </p>
+    <ul class="trust-points">
+      <li>Client-side parsing powered by <code>js-yaml</code>—no uploads or persistence.</li>
+      <li>Handles nested objects, arrays, and quoted values to preserve meaning.</li>
+      <li>Copy-ready output with consistent spacing for reviews and pull requests.</li>
+    </ul>
+  </div>
+  <div class="converter-card">
+    <label for="direction">Choose conversion direction</label>
+    <select id="direction" name="direction" required>
+      <option value="yaml-to-json">YAML → JSON</option>
+      <option value="json-to-yaml">JSON → YAML</option>
+    </select>
+
+    <label for="sourceText" class="mt-2">Paste YAML or JSON</label>
+    <textarea
+      id="sourceText"
+      rows="10"
+      placeholder="---\nservice: pricing\nowner: platform\nfeatures:\n  - discounts\n  - rate-limits\nrollout:\n  enabled: true\n  regions:\n    - us-east-1\n    - eu-west-2"
+    ></textarea>
+
+    <div class="button-row">
+      <button id="convertBtn" type="button" class="button primary btn btn-primary btn-modern">Convert</button>
+      <button id="swapBtn" type="button" class="button ghost btn btn-outline-light btn-modern">Swap directions</button>
+    </div>
+    <p class="help-text">Paste text directly—no uploads or size limits for typical configs.</p>
+    <div id="status" role="status" aria-live="polite" class="help-text"></div>
+  </div>
+</section>
+
+<section class="result-panel">
+  <div class="result-card">
+    <h2>Converted output</h2>
+    <p class="help-text">Copy your converted payload and drop it straight into your API client or repo.</p>
+    <textarea id="resultText" class="code-block" rows="14" readonly></textarea>
+    <div class="button-row mt-2">
+      <button id="copyBtn" type="button" class="button primary btn btn-primary btn-modern">Copy result</button>
+      <button id="clearBtn" type="button" class="button ghost btn btn-outline-light btn-modern">Clear</button>
+    </div>
+  </div>
+  <div class="result-card">
+    <h2>Tips for reliable conversions</h2>
+    <ul class="checklist">
+      <li>Prefer YAML for human-friendly config; switch to JSON when an SDK or REST client demands strict objects.</li>
+      <li>Keep sensitive values quoted so numbers and booleans stay strings when needed.</li>
+      <li>Use the swap button to flip directions after a conversion without re-pasting.</li>
+      <li>Validate converted payloads against your schema or lint rules before shipping changes.</li>
+    </ul>
+    <p class="help-text">Everything runs locally in your browser, keeping snippets private while you iterate.</p>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+<script>
+  const direction = document.getElementById('direction');
+  const sourceText = document.getElementById('sourceText');
+  const resultText = document.getElementById('resultText');
+  const status = document.getElementById('status');
+
+  const samples = {
+    'yaml-to-json': `---\nservice: pricing\nversion: 2\nendpoints:\n  public: true\n  cache: redis\nlabels:\n  owner: platform\n  environment: staging`,
+    'json-to-yaml': JSON.stringify(
+      {
+        product: 'YAML/JSON Converter',
+        tags: ['devtools', 'automation'],
+        rollout: { region: ['us-east-1', 'eu-central-1'], percentage: 75 },
+        flags: { auditTrail: true, adsEnabled: false }
+      },
+      null,
+      2
+    )
+  };
+
+  const copyBtn = document.getElementById('copyBtn');
+  const convertBtn = document.getElementById('convertBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const swapBtn = document.getElementById('swapBtn');
+
+  const setStatus = (message, isError = false) => {
+    status.textContent = message;
+    status.classList.toggle('error-text', isError);
+    status.classList.toggle('success-text', !isError && message);
+  };
+
+  const updatePlaceholder = () => {
+    const sample = samples[direction.value];
+    sourceText.placeholder = sample;
+    if (!sourceText.value.trim()) {
+      sourceText.value = sample;
+    }
+  };
+
+  const convert = () => {
+    const raw = sourceText.value.trim();
+    if (!raw) {
+      setStatus('Paste YAML or JSON to start a conversion.', true);
+      return;
+    }
+
+    try {
+      if (direction.value === 'yaml-to-json') {
+        const parsed = jsyaml.load(raw);
+        resultText.value = JSON.stringify(parsed, null, 2);
+        setStatus('Converted YAML to JSON successfully.');
+      } else {
+        const parsed = JSON.parse(raw);
+        resultText.value = jsyaml.dump(parsed, { lineWidth: 120 });
+        setStatus('Converted JSON to YAML successfully.');
+      }
+    } catch (error) {
+      resultText.value = '';
+      setStatus(error.message || 'Unable to convert. Please check your syntax.', true);
+    }
+  };
+
+  convertBtn.addEventListener('click', convert);
+
+  swapBtn.addEventListener('click', () => {
+    const currentDirection = direction.value;
+    direction.value = currentDirection === 'yaml-to-json' ? 'json-to-yaml' : 'yaml-to-json';
+    if (resultText.value.trim()) {
+      sourceText.value = resultText.value;
+    }
+    resultText.value = '';
+    updatePlaceholder();
+    setStatus('Direction swapped. Paste or convert again.');
+  });
+
+  copyBtn.addEventListener('click', async () => {
+    if (!resultText.value.trim()) {
+      setStatus('Convert something first to copy.', true);
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(resultText.value);
+      setStatus('Copied converted output to your clipboard.');
+    } catch (error) {
+      setStatus('Clipboard copy failed. Please copy manually.', true);
+    }
+  });
+
+  clearBtn.addEventListener('click', () => {
+    sourceText.value = '';
+    resultText.value = '';
+    setStatus('Cleared input and output.');
+    updatePlaceholder();
+  });
+
+  direction.addEventListener('change', updatePlaceholder);
+
+  updatePlaceholder();
+  convert();
+</script>
+<%- include('partials/page-bottom') %>

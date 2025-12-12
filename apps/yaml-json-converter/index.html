@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YAML ↔ JSON Converter | Monetize Hub</title>
+    <meta
+      name="description"
+      content="Convert YAML to JSON or JSON back to YAML instantly. Paste config files, switch formats, and copy clean output in one click."
+    />
+    <link rel="canonical" href="https://natesobol.github.io/Nates-Free-Tools/apps/yaml-json-converter/index.html" />
+    <meta property="og:title" content="YAML ↔ JSON Converter" />
+    <meta
+      property="og:description"
+      content="Paste YAML or JSON, pick your direction, and get a formatted conversion instantly—all in your browser."
+    />
+    <meta property="og:url" content="https://natesobol.github.io/Nates-Free-Tools/apps/yaml-json-converter/index.html" />
+    <meta property="og:type" content="website" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="../../public/css/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-top">
+        <a class="brand" href="../../index.html">
+          <img src="../../public/logo.png" alt="Monetize Hub" class="brand-logo" />
+          <div class="brand-text">
+            <span class="brand-name">Monetize Hub</span>
+            <span class="brand-tagline">Launch, host, and grow your webapps</span>
+          </div>
+        </a>
+        <details class="nav-dropdown user-dropdown" open>
+          <summary class="nav-link nav-dropdown-toggle">
+            <span class="user-label">Account</span>
+            <span aria-hidden="true">▾</span>
+          </summary>
+          <div class="nav-dropdown-menu">
+            <a href="../../login.html" class="dropdown-link">Login</a>
+            <a href="../../register.html" class="dropdown-link">Create Account</a>
+            <a href="../../admin.html" class="dropdown-link">Admin Dashboard</a>
+          </div>
+        </details>
+      </div>
+      <nav class="main-nav">
+        <a href="../../index.html" class="nav-link">Home</a>
+        <a href="../../about.html" class="nav-link">About</a>
+        <details class="nav-dropdown" open>
+          <summary class="nav-link nav-dropdown-toggle">Webapps <span aria-hidden="true">▾</span></summary>
+          <div class="nav-dropdown-menu">
+            <a href="../excel-to-json/index.html" class="dropdown-link">Excel → JSON</a>
+            <a href="../xml-json-translator/index.html" class="dropdown-link">XML ⇄ JSON Translator</a>
+            <a href="./index.html" class="dropdown-link active">YAML ↔ JSON Converter</a>
+            <a href="../json-combiner/wwwroot/index.html" class="dropdown-link">JSON Combiner</a>
+            <a href="../csv-xml-converter/index.html" class="dropdown-link">CSV/XML Converter</a>
+            <a href="../pdf-splitter/wwwroot/index.html" class="dropdown-link">PDF Splitter</a>
+          </div>
+        </details>
+      </nav>
+    </header>
+
+    <main class="page-body">
+      <section class="tool-hero">
+        <div>
+          <p class="eyebrow">YAML ⇄ JSON Converter</p>
+          <h1>Paste YAML or JSON and switch formats with one click.</h1>
+          <p class="lede">
+            Keep config files, API payloads, and CI/CD snippets consistent. Drop in YAML or JSON, choose your direction, and
+            instantly generate a neatly formatted result ready to copy into your next request.
+          </p>
+          <ul class="trust-points">
+            <li>Powered by <code>js-yaml</code> for reliable parsing and clean formatting.</li>
+            <li>Preserves nested structures, arrays, and quoted strings for accurate conversions.</li>
+            <li>Runs entirely in the browser—no uploads, no persistence.</li>
+          </ul>
+        </div>
+        <div class="converter-card">
+          <label for="direction">Choose conversion direction</label>
+          <select id="direction" name="direction" required>
+            <option value="yaml-to-json">YAML → JSON</option>
+            <option value="json-to-yaml">JSON → YAML</option>
+          </select>
+
+          <label for="sourceText" class="mt-2">Paste YAML or JSON</label>
+          <textarea
+            id="sourceText"
+            rows="10"
+            placeholder="---\nname: Sample Service\nteam: platform\nfeatures:\n  - login\n  - audit-logs\nlimits:\n  requests_per_minute: 120"
+          ></textarea>
+
+          <div class="button-row">
+            <button id="convertBtn" type="button" class="button primary btn btn-primary btn-modern">Convert</button>
+            <button id="swapBtn" type="button" class="button ghost btn btn-outline-light btn-modern">Swap directions</button>
+          </div>
+          <p class="help-text">No file uploads required. Paste text and click convert.</p>
+          <div id="status" role="status" aria-live="polite" class="help-text"></div>
+        </div>
+      </section>
+
+      <section class="result-panel">
+        <div class="result-card">
+          <h2>Converted output</h2>
+          <p class="help-text">Review and copy your transformed payload below.</p>
+          <textarea id="resultText" class="code-block" rows="14" readonly></textarea>
+          <div class="button-row mt-2">
+            <button id="copyBtn" type="button" class="button primary btn btn-primary btn-modern">Copy result</button>
+            <button id="clearBtn" type="button" class="button ghost btn btn-outline-light btn-modern">Clear</button>
+          </div>
+        </div>
+        <div class="result-card">
+          <h2>Quick tips</h2>
+          <ul class="checklist">
+            <li>Use YAML for human-friendly config like GitHub Actions or Kubernetes manifests.</li>
+            <li>Switch to JSON when an API client or SDK requires strict object notation.</li>
+            <li>Maintain quoted strings for secrets and environment variables to avoid accidental parsing.</li>
+            <li>After conversion, run the payload through your linter or schema validation for production safety.</li>
+          </ul>
+          <p class="help-text">
+            This converter keeps indentation and array formatting predictable so you can move between YAML and JSON without breaking
+            your automation.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    <script>
+      const direction = document.getElementById('direction');
+      const sourceText = document.getElementById('sourceText');
+      const resultText = document.getElementById('resultText');
+      const status = document.getElementById('status');
+
+      const samples = {
+        'yaml-to-json': `---\nname: Sample Service\nversion: 1.2.0\nowners:\n  - platform@company.com\n  - sre@company.com\nfeatures:\n  auth: enabled\n  logging:\n    level: info\n    format: json\nenabled: true`,
+        'json-to-yaml': JSON.stringify(
+          {
+            project: 'Monetize Hub',
+            services: ['webapp', 'api', 'worker'],
+            limits: { requests_per_hour: 10000, soft_limit: true },
+            flags: { onboarding: true, ads: false }
+          },
+          null,
+          2
+        )
+      };
+
+      const copyBtn = document.getElementById('copyBtn');
+      const convertBtn = document.getElementById('convertBtn');
+      const clearBtn = document.getElementById('clearBtn');
+      const swapBtn = document.getElementById('swapBtn');
+
+      const setStatus = (message, isError = false) => {
+        status.textContent = message;
+        status.classList.toggle('error-text', isError);
+        status.classList.toggle('success-text', !isError && message);
+      };
+
+      const updatePlaceholder = () => {
+        const sample = samples[direction.value];
+        sourceText.placeholder = sample;
+        if (!sourceText.value.trim()) {
+          sourceText.value = sample;
+        }
+      };
+
+      const convert = () => {
+        const raw = sourceText.value.trim();
+        if (!raw) {
+          setStatus('Paste YAML or JSON to start a conversion.', true);
+          return;
+        }
+
+        try {
+          if (direction.value === 'yaml-to-json') {
+            const parsed = jsyaml.load(raw);
+            resultText.value = JSON.stringify(parsed, null, 2);
+            setStatus('Converted YAML to JSON successfully.');
+          } else {
+            const parsed = JSON.parse(raw);
+            resultText.value = jsyaml.dump(parsed, { lineWidth: 120 });
+            setStatus('Converted JSON to YAML successfully.');
+          }
+        } catch (error) {
+          resultText.value = '';
+          setStatus(error.message || 'Unable to convert. Please check your syntax.', true);
+        }
+      };
+
+      convertBtn.addEventListener('click', convert);
+
+      swapBtn.addEventListener('click', () => {
+        const currentDirection = direction.value;
+        direction.value = currentDirection === 'yaml-to-json' ? 'json-to-yaml' : 'yaml-to-json';
+        if (resultText.value.trim()) {
+          sourceText.value = resultText.value;
+        }
+        resultText.value = '';
+        updatePlaceholder();
+        setStatus('Direction swapped. Paste or convert again.');
+      });
+
+      copyBtn.addEventListener('click', async () => {
+        if (!resultText.value.trim()) {
+          setStatus('Convert something first to copy.', true);
+          return;
+        }
+
+        try {
+          await navigator.clipboard.writeText(resultText.value);
+          setStatus('Copied converted output to your clipboard.');
+        } catch (error) {
+          setStatus('Clipboard copy failed. Please copy manually.', true);
+        }
+      });
+
+      clearBtn.addEventListener('click', () => {
+        sourceText.value = '';
+        resultText.value = '';
+        setStatus('Cleared input and output.');
+        updatePlaceholder();
+      });
+
+      direction.addEventListener('change', updatePlaceholder);
+
+      updatePlaceholder();
+      convert();
+    </script>
+  </body>
+</html>

@@ -19,4 +19,13 @@ router.get('/xml-json-translator', (req, res) => {
   });
 });
 
+router.get('/yaml-json-converter', (req, res) => {
+  res.render('yaml-json-converter', {
+    title: 'YAML/JSON Converter',
+    metaDescription:
+      'Convert YAML configuration to JSON or reverse JSON into YAML instantly. Paste text, pick a direction, and copy cleanly formatted results.',
+    metaKeywords: 'yaml to json converter,json to yaml converter,config translator'
+  });
+});
+
 export default router;

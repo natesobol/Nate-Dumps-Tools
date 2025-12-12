@@ -7,6 +7,7 @@ A starter website for hosting webapps with monetization in mind. It provides a h
 - The preview uses `index.html` plus companion static pages in the root and `/apps/` folders
 - Static versions of webapps are available at:
   - Excel to JSON: `/apps/excel-to-json/index.html`
+  - YAML/JSON Converter: `/apps/yaml-json-converter/index.html`
   - JSON Combiner: `/apps/json-combiner/wwwroot/index.html`
   - CSV/XML Converter: `/apps/csv-xml-converter/index.html`
   - PDF Splitter: `/apps/pdf-splitter/wwwroot/index.html`
@@ -65,6 +66,17 @@ XML without any uploads.
 **Server Route:** `/xml-json-translator`
 **Static Version:** `/apps/xml-json-translator/index.html`
 
+### YAML/JSON Converter
+Located in `apps/yaml-json-converter/`, this in-browser tool flips YAML to JSON or JSON back to YAML for config files and API payloads.
+
+**Features:**
+- Client-side parsing powered by `js-yaml` with clear error messages
+- Copy-ready formatting that preserves nested objects and arrays
+- Swap directions without re-pasting your source text
+
+**Server Route:** `/yaml-json-converter`
+**Static Version:** `/apps/yaml-json-converter/index.html`
+
 ### JSON Combiner
 Located in `apps/json-combiner/`, this C# .NET minimal API webapp combines multiple JSON files.
 
@@ -114,6 +126,10 @@ apps/
 │   ├── views/              # EJS templates
 │   ├── index.html          # Static version
 │   └── README.md
+├── yaml-json-converter/    # YAML ↔ JSON converter webapp
+│   └── index.html          # Static version (browser-only)
+├── xml-json-translator/    # XML ↔ JSON translator webapp
+│   └── index.html          # Static version (browser-only)
 ├── csv-xml-converter/      # CSV/XML converter webapp
 │   ├── src/routes/         # Express routes
 │   ├── views/              # EJS templates

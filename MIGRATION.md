@@ -16,6 +16,10 @@ apps/
 │   │   └── excel-to-json.ejs
 │   ├── index.html           # Static GitHub Pages version
 │   └── README.md
+├── yaml-json-converter/     # YAML ↔ JSON Converter (static)
+│   └── index.html
+├── xml-json-translator/     # XML ↔ JSON Translator (static)
+│   └── index.html
 │
 └── json-combiner/           # JSON Combiner (C# .NET)
     ├── wwwroot/
