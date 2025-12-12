@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audiobook Chapter Downloader</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <style>
+        body { padding: 1rem; }
+        main { max-width: 1100px; margin: 0 auto; }
+        .chapter-list { max-height: 420px; overflow: auto; }
+        .status { min-height: 1.5rem; }
+        .table thead th { position: sticky; top: 0; background: var(--pico-background-color); }
+    </style>
+</head>
+<body>
+<main>
+    <h1>Audiobook Chapter Downloader</h1>
+    <p>Paste a LibriVox or Archive.org book URL to fetch chapter audio, pick the files you need, and download them as MP3s. Optionally merge everything into a single track for offline listening.</p>
+    <form id="lookup-form">
+        <label for="book-url">Book URL</label>
+        <input type="url" id="book-url" name="book-url" placeholder="https://librivox.org/... or https://archive.org/details/..." required>
+        <button type="submit">Fetch Chapters</button>
+    </form>
+
+    <section id="results" hidden>
+        <h2 id="book-title"></h2>
+        <p><strong>Source:</strong> <span id="book-source"></span></p>
+
+        <div class="chapter-list">
+            <table class="table" aria-label="Chapter list">
+                <thead>
+                <tr>
+                    <th><input type="checkbox" id="select-all"></th>
+                    <th>Chapter</th>
+                    <th>Duration</th>
+                </tr>
+                </thead>
+                <tbody id="chapter-rows"></tbody>
+            </table>
+        </div>
+
+        <div class="grid">
+            <button id="download-selected" type="button">Download selected (ZIP)</button>
+            <button id="download-merged" type="button" class="contrast">Merge &amp; download single MP3</button>
+        </div>
+    </section>
+
+    <p class="status" id="status"></p>
+</main>
+
+<script>
+const form = document.getElementById('lookup-form');
+const statusEl = document.getElementById('status');
+const resultsSection = document.getElementById('results');
+const chapterRows = document.getElementById('chapter-rows');
+const selectAll = document.getElementById('select-all');
+const bookTitle = document.getElementById('book-title');
+const bookSource = document.getElementById('book-source');
+const downloadSelected = document.getElementById('download-selected');
+const downloadMerged = document.getElementById('download-merged');
+
+let fetchedChapters = [];
+let sourceUrl = '';
+
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const url = document.getElementById('book-url').value.trim();
+    if (!url) return;
+
+    setStatus('Looking up chapters...');
+    toggleButtons(true);
+    resultsSection.hidden = true;
+
+    try {
+        const response = await fetch(`/api/chapters?url=${encodeURIComponent(url)}`);
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || 'Unable to fetch chapters.');
+        }
+
+        fetchedChapters = data.chapters || [];
+        sourceUrl = url;
+        renderChapters(data.title, data.source, fetchedChapters);
+        setStatus(`Found ${fetchedChapters.length} chapter(s).`);
+    } catch (err) {
+        setStatus(err.message, true);
+    } finally {
+        toggleButtons(false);
+    }
+});
+
+selectAll.addEventListener('change', () => {
+    document.querySelectorAll('.chapter-checkbox').forEach(cb => cb.checked = selectAll.checked);
+});
+
+downloadSelected.addEventListener('click', () => download(false));
+downloadMerged.addEventListener('click', () => download(true));
+
+function renderChapters(title, source, chapters) {
+    chapterRows.innerHTML = '';
+    selectAll.checked = false;
+
+    bookTitle.textContent = title;
+    bookSource.textContent = source;
+
+    chapters.forEach((chapter, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><input type="checkbox" class="chapter-checkbox" data-index="${index}"></td>
+            <td>${chapter.title || chapter.id || 'Chapter'} </td>
+            <td>${formatDuration(chapter.durationSeconds)}</td>
+        `;
+        chapterRows.appendChild(row);
+    });
+
+    resultsSection.hidden = false;
+}
+
+async function download(merge) {
+    const selected = Array.from(document.querySelectorAll('.chapter-checkbox'))
+        .filter(cb => cb.checked)
+        .map(cb => fetchedChapters[Number(cb.dataset.index)]);
+
+    if (selected.length === 0) {
+        setStatus('Select at least one chapter first.', true);
+        return;
+    }
+
+    setStatus(merge ? 'Merging chapters...' : 'Preparing download...');
+    toggleButtons(true);
+
+    try {
+        const response = await fetch('/api/download', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sourceUrl, chapters: selected, mergeIntoSingleFile: merge })
+        });
+
+        const blob = await response.blob();
+        if (!response.ok) {
+            const text = await blob.text();
+            const error = safeJson(text)?.error || response.statusText;
+            throw new Error(error);
+        }
+
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = merge ? 'audiobook-merged.mp3' : 'chapters.zip';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        setStatus('Download ready!');
+    } catch (err) {
+        setStatus(err.message, true);
+    } finally {
+        toggleButtons(false);
+    }
+}
+
+function formatDuration(seconds) {
+    if (!seconds && seconds !== 0) return '—';
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    const parts = [];
+    if (hrs > 0) parts.push(String(hrs).padStart(2, '0'));
+    parts.push(String(mins).padStart(2, '0'));
+    parts.push(String(secs).padStart(2, '0'));
+    return parts.join(':');
+}
+
+function setStatus(message, isError = false) {
+    statusEl.textContent = message;
+    statusEl.style.color = isError ? 'var(--pico-del-color)' : 'inherit';
+}
+
+function toggleButtons(disabled) {
+    downloadSelected.disabled = disabled;
+    downloadMerged.disabled = disabled;
+}
+
+function safeJson(text) {
+    try { return JSON.parse(text); }
+    catch { return null; }
+}
+</script>
+</body>
+</html>
