@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Question Extractor | Monetize Hub Tools</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="../../../public/css/styles.css" />
+    <link rel="stylesheet" href="../../../public/css/webapp-theme.css" />
+    <style>
+      .drop-zone {
+        border: 2px dashed var(--border-subtle);
+        border-radius: 12px;
+        padding: 28px;
+        background: rgba(255, 255, 255, 0.7);
+        transition: border-color 0.2s ease, background 0.2s ease;
+      }
+      .drop-zone.dragover {
+        border-color: var(--primary-color);
+        background: rgba(99, 102, 241, 0.06);
+      }
+      .result-card {
+        border: 1px solid var(--border-subtle);
+        border-radius: 12px;
+        padding: 16px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.8) 100%);
+      }
+      .question-badge {
+        background: #eef2ff;
+        color: #4338ca;
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-weight: 600;
+        font-size: 0.85rem;
+      }
+      .muted-bg {
+        background: rgba(17, 24, 39, 0.03);
+        border-radius: 10px;
+        padding: 12px;
+      }
+    </style>
+  </head>
+  <body class="tool-page">
+    <header class="site-header">
+      <div class="header-top">
+        <a class="brand" href="../../../index.html">
+          <img src="../../../public/logo.png" alt="Monetize Hub" class="brand-logo" />
+          <div class="brand-text">
+            <span class="brand-name">Monetize Hub</span>
+            <span class="brand-tagline">Launch, host, and grow your webapps</span>
+          </div>
+        </a>
+        <details class="nav-dropdown user-dropdown" open>
+          <summary class="nav-link nav-dropdown-toggle">
+            <span class="user-label">Account</span>
+            <span aria-hidden="true">▾</span>
+          </summary>
+          <div class="nav-dropdown-menu">
+            <a href="../../../login.html" class="dropdown-link">Login</a>
+            <a href="../../../register.html" class="dropdown-link">Create Account</a>
+            <a href="../../../admin.html" class="dropdown-link">Admin Dashboard</a>
+          </div>
+        </details>
+      </div>
+      <nav class="main-nav">
+        <a href="../../../index.html" class="nav-link">Home</a>
+        <a href="../../../about.html" class="nav-link">About</a>
+        <details class="nav-dropdown" open>
+          <summary class="nav-link nav-dropdown-toggle">Webapps <span aria-hidden="true">▾</span></summary>
+          <div class="nav-dropdown-menu">
+            <a href="../../../apps/excel-to-json/index.html" class="dropdown-link">Excel → JSON</a>
+            <a href="../../../apps/json-to-excel/wwwroot/index.html" class="dropdown-link">JSON → Excel</a>
+            <a href="../../../apps/xml-json-translator/index.html" class="dropdown-link">XML ⇄ JSON Translator</a>
+            <a href="../../../apps/yaml-json-converter/index.html" class="dropdown-link">YAML ↔ JSON Converter</a>
+            <a href="../../../apps/json-combiner/wwwroot/index.html" class="dropdown-link">JSON Combiner</a>
+            <a href="../../../apps/find-and-replace/wwwroot/index.html" class="dropdown-link">Find &amp; Replace</a>
+            <a href="../../../apps/csv-xml-converter/index.html" class="dropdown-link">CSV/XML Converter</a>
+            <a href="../../../apps/list-comparison/wwwroot/index.html" class="dropdown-link">List Comparison</a>
+            <a href="../../../apps/pdf-splitter/wwwroot/index.html" class="dropdown-link">PDF Splitter</a>
+            <a href="../../../apps/bullet-list-extractor/wwwroot/index.html" class="dropdown-link">Bullet List Extractor</a>
+            <a href="../../../apps/powerpoint-to-pdf/wwwroot/index.html" class="dropdown-link">PowerPoint → PDF</a>
+            <a href="../../../apps/powerpoint-image-extractor/wwwroot/index.html" class="dropdown-link">PowerPoint Image Extractor</a>
+            <a href="../../../apps/question-extractor/wwwroot/index.html" class="dropdown-link active">Question Extractor</a>
+          </div>
+        </details>
+      </nav>
+    </header>
+
+    <main class="tool-shell">
+      <div class="app-shell">
+        <header class="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-3">
+          <div>
+            <p class="question-badge mb-2">PDF, DOCX, TXT, and CSV friendly</p>
+            <h1 class="page-title mb-1">Question Extractor</h1>
+            <p class="muted mb-0">
+              Pull every question sentence from interview transcripts, surveys, and PDFs in one pass. Grouped by file with optional context windows.
+            </p>
+          </div>
+          <img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/2753.svg" width="72" height="72" alt="Question mark" />
+        </header>
+
+        <div class="card-gradient mb-4">
+          <div class="row g-3 align-items-stretch">
+            <div class="col-lg-8">
+              <label class="form-label fw-semibold">Upload files</label>
+              <div id="dropZone" class="drop-zone" role="button" tabindex="0" aria-label="Drop files or use the picker">
+                <p class="mb-1">Drag and drop interview transcripts, surveys, or exports here.</p>
+                <input id="fileInput" class="form-control" type="file" accept=".pdf,.txt,.docx,.csv" multiple />
+                <small class="text-secondary">Supported: .pdf, .txt, .docx, .csv (75 MB max combined).</small>
+              </div>
+            </div>
+            <div class="col-lg-4">
+              <div class="muted-bg h-100 d-flex flex-column justify-content-between">
+                <div>
+                  <label class="form-label fw-semibold">Options</label>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="true" id="contextToggle" checked />
+                    <label class="form-check-label" for="contextToggle">Include context snippets</label>
+                  </div>
+                  <small class="text-secondary">Adds surrounding sentences so you can keep nuance intact.</small>
+                </div>
+                <div class="d-flex align-items-center gap-2 mt-3">
+                  <button id="extractBtn" class="btn btn-primary px-4" type="button">Extract Questions</button>
+                  <span id="status" class="muted flex-grow-1"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <section aria-live="polite">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <h2 class="h5 mb-0">Results</h2>
+            <span id="counts" class="muted">No files processed yet.</span>
+          </div>
+          <div id="results" class="d-flex flex-column gap-3"></div>
+          <p id="emptyState" class="muted">Upload files and click Extract to see question sentences.</p>
+        </section>
+
+        <div class="notice mt-4">
+          All processing runs server-side within this tool. Files are handled in-memory and never stored.
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const dropZone = document.getElementById("dropZone");
+      const fileInput = document.getElementById("fileInput");
+      const extractBtn = document.getElementById("extractBtn");
+      const statusEl = document.getElementById("status");
+      const emptyState = document.getElementById("emptyState");
+      const resultsEl = document.getElementById("results");
+      const countsEl = document.getElementById("counts");
+      const contextToggle = document.getElementById("contextToggle");
+
+      let files = [];
+
+      function setStatus(message, tone = "muted") {
+        statusEl.textContent = message;
+        statusEl.className = tone === "error" ? "text-danger" : "muted";
+      }
+
+      function clearResults() {
+        resultsEl.innerHTML = "";
+      }
+
+      function handleFiles(selected) {
+        files = Array.from(selected || []);
+        if (files.length === 0) {
+          setStatus("No files selected.");
+          return;
+        }
+        setStatus(`${files.length} file(s) ready.`);
+      }
+
+      dropZone.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        dropZone.classList.add("dragover");
+      });
+
+      dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
+
+      dropZone.addEventListener("drop", (event) => {
+        event.preventDefault();
+        dropZone.classList.remove("dragover");
+        handleFiles(event.dataTransfer.files);
+        fileInput.files = event.dataTransfer.files;
+      });
+
+      dropZone.addEventListener("click", () => fileInput.click());
+
+      fileInput.addEventListener("change", (event) => handleFiles(event.target.files));
+
+      extractBtn.addEventListener("click", async () => {
+        if (files.length === 0) {
+          setStatus("Please add at least one file.", "error");
+          return;
+        }
+
+        const form = new FormData();
+        files.forEach((file) => form.append("files", file));
+        form.append("includeContext", contextToggle.checked);
+
+        setStatus("Extracting questions...");
+        extractBtn.disabled = true;
+        clearResults();
+        emptyState.style.display = "none";
+
+        try {
+          const response = await fetch("/api/extract-questions", {
+            method: "POST",
+            body: form,
+          });
+
+          if (!response.ok) {
+            const error = await response.json().catch(() => ({ error: "Request failed." }));
+            throw new Error(error.error || "Request failed.");
+          }
+
+          const data = await response.json();
+          renderResults(data);
+          setStatus("Done.");
+        } catch (error) {
+          setStatus(error.message, "error");
+          emptyState.style.display = "block";
+        } finally {
+          extractBtn.disabled = false;
+        }
+      });
+
+      function renderResults(payload) {
+        const { files = [], totalQuestions = 0 } = payload || {};
+        countsEl.textContent = `${totalQuestions} question(s) found across ${files.length} file(s).`;
+
+        if (!files.length) {
+          emptyState.style.display = "block";
+          return;
+        }
+
+        clearResults();
+        emptyState.style.display = "none";
+
+        files.forEach((file) => {
+          const card = document.createElement("div");
+          card.className = "result-card";
+
+          const header = document.createElement("div");
+          header.className = "d-flex align-items-center justify-content-between gap-2 mb-2 flex-wrap";
+
+          const title = document.createElement("div");
+          title.innerHTML = `<strong>${file.fileName || "Untitled"}</strong>`;
+          header.appendChild(title);
+
+          const badge = document.createElement("span");
+          badge.className = "question-badge";
+          const count = file.questions?.length || 0;
+          badge.textContent = `${count} question${count === 1 ? "" : "s"}`;
+          header.appendChild(badge);
+
+          card.appendChild(header);
+
+          if (file.error) {
+            const alert = document.createElement("div");
+            alert.className = "alert alert-danger mb-0";
+            alert.textContent = file.error;
+            card.appendChild(alert);
+            resultsEl.appendChild(card);
+            return;
+          }
+
+          if (!count) {
+            const empty = document.createElement("p");
+            empty.className = "muted mb-0";
+            empty.textContent = "No questions detected.";
+            card.appendChild(empty);
+            resultsEl.appendChild(card);
+            return;
+          }
+
+          const list = document.createElement("ol");
+          list.className = "ps-3 mb-0 d-flex flex-column gap-2";
+
+          file.questions.forEach((item) => {
+            const li = document.createElement("li");
+            const question = document.createElement("p");
+            question.className = "mb-1 fw-semibold";
+            question.textContent = item.question;
+            li.appendChild(question);
+
+            if (item.context) {
+              const context = document.createElement("p");
+              context.className = "muted mb-0";
+              context.textContent = item.context;
+              li.appendChild(context);
+            }
+
+            list.appendChild(li);
+          });
+
+          card.appendChild(list);
+          resultsEl.appendChild(card);
+        });
+      }
+    </script>
+  </body>
+</html>

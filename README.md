@@ -14,6 +14,7 @@ A starter website for hosting webapps with monetization in mind. It provides a h
 - List Comparison / Diff Checker: `/apps/list-comparison/wwwroot/index.html`
 - Extract Text Inside Quotes: `/apps/extract-text-inside-quotes/wwwroot/index.html`
 - PDF Splitter: `/apps/pdf-splitter/wwwroot/index.html`
+- Table Data Extractor: `/apps/table-data-extractor/wwwroot/index.html`
 - Bullet List Extractor: `/apps/bullet-list-extractor/wwwroot/index.html`
 - PowerPoint → PDF: `/apps/powerpoint-to-pdf/wwwroot/index.html`
 - PowerPoint Image Extractor: `/apps/powerpoint-image-extractor/wwwroot/index.html`
@@ -275,6 +276,21 @@ cd apps/batch-pdf-text-extractor
 dotnet run
 ```
 
+### Extract Table Data From PDF, Word, and HTML Files
+Located in `apps/table-data-extractor/`, this .NET 8 minimal API auto-detects tables in PDFs, DOCX files, and saved HTML pages.
+
+**Features:**
+- Accepts `.pdf`, `.docx`, `.html`, and `.htm` uploads
+- Detects grid-style and borderless tables with per-table previews
+- Honors HTML captions and Word headers while normalizing columns
+- Export all detected tables together as CSV or multi-sheet Excel files
+
+**Run locally:**
+```bash
+cd apps/table-data-extractor
+dotnet run
+```
+
 ### PowerPoint → PDF Converter
 Located in `apps/powerpoint-to-pdf/`, this tool uses LibreOffice through the Node server to turn `.ppt` and `.pptx` files into PDFs.
 
@@ -299,6 +315,16 @@ Located in `apps/powerpoint-slide-exporter/`, this .NET 8 webapp converts each s
 cd apps/powerpoint-slide-exporter
 dotnet run
 ```
+
+### Named Entity Extractor
+Located in `apps/named-entity-extractor/`, this C# minimal API hosts a browser-based NLP tool for pulling people, organizations, and locations from documents.
+
+**Features:**
+- Upload `.pdf`, `.docx`, or `.txt` files and process them entirely in the browser
+- Combined and per-file entity breakdowns with deduplication controls
+- Quick JSON export for downstream analysis
+
+**Static Version:** `/apps/named-entity-extractor/wwwroot/index.html`
 
 ## Project Structure
 
@@ -347,6 +373,10 @@ apps/
 ├── find-and-replace/       # .NET find-and-replace utility
 │   ├── Program.cs          # Minimal API and text/file processor
 │   ├── find-and-replace.csproj
+│   └── wwwroot/            # Static UI assets
+├── named-entity-extractor/ # Browser-based named entity extraction
+│   ├── Program.cs          # Minimal API hosting the static UI
+│   ├── named-entity-extractor.csproj
 │   └── wwwroot/            # Static UI assets
 ├── batch-file-renamer/     # .NET batch renamer for filename cleanup
 │   ├── Program.cs          # Minimal API building renamed archives

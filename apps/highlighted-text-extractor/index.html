@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Highlighted Text Extractor</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b1021;
+        --panel: #0f172a;
+        --border: rgba(255, 255, 255, 0.1);
+        --accent: #38bdf8;
+        --muted: #cbd5e1;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.08), transparent 25%),
+          radial-gradient(circle at 80% 10%, rgba(96, 165, 250, 0.08), transparent 30%),
+          var(--bg);
+        color: #e2e8f0;
+        margin: 0;
+        padding: 0;
+      }
+
+      header,
+      main {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem 3rem;
+      }
+
+      header {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 1.5rem;
+        align-items: center;
+      }
+
+      .hero-card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 1.5rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      }
+
+      h1 {
+        margin: 0 0 0.5rem;
+        font-size: clamp(2rem, 5vw, 2.7rem);
+      }
+
+      p.lede {
+        color: var(--muted);
+        font-size: 1.05rem;
+        line-height: 1.6;
+        margin-top: 0;
+      }
+
+      ul.checklist {
+        padding-left: 1.2rem;
+        color: var(--muted);
+      }
+
+      .panel-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 1.25rem;
+        margin-top: 1.25rem;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1.25rem;
+      }
+
+      label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.35rem;
+      }
+
+      input[type="file"] {
+        width: 100%;
+        padding: 0.6rem;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.02);
+        color: #e2e8f0;
+      }
+
+      .options {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin: 0.75rem 0 1rem;
+        color: var(--muted);
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        background: rgba(56, 189, 248, 0.12);
+        color: #38bdf8;
+        padding: 0.35rem 0.7rem;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+
+      button {
+        background: linear-gradient(135deg, #38bdf8, #6366f1);
+        color: #0b1021;
+        font-weight: 700;
+        border: none;
+        border-radius: 12px;
+        padding: 0.9rem 1.25rem;
+        cursor: pointer;
+        width: 100%;
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .dropzone {
+        border: 1px dashed var(--border);
+        border-radius: 12px;
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.02);
+        transition: all 0.2s ease;
+        text-align: center;
+        color: var(--muted);
+      }
+
+      .dropzone.dragover {
+        border-color: var(--accent);
+        background: rgba(56, 189, 248, 0.08);
+        color: #e2e8f0;
+      }
+
+      .results {
+        margin-top: 1.5rem;
+        display: grid;
+        gap: 1rem;
+      }
+
+      .result-card {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 1rem;
+        background: #0d1528;
+      }
+
+      .result-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+
+      .color-dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+      }
+
+      .badge {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 0.15rem 0.5rem;
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+
+      .muted {
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      pre {
+        white-space: pre-wrap;
+        word-break: break-word;
+        margin: 0.5rem 0 0;
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 10px;
+        padding: 0.75rem;
+        font-family: "Inter", system-ui, sans-serif;
+      }
+
+      .status {
+        margin-top: 0.75rem;
+        padding: 0.75rem;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: rgba(56, 189, 248, 0.06);
+        color: var(--muted);
+      }
+
+      .flash-error {
+        background: rgba(239, 68, 68, 0.12);
+        border-color: rgba(239, 68, 68, 0.35);
+        color: #fecdd3;
+      }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  </head>
+  <body>
+    <header>
+      <div>
+        <p class="pill">Highlight scanner</p>
+        <h1>Extract highlighted text from Word, PDF, and PowerPoint files.</h1>
+        <p class="lede">
+          Drop your annotated documents to pull every highlighted or color-backed passage. Perfect for collecting user
+          feedback, review notes, or any marked-up sections across formats.
+        </p>
+        <ul class="checklist">
+          <li>Scans DOCX highlight tags, PDF highlight annotations, and PPTX text runs with highlight fills.</li>
+          <li>Processes multiple files at once and keeps everything in the browser — nothing is uploaded.</li>
+          <li>Optionally group results by highlight color to mirror how your reviewers marked the file.</li>
+        </ul>
+      </div>
+      <div class="hero-card">
+        <label for="fileInput">Select .docx, .pdf, or .pptx files</label>
+        <input id="fileInput" type="file" accept=".docx,.pdf,.pptx" multiple />
+        <div class="dropzone" id="dropzone">or drop files here</div>
+        <div class="options">
+          <label><input type="checkbox" id="groupByColor" checked /> Tag by highlight color</label>
+          <label><input type="checkbox" id="includeFileText" checked /> Include file name on each snippet</label>
+        </div>
+        <button id="runButton">Extract highlights</button>
+        <div class="status" id="status" role="status" aria-live="polite">Waiting for files…</div>
+      </div>
+    </header>
+
+    <main>
+      <div class="panel-grid">
+        <div class="panel">
+          <h2>Results</h2>
+          <p class="muted">Highlighted passages appear here with their detected color tags.</p>
+          <div class="results" id="results"></div>
+        </div>
+        <div class="panel">
+          <h2>Tips for best matches</h2>
+          <ul class="checklist">
+            <li>For DOCX, use built-in highlight colors rather than custom shading for the cleanest matches.</li>
+            <li>For PDF, ensure highlights are actual annotations (not just colored text) so they can be detected.</li>
+            <li>For PPTX, text boxes with highlight fills are captured; background-only fills may be skipped.</li>
+          </ul>
+          <p class="muted">All processing is in-browser and temporary.</p>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const dropzone = document.getElementById('dropzone');
+      const fileInput = document.getElementById('fileInput');
+      const runButton = document.getElementById('runButton');
+      const resultsContainer = document.getElementById('results');
+      const statusBox = document.getElementById('status');
+      const groupByColor = document.getElementById('groupByColor');
+      const includeFileText = document.getElementById('includeFileText');
+
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.js';
+
+      const setStatus = (message, isError = false) => {
+        statusBox.textContent = message;
+        statusBox.classList.toggle('flash-error', isError);
+      };
+
+      const readFileBuffer = (file) =>
+        new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(reader.error);
+          reader.readAsArrayBuffer(file);
+        });
+
+      const extractDocxHighlights = async (file) => {
+        const buffer = await readFileBuffer(file);
+        const zip = await JSZip.loadAsync(buffer);
+        const entries = Object.keys(zip.files).filter(
+          (name) => name.startsWith('word/') && name.endsWith('.xml') && !name.includes('styles')
+        );
+
+        const parser = new DOMParser();
+        const snippets = [];
+
+        for (const entry of entries) {
+          const xml = await zip.file(entry).async('text');
+          const doc = parser.parseFromString(xml, 'application/xml');
+          const runs = Array.from(doc.getElementsByTagName('w:r'));
+
+          for (const run of runs) {
+            const textNodes = run.getElementsByTagName('w:t');
+            if (!textNodes.length) continue;
+            const content = Array.from(textNodes)
+              .map((node) => node.textContent)
+              .join('')
+              .trim();
+            if (!content) continue;
+
+            const highlightEl = run.querySelector('w\\:highlight, highlight');
+            const shadingEl = run.querySelector('w\\:shd, shd');
+            const color = highlightEl?.getAttribute('w:val') || shadingEl?.getAttribute('w:fill');
+
+            if (highlightEl || shadingEl) {
+              snippets.push({ text: content, color: color || 'highlight', source: file.name });
+            }
+          }
+        }
+
+        return snippets;
+      };
+
+      const extractPptxHighlights = async (file) => {
+        const buffer = await readFileBuffer(file);
+        const zip = await JSZip.loadAsync(buffer);
+        const slideEntries = Object.keys(zip.files).filter((name) => name.startsWith('ppt/slides/slide') && name.endsWith('.xml'));
+        const parser = new DOMParser();
+        const snippets = [];
+
+        for (const entry of slideEntries) {
+          const xml = await zip.file(entry).async('text');
+          const doc = parser.parseFromString(xml, 'application/xml');
+          const runs = Array.from(doc.getElementsByTagName('a:r'));
+
+          for (const run of runs) {
+            const textNode = run.getElementsByTagName('a:t')[0];
+            if (!textNode) continue;
+            const content = textNode.textContent.trim();
+            if (!content) continue;
+
+            const highlight = run.querySelector('a\\:highlight, highlight, a\\:solidFill, solidFill');
+            if (!highlight) continue;
+
+            const srgb = highlight.querySelector('a\\:srgbClr, srgbClr');
+            const color = srgb?.getAttribute('val');
+            snippets.push({ text: content, color: color || 'highlight', source: file.name });
+          }
+        }
+
+        return snippets;
+      };
+
+      const rectFromQuad = (quad) => {
+        const xs = [quad[0], quad[2], quad[4], quad[6]];
+        const ys = [quad[1], quad[3], quad[5], quad[7]];
+        return {
+          minX: Math.min(...xs),
+          maxX: Math.max(...xs),
+          minY: Math.min(...ys),
+          maxY: Math.max(...ys)
+        };
+      };
+
+      const boxesIntersect = (a, b) => !(a.minX > b.maxX || a.maxX < b.minX || a.minY > b.maxY || a.maxY < b.minY);
+
+      const extractPdfHighlights = async (file) => {
+        const buffer = await readFileBuffer(file);
+        const loadingTask = pdfjsLib.getDocument({ data: buffer });
+        const pdf = await loadingTask.promise;
+        const snippets = [];
+
+        for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+          const page = await pdf.getPage(pageNumber);
+          const [annotations, textContent] = await Promise.all([
+            page.getAnnotations(),
+            page.getTextContent({ normalizeWhitespace: true })
+          ]);
+
+          const textItems = textContent.items.map((item) => {
+            const [a, b, c, d, e, f] = item.transform;
+            const width = item.width;
+            const height = item.height || Math.hypot(b, d);
+            return {
+              str: item.str,
+              rect: { minX: e, minY: f, maxX: e + width, maxY: f + height }
+            };
+          });
+
+          annotations
+            .filter((anno) => anno.subtype === 'Highlight')
+            .forEach((highlight) => {
+              const quads = highlight.quadPoints || [];
+              const color = highlight.color ? `rgb(${highlight.color.join(',')})` : 'highlight';
+              const collected = [];
+
+              for (let i = 0; i < quads.length; i += 8) {
+                const quadRect = rectFromQuad(quads.slice(i, i + 8));
+                textItems.forEach((item) => {
+                  if (boxesIntersect(item.rect, quadRect)) {
+                    collected.push(item.str);
+                  }
+                });
+              }
+
+              if (collected.length) {
+                snippets.push({
+                  text: collected.join(' ').replace(/\s+/g, ' ').trim(),
+                  color,
+                  source: `${file.name} (p.${pageNumber})`
+                });
+              }
+            });
+        }
+
+        return snippets;
+      };
+
+      const renderResults = (snippets) => {
+        resultsContainer.innerHTML = '';
+        if (!snippets.length) {
+          resultsContainer.innerHTML = '<p class="muted">No highlights found in the provided files.</p>';
+          return;
+        }
+
+        const grouped = groupByColor.checked
+          ? snippets.reduce((acc, item) => {
+              const key = item.color || 'highlight';
+              acc[key] = acc[key] || [];
+              acc[key].push(item);
+              return acc;
+            }, {})
+          : { Ungrouped: snippets };
+
+        Object.entries(grouped).forEach(([color, items]) => {
+          const card = document.createElement('article');
+          card.className = 'result-card';
+
+          const header = document.createElement('div');
+          header.className = 'result-header';
+
+          const title = document.createElement('div');
+          title.innerHTML = `<strong>${color}</strong> <span class="badge">${items.length} snippet${
+            items.length === 1 ? '' : 's'
+          }</span>`;
+
+          const dot = document.createElement('span');
+          dot.className = 'color-dot';
+          dot.style.background = color.startsWith('rgb') || color.startsWith('#') ? color : '#facc15';
+
+          header.appendChild(title);
+          header.appendChild(dot);
+          card.appendChild(header);
+
+          items.forEach((item) => {
+            const pre = document.createElement('pre');
+            const prefix = includeFileText.checked ? `[${item.source}] ` : '';
+            pre.textContent = `${prefix}${item.text}`;
+            card.appendChild(pre);
+          });
+
+          resultsContainer.appendChild(card);
+        });
+      };
+
+      const handleFiles = async (files) => {
+        if (!files.length) {
+          setStatus('Please add at least one DOCX, PDF, or PPTX file.', true);
+          return;
+        }
+
+        runButton.disabled = true;
+        setStatus('Scanning files for highlights…');
+        const snippets = [];
+
+        for (const file of files) {
+          const ext = file.name.toLowerCase();
+          try {
+            if (ext.endsWith('.docx')) {
+              const docxSnippets = await extractDocxHighlights(file);
+              snippets.push(...docxSnippets);
+            } else if (ext.endsWith('.pptx')) {
+              const pptxSnippets = await extractPptxHighlights(file);
+              snippets.push(...pptxSnippets);
+            } else if (ext.endsWith('.pdf')) {
+              const pdfSnippets = await extractPdfHighlights(file);
+              snippets.push(...pdfSnippets);
+            } else {
+              setStatus(`Skipping unsupported file: ${file.name}`, true);
+            }
+          } catch (error) {
+            console.error(error);
+            snippets.push({
+              text: `Unable to read ${file.name}: ${error.message}`,
+              color: 'error',
+              source: file.name
+            });
+          }
+        }
+
+        renderResults(snippets);
+        setStatus(`Finished scanning ${files.length} file${files.length === 1 ? '' : 's'}.`);
+        runButton.disabled = false;
+      };
+
+      runButton.addEventListener('click', () => handleFiles(fileInput.files));
+
+      dropzone.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        dropzone.classList.add('dragover');
+      });
+
+      dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+
+      dropzone.addEventListener('drop', (event) => {
+        event.preventDefault();
+        dropzone.classList.remove('dragover');
+        if (event.dataTransfer?.files?.length) {
+          fileInput.files = event.dataTransfer.files;
+          handleFiles(event.dataTransfer.files);
+        }
+      });
+    </script>
+  </body>
+</html>

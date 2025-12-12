@@ -82,4 +82,13 @@ router.get('/number-extractor', (req, res) => {
   });
 });
 
+router.get('/highlighted-text-extractor', (req, res) => {
+  res.render('highlighted-text-extractor', {
+    title: 'Extract Highlighted Text from Word, PDF, and PowerPoint Files',
+    metaDescription:
+      'Upload DOCX, PDF, or PPTX files to pull every highlighted or background-colored snippet with optional color tagging for reviewer notes.',
+    metaKeywords: 'highlight extractor docx,pdf highlight reader,powerpoint highlighted text,annotated text puller'
+  });
+});
+
 export default router;

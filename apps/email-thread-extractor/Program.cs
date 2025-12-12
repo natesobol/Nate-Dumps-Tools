@@ -60,17 +60,24 @@ app.MapPost("/api/extract", async Task<IResult> (HttpRequest request) =>
     var flattenedMessages = responses
         .Where(r => r.Messages is not null)
         .SelectMany(r => r.Messages!.Select(m => (File: r.FileName, Message: m)))
+        .OrderBy(m => SafeTimestamp(m.Message.Timestamp))
         .ToList();
 
+    var threads = BuildThreads(flattenedMessages);
     var csv = BuildCsv(flattenedMessages);
     var bodyText = BuildBodyExport(flattenedMessages);
+    var threadCsv = BuildThreadCsv(threads);
+    var threadText = BuildThreadText(threads);
 
     return Results.Ok(new
     {
         files = responses,
         messageCount = flattenedMessages.Count,
         csv,
-        bodyText
+        bodyText,
+        threads,
+        threadCsv,
+        threadText
     });
 });
 
@@ -259,6 +266,109 @@ static string BuildCsv(IEnumerable<(string File, EmailMessage Message)> messages
     return builder.ToString();
 }
 
+static List<EmailThread> BuildThreads(IEnumerable<(string File, EmailMessage Message)> messages)
+{
+    return messages
+        .GroupBy(tuple => NormalizeSubject(tuple.Message.Subject))
+        .Select(group =>
+        {
+            var ordered = group
+                .OrderBy(m => SafeTimestamp(m.Message.Timestamp))
+                .ToList();
+
+            return new EmailThread
+            {
+                Subject = ordered.First().Message.Subject ?? string.Empty,
+                NormalizedSubject = group.Key,
+                Messages = ordered
+                    .Select((entry, index) => new ThreadMessage
+                    {
+                        Order = index + 1,
+                        FileName = entry.File,
+                        Subject = entry.Message.Subject,
+                        Sender = entry.Message.Sender,
+                        Recipients = entry.Message.Recipients,
+                        Timestamp = entry.Message.Timestamp,
+                        BodyText = entry.Message.BodyText,
+                        Attachments = entry.Message.Attachments
+                    })
+                    .ToList()
+            };
+        })
+        .OrderByDescending(thread => thread.Messages.Count)
+        .ToList();
+}
+
+static string BuildThreadCsv(IEnumerable<EmailThread> threads)
+{
+    var builder = new StringBuilder();
+    builder.AppendLine("Thread Subject,Normalized Subject,Message #,File,Sender,To,Cc,Bcc,Timestamp,Attachments");
+
+    foreach (var thread in threads)
+    {
+        foreach (var message in thread.Messages)
+        {
+            var attachments = string.Join("|", message.Attachments.Select(a => a.FileName));
+            builder.AppendLine(string.Join(',', new[]
+            {
+                EscapeCsv(thread.Subject),
+                EscapeCsv(thread.NormalizedSubject),
+                message.Order.ToString(CultureInfo.InvariantCulture),
+                EscapeCsv(message.FileName),
+                EscapeCsv(message.Sender),
+                EscapeCsv(string.Join("; ", message.Recipients.To)),
+                EscapeCsv(string.Join("; ", message.Recipients.Cc)),
+                EscapeCsv(string.Join("; ", message.Recipients.Bcc)),
+                EscapeCsv(message.Timestamp == DateTime.MinValue ? string.Empty : message.Timestamp.ToString("o")),
+                EscapeCsv(attachments)
+            }));
+        }
+    }
+
+    return builder.ToString();
+}
+
+static string BuildThreadText(IEnumerable<EmailThread> threads)
+{
+    var builder = new StringBuilder();
+
+    foreach (var thread in threads)
+    {
+        builder.AppendLine($"Subject: {thread.Subject}");
+        builder.AppendLine($"Normalized Subject: {thread.NormalizedSubject}");
+        builder.AppendLine($"Messages: {thread.Messages.Count}");
+        builder.AppendLine();
+
+        foreach (var message in thread.Messages)
+        {
+            builder.AppendLine($"Message #{message.Order} ({message.FileName})");
+            builder.AppendLine($"From: {message.Sender}");
+            builder.AppendLine($"To: {string.Join("; ", message.Recipients.To)}");
+            if (message.Recipients.Cc.Count > 0)
+            {
+                builder.AppendLine($"Cc: {string.Join("; ", message.Recipients.Cc)}");
+            }
+            if (message.Recipients.Bcc.Count > 0)
+            {
+                builder.AppendLine($"Bcc: {string.Join("; ", message.Recipients.Bcc)}");
+            }
+            if (message.Timestamp != DateTime.MinValue)
+            {
+                builder.AppendLine($"Date: {message.Timestamp:O}");
+            }
+            builder.AppendLine();
+            builder.AppendLine(message.BodyText);
+            builder.AppendLine("----");
+            builder.AppendLine();
+        }
+
+        builder.AppendLine(new string('=', 40));
+        builder.AppendLine();
+    }
+
+    return builder.ToString();
+}
+
 static string BuildBodyExport(IEnumerable<(string File, EmailMessage Message)> messages)
 {
     var builder = new StringBuilder();
@@ -288,6 +398,24 @@ static string BuildBodyExport(IEnumerable<(string File, EmailMessage Message)> m
     }
 
     return builder.ToString();
+}
+
+static string NormalizeSubject(string subject)
+{
+    var cleaned = subject ?? string.Empty;
+    var pattern = new Regex("^(re|fwd?|aw|sv):\\s*", RegexOptions.IgnoreCase);
+
+    while (pattern.IsMatch(cleaned))
+    {
+        cleaned = pattern.Replace(cleaned, string.Empty);
+    }
+
+    return cleaned.Trim();
+}
+
+static DateTime SafeTimestamp(DateTime timestamp)
+{
+    return timestamp == DateTime.MinValue ? DateTime.MaxValue : timestamp;
 }
 
 static string EscapeCsv(string input)
@@ -330,4 +458,23 @@ record AttachmentInfo
     public string ContentType { get; set; } = string.Empty;
     public int Size { get; set; }
     public string? Base64Data { get; set; }
+}
+
+record EmailThread
+{
+    public string Subject { get; set; } = string.Empty;
+    public string NormalizedSubject { get; set; } = string.Empty;
+    public List<ThreadMessage> Messages { get; set; } = new();
+}
+
+record ThreadMessage
+{
+    public int Order { get; set; }
+    public string FileName { get; set; } = string.Empty;
+    public string Subject { get; set; } = string.Empty;
+    public string Sender { get; set; } = string.Empty;
+    public RecipientSet Recipients { get; set; } = new();
+    public DateTime Timestamp { get; set; }
+    public string BodyText { get; set; } = string.Empty;
+    public List<AttachmentInfo> Attachments { get; set; } = new();
 }
