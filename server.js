@@ -25,6 +25,7 @@ const SQLiteStore = SQLiteStoreFactory(session);
 app.set('view engine', 'ejs');
 app.set('views', [
   path.join(__dirname, 'views'),
+  path.join(__dirname, 'webapps/webapp-views-htmls'),
   path.join(__dirname, 'apps/excel-to-json/views'),
   path.join(__dirname, 'apps/csv-xml-converter/views')
 ]);

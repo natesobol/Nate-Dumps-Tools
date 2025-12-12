@@ -28,4 +28,13 @@ router.get('/yaml-json-converter', (req, res) => {
   });
 });
 
+router.get('/json-key-flattener', (req, res) => {
+  res.render('json-key-flattener', {
+    title: 'JSON Key Flattener',
+    metaDescription:
+      'Upload or paste nested JSON and instantly flatten or unflatten keys using dot notation and array-aware paths—perfect for CSV exports or API payloads.',
+    metaKeywords: 'flatten json,unflatten json,json dot notation converter'
+  });
+});
+
 export default router;

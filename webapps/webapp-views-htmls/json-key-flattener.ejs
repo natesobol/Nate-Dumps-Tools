@@ -1,0 +1,292 @@
+<%- include('../../views/partials/page-top', {
+  title: 'JSON Key Flattener',
+  metaDescription:
+    'Upload or paste nested JSON and instantly flatten or unflatten keys using dot notation and array-aware paths—perfect for CSV exports or API payloads.',
+  metaKeywords: 'flatten json,unflatten json,nested json to dot notation,json csv prep',
+  canonicalUrl: 'https://natesobol.github.io/Nates-Free-Tools/apps/json-key-flattener/index.html',
+  ogTitle: 'JSON Key Flattener / Unflattener',
+  ogDescription: 'Convert nested JSON into dot-notated keys or rebuild nested structures in the browser.'
+}) %>
+<section class="tool-hero">
+  <div>
+    <p class="eyebrow">JSON Key Flattener / Unflattener</p>
+    <h1>Switch between nested JSON and dot-notated keys instantly.</h1>
+    <p class="lede">
+      Upload or paste JSON, then flatten it for spreadsheets or reverse flattened payloads back into nested objects. Everything
+      runs locally so your data never leaves the browser.
+    </p>
+    <ul class="trust-points">
+      <li>Dot notation with array support (<code>items[0].price</code>) for analytics and CSV exports.</li>
+      <li>Round-trip friendly: unflatten dot keys back into clean, nested JSON objects.</li>
+      <li>Works with uploads or pasted snippets—copy results in one click.</li>
+    </ul>
+  </div>
+  <div class="converter-card">
+    <label for="actionSelect">Choose your action</label>
+    <select id="actionSelect" name="actionSelect" aria-label="Flatten or unflatten JSON">
+      <option value="flatten">Flatten nested JSON → dot keys</option>
+      <option value="unflatten">Unflatten dot keys → nested JSON</option>
+    </select>
+
+    <label for="jsonFile" class="mt-2">Upload a JSON file (optional)</label>
+    <input type="file" id="jsonFile" accept="application/json" />
+
+    <label for="inputText" class="mt-2">Paste or edit JSON</label>
+    <textarea
+      id="inputText"
+      rows="10"
+      placeholder='{"user":{"name":"Ada","role":"admin"},"teams":[{"name":"Growth","active":true}]}'
+    ></textarea>
+
+    <div class="button-row">
+      <button id="runBtn" type="button" class="button primary btn btn-primary btn-modern">Run action</button>
+      <button id="sampleBtn" type="button" class="button ghost btn btn-outline-light btn-modern">Load sample</button>
+    </div>
+    <p class="help-text">Parse errors are highlighted so you can fix malformed JSON quickly.</p>
+    <div id="status" role="status" aria-live="polite" class="help-text"></div>
+  </div>
+</section>
+
+<section class="result-panel">
+  <div class="result-card">
+    <h2>Result</h2>
+    <p class="help-text">Copy or download the converted JSON for your workflow.</p>
+    <textarea id="outputText" class="code-block" rows="14" readonly></textarea>
+    <div class="button-row mt-2">
+      <button id="copyBtn" type="button" class="button primary btn btn-primary btn-modern">Copy result</button>
+      <button id="clearBtn" type="button" class="button ghost btn btn-outline-light btn-modern">Clear</button>
+      <button id="downloadBtn" type="button" class="button ghost btn btn-outline-light btn-modern">Download JSON</button>
+    </div>
+  </div>
+  <div class="result-card">
+    <h2>How to get the best results</h2>
+    <ul class="checklist">
+      <li>Flatten before exporting to CSV or Sheets so every value has a single column header.</li>
+      <li>Use bracketed array segments (e.g., <code>items[0].name</code>) when constructing dot keys manually.</li>
+      <li>Unflatten to reconstruct payloads received from logging pipelines or webhook mappers.</li>
+      <li>Everything runs in-memory—refresh the page to discard inputs when you are done.</li>
+    </ul>
+    <p class="help-text">Need to validate structure? Paste the output into your schema tests or API client.</p>
+  </div>
+</section>
+
+<script>
+  const actionSelect = document.getElementById('actionSelect');
+  const inputText = document.getElementById('inputText');
+  const outputText = document.getElementById('outputText');
+  const status = document.getElementById('status');
+  const jsonFile = document.getElementById('jsonFile');
+  const runBtn = document.getElementById('runBtn');
+  const sampleBtn = document.getElementById('sampleBtn');
+  const copyBtn = document.getElementById('copyBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
+
+  const samples = {
+    flatten: {
+      user: {
+        name: 'Ada Lovelace',
+        title: 'Engineer',
+        preferences: { theme: 'dark', timezone: 'UTC' }
+      },
+      teams: [
+        { name: 'Growth', active: true },
+        { name: 'Platform', active: false }
+      ],
+      visits: 42
+    },
+    unflatten: {
+      'user.name': 'Ada Lovelace',
+      'user.title': 'Engineer',
+      'user.preferences.theme': 'dark',
+      'user.preferences.timezone': 'UTC',
+      'teams[0].name': 'Growth',
+      'teams[0].active': true,
+      'teams[1].name': 'Platform',
+      'teams[1].active': false,
+      visits: 42
+    }
+  };
+
+  const setStatus = (message, isError = false) => {
+    status.textContent = message;
+    status.classList.toggle('error-text', isError);
+    status.classList.toggle('success-text', !isError && Boolean(message));
+  };
+
+  const flattenObject = (value, prefix = '', result = {}) => {
+    if (Array.isArray(value)) {
+      value.forEach((item, index) => {
+        const key = prefix ? `${prefix}[${index}]` : `[${index}]`;
+        flattenObject(item, key, result);
+      });
+    } else if (value !== null && typeof value === 'object') {
+      Object.entries(value).forEach(([key, val]) => {
+        const nextKey = prefix ? `${prefix}.${key}` : key;
+        flattenObject(val, nextKey, result);
+      });
+    } else if (prefix) {
+      result[prefix] = value;
+    }
+
+    return result;
+  };
+
+  const tokenizePath = (path) => {
+    const tokens = [];
+    const matches = path.match(/[^.[\]]+|\[(\d+)\]/g) || [];
+
+    matches.forEach((segment) => {
+      if (segment.startsWith('[')) {
+        tokens.push(Number(segment.slice(1, -1)));
+      } else {
+        tokens.push(segment);
+      }
+    });
+
+    return tokens;
+  };
+
+  const unflattenObject = (flat) => {
+    let result = {};
+
+    Object.entries(flat).forEach(([path, value]) => {
+      const tokens = tokenizePath(path);
+      if (typeof tokens[0] === 'number' && !Array.isArray(result)) {
+        result = [];
+      }
+      let current = result;
+
+      tokens.forEach((token, index) => {
+        const isLast = index === tokens.length - 1;
+        const tokenIsIndex = typeof token === 'number';
+        const nextToken = tokens[index + 1];
+        const useArray = typeof nextToken === 'number';
+
+        if (tokenIsIndex && !Array.isArray(current)) {
+          current = Array.isArray(result) && current === result ? result : (current[token] = []);
+        }
+
+        if (isLast) {
+          current[token] = value;
+          return;
+        }
+
+        if (current[token] === undefined) {
+          current[token] = useArray ? [] : {};
+        }
+
+        current = current[token];
+      });
+    });
+
+    return result;
+  };
+
+  const parseInput = () => {
+    const raw = inputText.value.trim();
+    if (!raw) {
+      throw new Error('Paste JSON first to run the conversion.');
+    }
+
+    return JSON.parse(raw);
+  };
+
+  const runAction = () => {
+    try {
+      const parsed = parseInput();
+
+      if (actionSelect.value === 'flatten' && (parsed === null || typeof parsed !== 'object')) {
+        throw new Error('Flatten expects an object or array.');
+      }
+
+      if (actionSelect.value === 'flatten') {
+        const flattened = flattenObject(parsed);
+        outputText.value = JSON.stringify(flattened, null, 2);
+        setStatus('Flattened nested JSON into dot-notated keys.');
+      } else {
+        if (Array.isArray(parsed) || parsed === null || typeof parsed !== 'object') {
+          throw new Error('Unflatten expects an object of dot-notated keys.');
+        }
+
+        const unflattened = unflattenObject(parsed);
+        outputText.value = JSON.stringify(unflattened, null, 2);
+        setStatus('Rebuilt nested JSON from flattened keys.');
+      }
+    } catch (error) {
+      outputText.value = '';
+      setStatus(error.message || 'Unable to convert JSON. Please check your input.', true);
+    }
+  };
+
+  const loadSample = () => {
+    const sample = samples[actionSelect.value];
+    inputText.value = JSON.stringify(sample, null, 2);
+    outputText.value = '';
+    setStatus('Loaded a sample snippet for quick testing.');
+  };
+
+  runBtn.addEventListener('click', runAction);
+  sampleBtn.addEventListener('click', loadSample);
+
+  copyBtn.addEventListener('click', async () => {
+    if (!outputText.value.trim()) {
+      setStatus('Run a conversion first before copying.', true);
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(outputText.value);
+      setStatus('Copied the converted JSON to your clipboard.');
+    } catch (error) {
+      setStatus('Clipboard copy failed. Please copy manually.', true);
+    }
+  });
+
+  clearBtn.addEventListener('click', () => {
+    inputText.value = '';
+    outputText.value = '';
+    setStatus('Cleared input and output fields.');
+  });
+
+  downloadBtn.addEventListener('click', () => {
+    if (!outputText.value.trim()) {
+      setStatus('Nothing to download yet—run a conversion first.', true);
+      return;
+    }
+
+    const blob = new Blob([outputText.value], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const suffix = actionSelect.value === 'flatten' ? 'flattened' : 'unflattened';
+    link.href = url;
+    link.download = `json-${suffix}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    setStatus('Downloaded the converted JSON.');
+  });
+
+  jsonFile.addEventListener('change', (event) => {
+    const [file] = event.target.files;
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (loadEvent) => {
+      inputText.value = loadEvent.target.result;
+      setStatus(`Loaded ${file.name}. Review the JSON, then run your action.`);
+    };
+    reader.onerror = () => {
+      setStatus('Could not read that file. Please try another JSON file.', true);
+    };
+    reader.readAsText(file);
+  });
+
+  actionSelect.addEventListener('change', () => {
+    outputText.value = '';
+    setStatus('Swapped modes. Load a sample or paste your JSON to continue.');
+  });
+
+  loadSample();
+  runAction();
+</script>
+<%- include('../../views/partials/page-bottom') %>
