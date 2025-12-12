@@ -71,6 +71,7 @@ app.use('/powerpoint-slide-exporter', express.static(path.join(__dirname, 'apps/
 app.use('/powerpoint-to-pdf', express.static(path.join(__dirname, 'apps/powerpoint-to-pdf/wwwroot')));
 app.use('/product-sku-extractor', express.static(path.join(__dirname, 'apps/product-sku-extractor/wwwroot')));
 app.use('/question-extractor', express.static(path.join(__dirname, 'apps/question-extractor/wwwroot')));
+app.use('/list-item-extractor', express.static(path.join(__dirname, 'apps/list-item-extractor/wwwroot')));
 app.use('/repetitive-phrase-extractor', express.static(path.join(__dirname, 'apps/repetitive-phrase-extractor/wwwroot')));
 app.use('/resume-contact-extractor', express.static(path.join(__dirname, 'apps/resume-contact-extractor/wwwroot')));
 app.use('/sentence-keyword-extractor', express.static(path.join(__dirname, 'apps/sentence-keyword-extractor/wwwroot')));
