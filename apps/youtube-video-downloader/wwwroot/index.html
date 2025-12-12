@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YouTube Video Downloader</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light dark;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: radial-gradient(circle at 20% 20%, #f3f8ff 0, transparent 35%),
+                  radial-gradient(circle at 80% 0, #f7f0ff 0, transparent 30%),
+                  #0b1021;
+      color: #0f172a;
+      min-height: 100vh;
+      padding: 32px;
+    }
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    h1 {
+      margin: 0;
+      font-size: 32px;
+      color: #0b1021;
+    }
+    .tag {
+      background: #e0f2fe;
+      color: #0ea5e9;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 20px 70px rgba(0,0,0,0.08);
+      margin-top: 20px;
+    }
+    label { font-weight: 600; color: #0f172a; }
+    input, select, button {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      font-size: 15px;
+      background: #f8fafc;
+    }
+    button {
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform 120ms ease, box-shadow 120ms ease;
+    }
+    button:hover { transform: translateY(-1px); box-shadow: 0 10px 30px rgba(37,99,235,0.35); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; transform: none; }
+    .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+    .status { margin-top: 12px; font-weight: 600; }
+    .status.error { color: #ef4444; }
+    .status.ok { color: #16a34a; }
+    .video-meta { display: grid; grid-template-columns: 180px 1fr; gap: 16px; align-items: center; margin-top: 12px; }
+    .video-meta img { width: 100%; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.14); }
+    .pill-list { display: flex; gap: 10px; flex-wrap: wrap; }
+    .pill { padding: 6px 10px; border-radius: 999px; background: #eef2ff; color: #4338ca; font-weight: 600; font-size: 13px; }
+    .section-title { font-size: 18px; margin: 6px 0; color: #0b1021; }
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .actions button { flex: 1 1 220px; }
+    @media (max-width: 640px) {
+      body { padding: 18px; }
+      .video-meta { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div>
+        <h1>YouTube Video Downloader</h1>
+        <p style="margin:6px 0 0;color:#1f2937">Pull down public videos in the exact quality or audio format you need.</p>
+      </div>
+      <span class="tag">MP4 / WebM · MP3 / AAC</span>
+    </header>
+
+    <div class="card">
+      <div class="grid" style="align-items:end">
+        <div>
+          <label for="url">YouTube URL</label>
+          <input id="url" type="url" placeholder="https://www.youtube.com/watch?v=..." autocomplete="off" />
+        </div>
+        <div style="display:flex; gap:12px; align-items:end; flex-wrap:wrap;">
+          <div style="flex:1 1 200px;">
+            <label for="formatFilter">Preferred container</label>
+            <select id="formatFilter">
+              <option value="any">Show all</option>
+              <option value="mp4">MP4 only</option>
+              <option value="webm">WebM only</option>
+            </select>
+          </div>
+          <button id="loadBtn" style="width:160px">Load Streams</button>
+        </div>
+      </div>
+      <div id="status" class="status" aria-live="polite"></div>
+
+      <div id="meta" class="video-meta" style="display:none">
+        <img id="thumb" alt="Video thumbnail" />
+        <div>
+          <div class="section-title" id="title"></div>
+          <div style="color:#475569" id="channel"></div>
+          <div class="pill-list">
+            <span class="pill" id="duration"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid" style="margin-top:16px">
+        <div>
+          <div class="section-title">Video download</div>
+          <label for="videoSelect">Resolution & container</label>
+          <select id="videoSelect"></select>
+          <div class="actions" style="margin-top:12px">
+            <button id="downloadVideo">Download Video</button>
+          </div>
+        </div>
+        <div>
+          <div class="section-title">Audio only</div>
+          <label for="audioSelect">Bitrate</label>
+          <select id="audioSelect"></select>
+          <label for="audioFormat" style="margin-top:10px; display:block;">Audio format</label>
+          <select id="audioFormat">
+            <option value="aac">AAC (M4A)</option>
+            <option value="mp3">MP3</option>
+          </select>
+          <div class="actions" style="margin-top:12px">
+            <button id="downloadAudio">Download Audio</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const urlInput = document.getElementById('url');
+    const statusEl = document.getElementById('status');
+    const metaEl = document.getElementById('meta');
+    const thumbEl = document.getElementById('thumb');
+    const titleEl = document.getElementById('title');
+    const channelEl = document.getElementById('channel');
+    const durationEl = document.getElementById('duration');
+    const videoSelect = document.getElementById('videoSelect');
+    const audioSelect = document.getElementById('audioSelect');
+    const audioFormat = document.getElementById('audioFormat');
+    const formatFilter = document.getElementById('formatFilter');
+    const loadBtn = document.getElementById('loadBtn');
+    const downloadVideoBtn = document.getElementById('downloadVideo');
+    const downloadAudioBtn = document.getElementById('downloadAudio');
+
+    let streamCache = null;
+
+    async function fetchStreams() {
+      const url = urlInput.value.trim();
+      if (!url) {
+        setStatus('Paste a YouTube link to continue.', true);
+        return;
+      }
+      setStatus('Detecting available streams...', false);
+      toggleLoading(true);
+      try {
+        const response = await fetch(`/api/streams?url=${encodeURIComponent(url)}`);
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data?.error || 'Failed to detect streams.');
+        }
+        streamCache = data;
+        setStatus('Streams loaded. Choose a quality or audio format to download.', false, true);
+        renderMeta(data);
+        renderSelects();
+      } catch (err) {
+        setStatus(err.message, true);
+        streamCache = null;
+        metaEl.style.display = 'none';
+        videoSelect.innerHTML = '';
+        audioSelect.innerHTML = '';
+      } finally {
+        toggleLoading(false);
+      }
+    }
+
+    function renderMeta(data) {
+      metaEl.style.display = 'grid';
+      thumbEl.src = data.thumbnailUrl;
+      titleEl.textContent = data.title;
+      channelEl.textContent = `Channel: ${data.channel}`;
+      durationEl.textContent = `Duration: ${data.duration}`;
+    }
+
+    function renderSelects() {
+      if (!streamCache) return;
+      const filter = formatFilter.value;
+      const videoOptions = (streamCache.video || []).filter(v => filter === 'any' || v.container.toLowerCase() === filter);
+      videoSelect.innerHTML = '';
+      if (videoOptions.length === 0) {
+        videoSelect.innerHTML = `<option disabled>No ${filter.toUpperCase()} streams found</option>`;
+      } else {
+        for (const option of videoOptions) {
+          const opt = document.createElement('option');
+          opt.value = option.itag;
+          opt.textContent = `${option.label} · ~${option.sizeMb} MB`;
+          videoSelect.appendChild(opt);
+        }
+      }
+
+      audioSelect.innerHTML = '';
+      for (const option of streamCache.audio || []) {
+        const opt = document.createElement('option');
+        opt.value = option.itag;
+        opt.textContent = `${option.label} · ~${option.sizeMb} MB (${option.codec})`;
+        audioSelect.appendChild(opt);
+      }
+    }
+
+    function download(kind) {
+      if (!streamCache) {
+        setStatus('Load a YouTube link first.', true);
+        return;
+      }
+      const url = urlInput.value.trim();
+      if (kind === 'video') {
+        const itag = videoSelect.value;
+        if (!itag) return setStatus('Select a video resolution first.', true);
+        window.location.href = `/api/download?${new URLSearchParams({ url, itag, type: 'video' }).toString()}`;
+      } else {
+        const itag = audioSelect.value;
+        if (!itag) return setStatus('Select an audio bitrate first.', true);
+        const params = new URLSearchParams({ url, itag, type: 'audio', audioFormat: audioFormat.value });
+        window.location.href = `/api/download?${params.toString()}`;
+      }
+    }
+
+    function setStatus(message, isError = false, ok = false) {
+      statusEl.textContent = message;
+      statusEl.className = `status ${isError ? 'error' : ok ? 'ok' : ''}`;
+    }
+
+    function toggleLoading(isLoading) {
+      loadBtn.disabled = isLoading;
+      downloadAudioBtn.disabled = isLoading;
+      downloadVideoBtn.disabled = isLoading;
+      loadBtn.textContent = isLoading ? 'Loading...' : 'Load Streams';
+    }
+
+    loadBtn.addEventListener('click', fetchStreams);
+    formatFilter.addEventListener('change', renderSelects);
+    downloadVideoBtn.addEventListener('click', () => download('video'));
+    downloadAudioBtn.addEventListener('click', () => download('audio'));
+  </script>
+</body>
+</html>
