@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script id="asset-base-loader">
+      (function () {
+        const segments = window.location.pathname.split('/').filter(Boolean);
+        const repoIndex = segments.indexOf('Nates-Free-Tools');
+        const baseHref = repoIndex !== -1 ? '/' + segments.slice(0, repoIndex + 1).join('/') + '/' : '/';
+        let baseTag = document.querySelector('base');
+        if (!baseTag) {
+          baseTag = document.createElement('base');
+          document.head.prepend(baseTag);
+        }
+        baseTag.href = baseHref;
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Citation Style Extractor</title>
+    <link rel="stylesheet" href="css/webapps-unified.css" />
+    <script src="js/site-chrome.js" defer></script>
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Citations &amp; references</p>
+          <h1>Extract APA, MLA, or IEEE citations from uploaded papers.</h1>
+          <p class="lede">
+            Drop in PDF, DOCX, TXT, or RTF files to isolate inline citations and reference lists. Export the results for citation
+            managers, plagiarism checks, or editorial review in one click.
+          </p>
+          <ul class="pill-list">
+            <li>Inline citation detection</li>
+            <li>Bibliography isolation</li>
+            <li>CSV or BibTeX export</li>
+          </ul>
+        </div>
+        <div class="hero-card">
+          <p class="hint">Powered by a .NET 8 minimal API with in-memory parsing.</p>
+          <p class="hint">Built for students, editors, and researchers reviewing source quality.</p>
+        </div>
+      </header>
+
+      <section class="card">
+        <form id="extract-form" class="form-grid">
+          <div class="grid">
+            <div class="field">
+              <label for="files">Upload papers (.docx, .pdf, .txt, .rtf)</label>
+              <input id="files" name="files" type="file" accept=".docx,.pdf,.txt,.rtf" multiple required />
+              <p class="hint">Files are read in-memory only—no storage is used.</p>
+            </div>
+          </div>
+
+          <div class="grid">
+            <label class="checkbox">
+              <input type="checkbox" id="includeInline" name="includeInline" checked /> Extract inline citations
+            </label>
+            <label class="checkbox">
+              <input type="checkbox" id="includeBibliography" name="includeBibliography" checked /> Extract bibliography section
+            </label>
+          </div>
+
+          <div class="grid">
+            <div class="field">
+              <label for="export">Export format</label>
+              <select id="export" name="export">
+                <option value="">JSON only</option>
+                <option value="csv">CSV</option>
+                <option value="bib">BibTeX</option>
+                <option value="all">CSV + BibTeX</option>
+              </select>
+              <p class="hint">Exports are returned as downloadable files per upload.</p>
+            </div>
+            <div class="field align-end">
+              <button type="submit" class="primary">Extract citations</button>
+            </div>
+          </div>
+
+          <div id="status" class="hint"></div>
+        </form>
+      </section>
+
+      <section class="card" id="results" hidden>
+        <h2>Extraction results</h2>
+        <div id="result-container" class="stack"></div>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById('extract-form');
+      const status = document.getElementById('status');
+      const resultsSection = document.getElementById('results');
+      const resultContainer = document.getElementById('result-container');
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        status.textContent = 'Processing...';
+        resultsSection.hidden = true;
+        resultContainer.innerHTML = '';
+
+        const data = new FormData(form);
+        const files = document.getElementById('files').files;
+        for (const file of files) {
+          data.append('files', file);
+        }
+
+        try {
+          const response = await fetch('/api/extract', {
+            method: 'POST',
+            body: data
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Extraction failed');
+          }
+
+          const payload = await response.json();
+          renderResults(payload.files || []);
+          status.textContent = 'Extraction completed.';
+          resultsSection.hidden = false;
+        } catch (error) {
+          status.textContent = error.message;
+        }
+      });
+
+      function renderResults(files) {
+        resultContainer.innerHTML = '';
+
+        if (!files.length) {
+          resultContainer.innerHTML = '<p class="hint">No data extracted.</p>';
+          return;
+        }
+
+        for (const file of files) {
+          const card = document.createElement('article');
+          card.className = 'card';
+
+          const heading = document.createElement('div');
+          heading.className = 'inline-between';
+          heading.innerHTML = `<div><p class="eyebrow">${file.inlineCount} inline / ${file.bibliographyCount} references</p><h3>${file.file}</h3></div>`;
+
+          const exportBar = document.createElement('div');
+          exportBar.className = 'inline';
+          if (file.csv) {
+            const csvButton = document.createElement('button');
+            csvButton.type = 'button';
+            csvButton.textContent = 'Download CSV';
+            csvButton.addEventListener('click', () => downloadBase64(file.csv, `${file.file}-citations.csv`, 'text/csv'));
+            exportBar.appendChild(csvButton);
+          }
+          if (file.bibTeX) {
+            const bibButton = document.createElement('button');
+            bibButton.type = 'button';
+            bibButton.textContent = 'Download BibTeX';
+            bibButton.addEventListener('click', () => downloadText(file.bibTeX, `${file.file}-references.bib`, 'application/x-bibtex'));
+            exportBar.appendChild(bibButton);
+          }
+
+          const inlineList = createList('Inline citations', file.inlineCitations || []);
+          const refList = createList('Bibliography', file.bibliography || []);
+
+          card.append(heading, exportBar, inlineList, refList);
+          resultContainer.appendChild(card);
+        }
+      }
+
+      function createList(title, items) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'stack';
+        const heading = document.createElement('h4');
+        heading.textContent = title;
+        wrapper.appendChild(heading);
+
+        if (!items.length) {
+          const empty = document.createElement('p');
+          empty.className = 'hint';
+          empty.textContent = 'No items found.';
+          wrapper.appendChild(empty);
+          return wrapper;
+        }
+
+        const list = document.createElement('ol');
+        for (const item of items) {
+          const li = document.createElement('li');
+          li.textContent = item;
+          list.appendChild(li);
+        }
+        wrapper.appendChild(list);
+        return wrapper;
+      }
+
+      function downloadBase64(base64, filename, mime) {
+        const link = document.createElement('a');
+        link.href = `data:${mime};base64,${base64}`;
+        link.download = filename;
+        link.click();
+      }
+
+      function downloadText(content, filename, mime) {
+        const blob = new Blob([content], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+    </script>
+  </body>
+</html>
