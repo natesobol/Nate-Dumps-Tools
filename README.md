@@ -14,6 +14,7 @@ A starter website for hosting webapps with monetization in mind. It provides a h
   - List Comparison / Diff Checker: `/apps/list-comparison/wwwroot/index.html`
   - PDF Splitter: `/apps/pdf-splitter/wwwroot/index.html`
   - PowerPoint → PDF: `/apps/powerpoint-to-pdf/wwwroot/index.html`
+  - PowerPoint Image Extractor: `/apps/powerpoint-image-extractor/wwwroot/index.html`
   - JSON to Excel Creator: `/apps/json-to-excel/wwwroot/index.html`
 - Dynamic features (login, admin, server-backed Excel conversion) require running the Node.js server locally or on a host that supports server-side rendering.
 
@@ -233,6 +234,10 @@ apps/
 │   ├── pdf-splitter.csproj # .NET project file
 │   ├── wwwroot/            # Static web files (served at /pdf-splitter)
 │   └── README.md
+├── powerpoint-image-extractor/ # .NET PPTX image extractor
+│   ├── Program.cs              # Minimal API handling validation and ZIP packaging
+│   ├── powerpoint-image-extractor.csproj
+│   └── wwwroot/                # Static UI assets
 ├── powerpoint-to-pdf/      # LibreOffice-backed PPT/PPTX to PDF converter
 │   ├── src/routes/         # Express route handling uploads and conversion
 │   ├── wwwroot/            # Static UI assets
@@ -260,7 +265,7 @@ apps/
 - Supabase for user data with SQLite session storage
 - EJS for server-rendered views
 - Helmet and secure session defaults for baseline security
-- C# .NET (JSON Combiner, JSON to Excel, PDF Splitter, and List Comparison webapps)
+- C# .NET (JSON Combiner, JSON to Excel, PDF Splitter, List Comparison, Find & Replace, Batch File Renamer, and PowerPoint Image Extractor webapps)
 
 ## Notes
 - User passwords are managed by Supabase Auth

@@ -11,6 +11,7 @@ import pageRoutes from './src/routes/pages.js';
 import adminRoutes from './src/routes/admin.js';
 import excelRoutes from './apps/excel-to-json/src/routes/excel.js';
 import csvXmlRoutes from './apps/csv-xml-converter/src/routes/csv-xml.js';
+import powerpointRoutes from './apps/powerpoint-to-pdf/src/routes/powerpoint.js';
 import { attachSupabase } from './src/middleware/auth.js';
 
 dotenv.config();
@@ -36,6 +37,10 @@ app.use('/json-combiner', express.static(path.join(__dirname, 'apps/json-combine
 app.use('/pdf-splitter', express.static(path.join(__dirname, 'apps/pdf-splitter/wwwroot')));
 app.use('/json-to-excel', express.static(path.join(__dirname, 'apps/json-to-excel/wwwroot')));
 app.use('/powerpoint-to-pdf', express.static(path.join(__dirname, 'apps/powerpoint-to-pdf/wwwroot')));
+app.use(
+  '/powerpoint-image-extractor',
+  express.static(path.join(__dirname, 'apps/powerpoint-image-extractor/wwwroot'))
+);
 app.use('/list-comparison', express.static(path.join(__dirname, 'apps/list-comparison/wwwroot')));
 app.use('/html-tag-cleaner', express.static(path.join(__dirname, 'apps/html-tag-cleaner/wwwroot')));
 app.use(morgan('dev'));
