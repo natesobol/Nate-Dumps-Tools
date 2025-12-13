@@ -1,0 +1,95 @@
+@page
+@model IndexModel
+
+<div class="grid">
+    <section class="panel controls">
+        <h2>Watchlist</h2>
+        <p>Upload a CSV/txt list or fall back to the built-in daily drivers.</p>
+        <form method="post" enctype="multipart/form-data" asp-page-handler="Upload">
+            <label for="upload">Upload tickers</label>
+            <input type="file" name="Upload" id="upload" accept=".csv,.txt" />
+            <div class="button-row">
+                <button type="submit">Save watchlist</button>
+            </div>
+        </form>
+        <form method="post" asp-page-handler="UseDefault" style="margin-top:8px;">
+            <button type="submit" class="btn-secondary">Use default list</button>
+        </form>
+        <div class="alert" style="margin-top:12px;">
+            Current tickers: @string.Join(", ", Model.Watchlist)
+        </div>
+    </section>
+    <section class="panel">
+        <h2>Premarket scan</h2>
+        <p>Pull live/delayed volume and sort by unusual activity vs. 30-day average.</p>
+        <form method="post" asp-page-handler="Scan">
+            <div class="button-row">
+                <button type="submit">Run scan</button>
+            </div>
+        </form>
+        <form method="post" asp-page-handler="Export" style="margin-top:10px;">
+            <button type="submit" class="btn-secondary">Export last scan to CSV</button>
+        </form>
+        @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+        {
+            <div class="alert" style="margin-top:12px;">@Model.StatusMessage</div>
+        }
+        <div class="kpi-grid">
+            <div class="kpi">
+                <strong>Total tickers</strong>
+                <div>@Model.Watchlist.Count</div>
+            </div>
+            <div class="kpi">
+                <strong>Flagged 3x avg</strong>
+                <div>@Model.Results.Count(r => r.IsThreeXAverage)</div>
+            </div>
+            <div class="kpi">
+                <strong>Low float</strong>
+                <div>@Model.Results.Count(r => r.IsLowFloat)</div>
+            </div>
+        </div>
+    </section>
+</div>
+
+@if (Model.Results.Any())
+{
+    <div class="panel table-wrapper">
+        <h2>Sorted by volume multiple</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Ticker</th>
+                    <th>Premarket volume</th>
+                    <th>30-day avg</th>
+                    <th>x Avg</th>
+                    <th>Float</th>
+                    <th>Flags</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var row in Model.Results)
+            {
+                <tr>
+                    <td>@row.Ticker</td>
+                    <td>@row.PremarketVolume:n0</td>
+                    <td>@row.AverageVolume30Day:n0</td>
+                    <td>@row.VolumeMultiple</td>
+                    <td>@row.FloatShares:n0</td>
+                    <td>
+                        @if (row.IsThreeXAverage)
+                        {
+                            <span class="badge success">3x avg</span>
+                        }
+                        @if (row.IsLowFloat)
+                        {
+                            <span class="badge warning">Low float</span>
+                        }
+                    </td>
+                    <td>@row.RetrievedAt.ToLocalTime().ToShortTimeString()</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
