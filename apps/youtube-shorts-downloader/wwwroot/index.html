@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script id="asset-base-loader">
+    (function() {
+      const segments = window.location.pathname.split('/').filter(Boolean);
+      const repoIndex = segments.indexOf('Nates-Free-Tools');
+      const baseHref = repoIndex !== -1 ? '/' + segments.slice(0, repoIndex + 1).join('/') + '/' : '/';
+      let baseTag = document.querySelector('base');
+      if (!baseTag) {
+        baseTag = document.createElement('base');
+        document.head.prepend(baseTag);
+      }
+      baseTag.href = baseHref;
+    })();
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YouTube Shorts Downloader (C#)</title>
+  <link rel="stylesheet" href="css/webapps-unified.css" />
+  <script src="js/site-chrome.js" defer></script>
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h1>YouTube Shorts Downloader</h1>
+      <p>Paste a public YouTube Shorts link (≤ 60 seconds) to download a high-resolution vertical video as MP4 or WebM.</p>
+      <p class="hint">Square crop mode centers the clip into a 1:1 frame for feeds and carousels.</p>
+    </header>
+
+    <section class="card">
+      <form id="download-form">
+        <label for="shortUrl">Shorts URL</label>
+        <input id="shortUrl" name="url" type="url" placeholder="https://www.youtube.com/shorts/..." required />
+
+        <div class="grid two-column">
+          <div>
+            <label for="format">Format</label>
+            <select id="format" name="format">
+              <option value="mp4">MP4</option>
+              <option value="webm">WebM</option>
+            </select>
+          </div>
+          <label class="checkbox">
+            <input type="checkbox" id="squareCrop" name="squareCrop" />
+            <span>Square crop (1:1)</span>
+          </label>
+        </div>
+
+        <button type="submit">Download Shorts</button>
+      </form>
+    </section>
+
+    <section class="card" id="status" aria-live="polite">
+      Paste a Shorts link to begin.
+    </section>
+
+    <section class="card" id="details" hidden>
+      <h2>Detected Video</h2>
+      <dl class="details">
+        <div>
+          <dt>Title</dt>
+          <dd id="videoTitle">—</dd>
+        </div>
+        <div>
+          <dt>Duration</dt>
+          <dd id="videoDuration">—</dd>
+        </div>
+        <div>
+          <dt>Orientation</dt>
+          <dd id="videoOrientation">—</dd>
+        </div>
+      </dl>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById('download-form');
+    const statusEl = document.getElementById('status');
+    const detailsCard = document.getElementById('details');
+    const titleEl = document.getElementById('videoTitle');
+    const durationEl = document.getElementById('videoDuration');
+    const orientationEl = document.getElementById('videoOrientation');
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      statusEl.textContent = 'Resolving Shorts link and preparing download…';
+      detailsCard.hidden = true;
+
+      const url = document.getElementById('shortUrl').value.trim();
+      const format = document.getElementById('format').value;
+      const squareCrop = document.getElementById('squareCrop').checked;
+
+      if (!url) {
+        statusEl.textContent = 'Please provide a Shorts URL.';
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/download', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ url, format, squareCrop })
+        });
+
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({ error: 'Unexpected error.' }));
+          statusEl.textContent = error.error || 'Download failed.';
+          return;
+        }
+
+        const title = response.headers.get('X-Video-Title') || 'Shorts Video';
+        const duration = response.headers.get('X-Video-Duration');
+        const orientation = response.headers.get('X-Video-Orientation');
+        const fileName = response.headers.get('X-Download-FileName') || `shorts.${format}`;
+
+        titleEl.textContent = title;
+        durationEl.textContent = duration ? `${Math.round(Number(duration))}s` : '—';
+        orientationEl.textContent = orientation || '—';
+        detailsCard.hidden = false;
+
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = objectUrl;
+        anchor.download = fileName;
+        anchor.click();
+        URL.revokeObjectURL(objectUrl);
+
+        statusEl.textContent = squareCrop
+          ? 'Square render created. Download should begin shortly.'
+          : 'Download ready. Your file should begin downloading.';
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = 'Unexpected error while downloading the Shorts clip.';
+      }
+    });
+  </script>
+</body>
+</html>

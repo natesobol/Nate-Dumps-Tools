@@ -34,6 +34,9 @@ A starter website for hosting webapps with monetization in mind. It provides a h
 - Capitalized Phrase Extractor: `/apps/capitalized-phrase-extractor/wwwroot/index.html`
 - Sentence Keyword Extractor: `/apps/sentence-keyword-extractor/wwwroot/index.html`
 - Long Word Extractor: `/apps/long-word-extractor/wwwroot/index.html`
+ - IP & Port Extractor: `/apps/ip-port-extractor/wwwroot/index.html`
+ - YouTube Shorts Downloader (C#): `/apps/youtube-shorts-downloader/wwwroot/index.html`
+ - Dynamic features (login, admin, server-backed Excel conversion) require running the Node.js server locally or on a host that supports server-side rendering.
 - IP & Port Extractor: `/apps/ip-port-extractor/wwwroot/index.html`
 - Audio-Only Extractor: `/apps/audio-only-extractor/wwwroot/index.html`
 - Dynamic features (login, admin, server-backed Excel conversion) require running the Node.js server locally or on a host that supports server-side rendering.
