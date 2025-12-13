@@ -1,48 +1,35 @@
 (() => {
-  const pathSegments = window.location.pathname.split('/').filter(Boolean);
-  const repoIndex = pathSegments.indexOf('Nates-Free-Tools');
-  const basePath = repoIndex !== -1 ? `/${pathSegments.slice(0, repoIndex + 1).join('/')}` : '';
+  function getBasePath() {
+    const pathSegments = window.location.pathname.split('/').filter(Boolean);
+    const repoIndex = pathSegments.indexOf('Nates-Free-Tools');
+    return repoIndex !== -1 ? `/${pathSegments.slice(0, repoIndex + 1).join('/')}` : '';
+  }
+
+  const basePath = getBasePath();
 
   const resolvePath = path => {
     const normalized = path.startsWith('/') ? path : `/${path}`;
-    return `${basePath}${normalized}`.replace(/\/{2,}/g, '/');
+    const withHtml = /\.html?$/.test(normalized) ? normalized : `${normalized}.html`;
+    return `${basePath}${withHtml}`.replace(/\/{2,}/g, '/');
   };
 
-  const loadScript = (src, datasetName) => {
-    const attribute = `data-${datasetName}`;
-    const filename = src.split('/').pop();
-    const alreadyLoaded =
-      document.querySelector(`script[${attribute}]`) ||
-      Array.from(document.scripts).some(script => (script.getAttribute('src') || '').includes(filename));
+  const hasMenuBuilder = () =>
+    typeof window.NDTWebappsMenu?.buildMenu === 'function' &&
+    typeof window.NDTWebappsMenu?.populateMenus === 'function';
 
-    if (alreadyLoaded) {
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = src;
-    script.setAttribute(attribute, 'true');
-    document.head.appendChild(script);
-  };
-
-  const ensureStyles = () => {
-    const styles = [
-      '/public/css/styles.css',
-      '/public/css/webapps-unified.css',
-      '/public/css/webapp-theme.css',
-    ];
-
+  function ensureStyles() {
+    const stylesheets = ['/css/webapps-unified.css', '/css/styles.css', '/css/webapp-theme.css'];
     const head = document.head;
     const existing = Array.from(head.querySelectorAll('link[rel="stylesheet"]'));
 
     existing.forEach(link => {
       const href = link.getAttribute('href') || '';
-      if (basePath && href.startsWith('/public/css/')) {
+      if (basePath && href.startsWith('/css/')) {
         link.href = `${basePath}${href}`;
       }
     });
 
-    styles.forEach(href => {
+    stylesheets.forEach(href => {
       const alreadyPresent = existing.some(link => (link.getAttribute('href') || '').includes(href));
       if (!alreadyPresent) {
         const link = document.createElement('link');
@@ -51,25 +38,39 @@
         head.appendChild(link);
       }
     });
-  };
+  }
 
-  loadScript(`${basePath}/public/js/webapps-menu.js`, 'proxied-webapps-menu');
+  function ensureMenuScript() {
+    return new Promise(resolve => {
+      if (hasMenuBuilder()) return resolve();
+
+      const existing = document.querySelector('script[data-webapps-menu]');
+      if (existing) {
+        existing.addEventListener('load', resolve, { once: true });
+        existing.addEventListener('error', resolve, { once: true });
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.defer = true;
+      script.src = `${basePath}/public/js/webapps-menu.js`;
+      script.setAttribute('data-webapps-menu', 'true');
+      script.onload = resolve;
+      script.onerror = resolve;
+      document.head.appendChild(script);
+    });
+  }
 
   function buildHeader() {
-    const header = document.querySelector('.site-header');
-    if (!header) return;
-
-    const navLinks = [
-      { key: 'home', href: resolvePath('/index.html'), label: 'Home' },
-      { key: 'about', href: resolvePath('/about.html'), label: 'About' },
-    ];
-
+    const menuHtml = hasMenuBuilder() ? window.NDTWebappsMenu.buildMenu(basePath) : '';
+    const header = document.createElement('header');
+    header.className = 'site-header';
     header.innerHTML = `
       <div class="header-top">
-        <a class="brand" href="${resolvePath('/index.html')}">
-          <img src="${resolvePath('/public/logo.png')}" alt="Nate Dumps Tools" class="brand-logo" />
+        <a class="brand" href="${resolvePath('/index')}">
+          <img src="${resolvePath('/public/logo.png')}" alt="Monetize Hub" class="brand-logo" />
           <div class="brand-text">
-            <span class="brand-name">Nate Dumps Tools</span>
+            <span class="brand-name">Monetize Hub</span>
             <span class="brand-tagline">Launch, host, and grow your webapps</span>
           </div>
         </a>
@@ -79,34 +80,22 @@
             <span aria-hidden="true">▾</span>
           </summary>
           <div class="nav-dropdown-menu">
-            <a href="${resolvePath('/login.html')}" class="dropdown-link">Login</a>
-            <a href="${resolvePath('/register.html')}" class="dropdown-link">Create Account</a>
-            <a href="${resolvePath('/admin.html')}" class="dropdown-link">Admin Dashboard</a>
+            <a href="${resolvePath('/login')}" class="dropdown-link">Login</a>
+            <a href="${resolvePath('/register')}" class="dropdown-link">Create Account</a>
+            <a href="${resolvePath('/admin')}" class="dropdown-link">Admin Dashboard</a>
           </div>
         </details>
       </div>
       <nav class="main-nav">
-        ${navLinks
-          .map(link => `<a class="nav-link" data-nav-key="${link.key}" href="${link.href}">${link.label}</a>`)
-          .join('')}
+        <a href="${resolvePath('/index')}" class="nav-link">Home</a>
+        <a href="${resolvePath('/about')}" class="nav-link">About</a>
         <details class="nav-dropdown">
           <summary class="nav-link nav-dropdown-toggle">Webapps <span aria-hidden="true">▾</span></summary>
-          <div class="nav-dropdown-menu mega-menu" data-webapps-menu></div>
+          <div class="nav-dropdown-menu mega-menu" data-webapps-menu>${menuHtml}</div>
         </details>
       </nav>
     `;
-
-    const pathname = window.location.pathname.replace(/\/index\.html$/, '/');
-    navLinks.forEach(({ key, href }) => {
-      const link = header.querySelector(`[data-nav-key="${key}"]`);
-      if (!link) return;
-      const normalizedHref = href.replace(/\/index\.html$/, '/');
-      if (pathname === normalizedHref || pathname.endsWith(`${key}.html`)) {
-        link.classList.add('active');
-      }
-    });
-
-    setupHoverDropdowns(header);
+    return header;
   }
 
   function setupHoverDropdowns(scope = document) {
@@ -134,12 +123,28 @@
     });
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
-    ensureStyles();
-    buildHeader();
-    if (window.NDTWebappsMenu?.populateMenus) {
+  async function injectHeader() {
+    let header = document.querySelector('.site-header');
+    const newHeader = buildHeader();
+
+    if (header) {
+      header.replaceWith(newHeader);
+      header = newHeader;
+    } else {
+      document.body.prepend(newHeader);
+      header = newHeader;
+    }
+
+    if (hasMenuBuilder()) {
       window.NDTWebappsMenu.populateMenus();
     }
-    setupHoverDropdowns();
+
+    setupHoverDropdowns(header);
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    ensureStyles();
+    await ensureMenuScript();
+    injectHeader();
   });
 })();

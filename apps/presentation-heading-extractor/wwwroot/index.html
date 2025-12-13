@@ -1,6 +1,23 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script id="asset-base-loader">
+    (function() {
+      const segments = window.location.pathname.split('/').filter(Boolean);
+      const repoIndex = segments.indexOf('Nates-Free-Tools');
+      const baseHref = repoIndex !== -1 ? '/' + segments.slice(0, repoIndex + 1).join('/') + '/' : '/';
+      let baseTag = document.querySelector('base');
+      if (!baseTag) {
+        baseTag = document.createElement('base');
+        document.head.prepend(baseTag);
+      }
+      baseTag.href = baseHref;
+    })();
+  </script>
+  <link rel="stylesheet" href="css/webapps-unified.css" />
+  <script src="public/js/webapps-menu.js" defer></script>
+  <script src="js/site-chrome.js" defer></script>
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Presentation Heading Extractor</title>

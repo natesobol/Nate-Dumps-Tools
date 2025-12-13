@@ -1,4 +1,4 @@
-(function () {
+(() => {
   function getBasePath() {
     const pathSegments = window.location.pathname.split('/').filter(Boolean);
     const repoIndex = pathSegments.indexOf('Nates-Free-Tools');
@@ -9,7 +9,7 @@
 
   const resolvePath = path => {
     const normalized = path.startsWith('/') ? path : `/${path}`;
-    const withHtml = normalized.endsWith('.html') ? normalized : `${normalized}.html`;
+    const withHtml = /\.html?$/.test(normalized) ? normalized : `${normalized}.html`;
     return `${basePath}${withHtml}`.replace(/\/{2,}/g, '/');
   };
 
@@ -18,12 +18,11 @@
     typeof window.NDTWebappsMenu?.populateMenus === 'function';
 
   function ensureStyles() {
-    const head = document.head;
     const stylesheets = ['/css/webapps-unified.css', '/css/styles.css', '/css/webapp-theme.css'];
+    const head = document.head;
+    const existing = Array.from(head.querySelectorAll('link[rel="stylesheet"]'));
 
-    const existingLinks = Array.from(head.querySelectorAll('link[rel="stylesheet"]'));
-
-    existingLinks.forEach(link => {
+    existing.forEach(link => {
       const href = link.getAttribute('href') || '';
       if (basePath && href.startsWith('/css/')) {
         link.href = `${basePath}${href}`;
@@ -31,14 +30,34 @@
     });
 
     stylesheets.forEach(href => {
-      const alreadyLoaded = existingLinks.some(link => (link.getAttribute('href') || '').includes(href));
-
-      if (!alreadyLoaded) {
+      const alreadyPresent = existing.some(link => (link.getAttribute('href') || '').includes(href));
+      if (!alreadyPresent) {
         const link = document.createElement('link');
         link.rel = 'stylesheet';
         link.href = `${basePath}${href}`;
         head.appendChild(link);
       }
+    });
+  }
+
+  function ensureMenuScript() {
+    return new Promise(resolve => {
+      if (hasMenuBuilder()) return resolve();
+
+      const existing = document.querySelector('script[data-webapps-menu]');
+      if (existing) {
+        existing.addEventListener('load', resolve, { once: true });
+        existing.addEventListener('error', resolve, { once: true });
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.defer = true;
+      script.src = `${basePath}/public/js/webapps-menu.js`;
+      script.setAttribute('data-webapps-menu', 'true');
+      script.onload = resolve;
+      script.onerror = resolve;
+      document.head.appendChild(script);
     });
   }
 
@@ -49,7 +68,7 @@
     header.innerHTML = `
       <div class="header-top">
         <a class="brand" href="${resolvePath('/index')}">
-          <img src="${basePath}/public/logo.png" alt="Monetize Hub" class="brand-logo" />
+          <img src="${resolvePath('/public/logo.png')}" alt="Monetize Hub" class="brand-logo" />
           <div class="brand-text">
             <span class="brand-name">Monetize Hub</span>
             <span class="brand-tagline">Launch, host, and grow your webapps</span>
@@ -104,20 +123,28 @@
     });
   }
 
-  function injectHeader() {
-    if (!document.querySelector('.site-header')) {
-      document.body.prepend(buildHeader());
+  async function injectHeader() {
+    let header = document.querySelector('.site-header');
+    const newHeader = buildHeader();
+
+    if (header) {
+      header.replaceWith(newHeader);
+      header = newHeader;
+    } else {
+      document.body.prepend(newHeader);
+      header = newHeader;
     }
 
     if (hasMenuBuilder()) {
       window.NDTWebappsMenu.populateMenus();
     }
 
-    setupHoverDropdowns(document.querySelector('.site-header'));
+    setupHoverDropdowns(header);
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', async () => {
     ensureStyles();
+    await ensureMenuScript();
     injectHeader();
   });
 })();
