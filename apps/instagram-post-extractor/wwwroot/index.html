@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Post Extractor</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <main class="container">
+        <header>
+            <p class="eyebrow">Webapp</p>
+            <h1>Instagram Post Extractor</h1>
+            <p class="lede">Paste a public Instagram profile URL to collect every post link. Number them chronologically or fetch the post captions you need to copy.</p>
+        </header>
+
+        <section class="card">
+            <form id="extract-form">
+                <label for="profileUrl">Instagram profile URL</label>
+                <input type="url" id="profileUrl" name="profileUrl" placeholder="https://www.instagram.com/instagram/" required>
+
+                <div class="options">
+                    <label class="checkbox">
+                        <input type="checkbox" id="includeDescriptions" name="includeDescriptions">
+                        <span>Include post descriptions</span>
+                    </label>
+                    <label class="checkbox">
+                        <input type="checkbox" id="oldestFirst" name="oldestFirst">
+                        <span>Number from oldest to newest</span>
+                    </label>
+                </div>
+
+                <button type="submit" id="submit-btn">Extract posts</button>
+                <p class="hint">Private or protected accounts cannot be scraped without signing in.</p>
+                <p class="error" id="error"></p>
+            </form>
+        </section>
+
+        <section class="card" id="results-card" hidden>
+            <div class="results-header">
+                <div>
+                    <p class="eyebrow">Results</p>
+                    <h2 id="result-count">0 posts found</h2>
+                </div>
+                <button id="copy-all" class="secondary">Copy URLs</button>
+            </div>
+            <div id="results"></div>
+        </section>
+    </main>
+
+    <template id="post-row">
+        <article class="post">
+            <div class="post-meta">
+                <span class="badge"></span>
+                <a class="post-link" target="_blank" rel="noopener"></a>
+            </div>
+            <p class="description"></p>
+            <div class="post-actions">
+                <button class="secondary copy-url">Copy URL</button>
+                <button class="secondary copy-description" hidden>Copy description</button>
+            </div>
+        </article>
+    </template>
+
+    <script src="script.js"></script>
+</body>
+</html>
