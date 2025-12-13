@@ -123,6 +123,20 @@ cd apps/json-combiner
 dotnet run
 ```
 
+### Watchlist to Calendar Exporter
+Located in `apps/watchlist-calendar/`, this C# minimal API turns a .csv/.txt watchlist (or manual ticker entry) into a color-coded calendar of earnings, dividend, and split events.
+
+**Features:**
+- Upload comma-, space-, or line-delimited watchlists or paste tickers manually
+- Deterministic placeholder events that can be swapped with Yahoo Finance or IEX API responses
+- Color-coded event grid plus downloadable `.ics` calendar and printable sheet
+
+**Run locally:**
+```bash
+cd apps/watchlist-calendar
+dotnet run
+```
+
 ### Multi-CSV Column Merger
 Located in `apps/multi-csv-column-merger/`, this C# minimal API merges several CSV exports using a shared key column.
 

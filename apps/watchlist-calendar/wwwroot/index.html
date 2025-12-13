@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script id="asset-base-loader">
+    (function() {
+      const segments = window.location.pathname.split('/').filter(Boolean);
+      const repoIndex = segments.indexOf('Nates-Free-Tools');
+      const baseHref = repoIndex !== -1 ? '/' + segments.slice(0, repoIndex + 1).join('/') + '/' : '/';
+      let baseTag = document.querySelector('base');
+      if (!baseTag) {
+        baseTag = document.createElement('base');
+        document.head.prepend(baseTag);
+      }
+      baseTag.href = baseHref;
+    })();
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="css/webapps-unified.css" />
+  <title>Watchlist to Calendar Exporter</title>
+  <script src="js/site-chrome.js" defer></script>
+  <style>
+    .form-grid {
+      display: grid;
+      gap: 1rem;
+    }
+    .form-grid label {
+      font-weight: 600;
+    }
+    .form-grid textarea {
+      min-height: 120px;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+    }
+    .actions button.secondary {
+      background: transparent;
+      color: #111;
+      border: 1px solid #ccc;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #0f172a;
+      background: #e2e8f0;
+    }
+    .events-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .events-table th, .events-table td {
+      text-align: left;
+      padding: 0.6rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .events-table tr:hover {
+      background: #f8fafc;
+    }
+    .badge {
+      padding: 0.35rem 0.65rem;
+      border-radius: 999px;
+      font-weight: 700;
+      color: #0f172a;
+      font-size: 0.9rem;
+      display: inline-block;
+    }
+    .badge[data-type="Earnings"] { background: #dbeafe; color: #1d4ed8; }
+    .badge[data-type="Dividend"] { background: #dcfce7; color: #15803d; }
+    .badge[data-type="Split"] { background: #ffedd5; color: #c2410c; }
+    .hint-inline { color: #475569; font-size: 0.95rem; }
+    .warnings {
+      background: #fef3c7;
+      border: 1px solid #facc15;
+      padding: 0.75rem 1rem;
+      border-radius: 0.75rem;
+      color: #854d0e;
+      margin-top: 0.5rem;
+    }
+    .empty-state {
+      text-align: center;
+      color: #475569;
+      padding: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h1>Watchlist to Calendar Exporter</h1>
+      <p>Turn a .csv or .txt watchlist into a color-coded calendar of earnings, dividends, and splits. Export an .ics file or print an event sheet for trading prep.</p>
+      <p class="hint">Data is generated from a deterministic placeholder schedule. Wire up your Yahoo Finance or IEX API credentials to replace the mock feed.</p>
+    </header>
+
+    <section class="card">
+      <form id="watchlist-form">
+        <div class="form-grid">
+          <div>
+            <label for="watchlistFile">Upload watchlist (.csv or .txt)</label>
+            <input id="watchlistFile" name="files" type="file" accept=".csv,.txt" multiple />
+            <p class="hint-inline">Symbols can be comma-separated, line-separated, or tab-delimited.</p>
+          </div>
+          <div>
+            <label for="manualSymbols">Add tickers manually</label>
+            <textarea id="manualSymbols" name="manualSymbols" placeholder="AAPL, MSFT, NVDA&#10;TSLA"></textarea>
+            <p class="hint-inline">Paste a watchlist or type tickers separated by commas, spaces, or new lines.</p>
+          </div>
+        </div>
+        <div class="actions">
+          <button type="submit">Generate event roadmap</button>
+          <button type="button" id="downloadIcs" class="secondary" disabled>Download .ics calendar</button>
+          <button type="button" id="printSheet" class="secondary" disabled>Printable sheet</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card" id="status" aria-live="polite"></section>
+
+    <section class="card">
+      <div class="result-header">
+        <h2>Upcoming events</h2>
+        <span class="pill"><span aria-hidden="true">●</span> Color-coded by event type</span>
+      </div>
+      <div id="eventsContainer" class="empty-state">Upload a watchlist to see earnings, dividends, and splits.</div>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById('watchlist-form');
+    const statusEl = document.getElementById('status');
+    const eventsContainer = document.getElementById('eventsContainer');
+    const downloadBtn = document.getElementById('downloadIcs');
+    const printBtn = document.getElementById('printSheet');
+
+    let lastEvents = [];
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      statusEl.textContent = 'Parsing watchlist and generating event slate…';
+      downloadBtn.disabled = true;
+      printBtn.disabled = true;
+      eventsContainer.innerHTML = '<div class="empty-state">Working…</div>';
+
+      const payload = buildFormData();
+      if (!payload) {
+        statusEl.textContent = 'Add tickers manually or upload a supported file to continue.';
+        eventsContainer.innerHTML = '<div class="empty-state">No watchlist provided.</div>';
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/events', { method: 'POST', body: payload });
+        if (!response.ok) {
+          const error = await response.json();
+          const warnings = error.warnings?.length ? `<div class="warnings">${error.warnings.join('<br>')}</div>` : '';
+          statusEl.innerHTML = `${error.error || 'Unable to process watchlist.'}${warnings}`;
+          eventsContainer.innerHTML = '<div class="empty-state">No events to display.</div>';
+          return;
+        }
+
+        const data = await response.json();
+        lastEvents = data.events || [];
+        renderEvents(data.events, data.warnings || []);
+        downloadBtn.disabled = data.events.length === 0;
+        printBtn.disabled = data.events.length === 0;
+        statusEl.textContent = `${data.events.length} events generated for ${data.symbols.length} tickers.`;
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = 'Unexpected error while building the calendar. Please try again.';
+        eventsContainer.innerHTML = '<div class="empty-state">No events to display.</div>';
+      }
+    });
+
+    downloadBtn.addEventListener('click', async () => {
+      const payload = buildFormData();
+      if (!payload) return;
+      try {
+        const response = await fetch('/api/export-ics', { method: 'POST', body: payload });
+        if (!response.ok) {
+          const error = await response.json();
+          statusEl.textContent = error.error || 'Unable to export .ics calendar.';
+          return;
+        }
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'watchlist-events.ics';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        statusEl.textContent = 'Downloaded .ics calendar.';
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = 'Unexpected error while exporting.';
+      }
+    });
+
+    printBtn.addEventListener('click', () => {
+      if (!lastEvents.length) return;
+      const sheet = buildPrintableSheet(lastEvents);
+      const w = window.open('', '_blank');
+      w.document.write(sheet);
+      w.document.close();
+      w.focus();
+      w.print();
+    });
+
+    function buildFormData() {
+      const files = document.getElementById('watchlistFile').files;
+      const manual = document.getElementById('manualSymbols').value.trim();
+
+      if (!files.length && !manual) {
+        return null;
+      }
+
+      const formData = new FormData();
+      for (const file of files) {
+        formData.append('files', file);
+      }
+      formData.set('manualSymbols', manual);
+      return formData;
+    }
+
+    function renderEvents(events, warnings) {
+      if (!events?.length) {
+        eventsContainer.innerHTML = '<div class="empty-state">No events found for the provided watchlist.</div>';
+        return;
+      }
+
+      const warningHtml = warnings.length ? `<div class="warnings">${warnings.join('<br>')}</div>` : '';
+
+      const rows = events.map(evt => {
+        const date = new Date(evt.date);
+        const formatted = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+        return `<tr>
+          <td><span class="badge" data-type="${evt.eventType}">${evt.eventType}</span></td>
+          <td>${evt.symbol}</td>
+          <td>${formatted}</td>
+          <td>${evt.title}</td>
+          <td>${evt.notes}</td>
+        </tr>`;
+      }).join('');
+
+      eventsContainer.innerHTML = `
+        ${warningHtml}
+        <div class="table-wrapper">
+          <table class="events-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Ticker</th>
+                <th>Date</th>
+                <th>Summary</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+    }
+
+    function buildPrintableSheet(events) {
+      const rows = events.map(evt => {
+        const date = new Date(evt.date);
+        const formatted = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+        return `<tr>
+          <td>${evt.symbol}</td>
+          <td>${formatted}</td>
+          <td>${evt.eventType}</td>
+          <td>${evt.title}</td>
+          <td>${evt.notes}</td>
+        </tr>`;
+      }).join('');
+
+      return `<!doctype html>
+      <html><head>
+        <meta charset="utf-8">
+        <title>Printable Event Sheet</title>
+        <style>
+          body { font-family: 'Inter', system-ui, -apple-system, sans-serif; padding: 24px; color: #0f172a; }
+          h1 { margin-bottom: 0; }
+          p { color: #475569; }
+          table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+          th, td { border: 1px solid #e2e8f0; padding: 8px 10px; text-align: left; }
+          th { background: #f8fafc; }
+          tr:nth-child(even) { background: #f8fafc; }
+        </style>
+      </head>
+      <body>
+        <h1>Watchlist event sheet</h1>
+        <p>Color legend: Earnings (blue), Dividend (green), Split (orange).</p>
+        <table>
+          <thead><tr><th>Ticker</th><th>Date</th><th>Type</th><th>Title</th><th>Notes</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </body></html>`;
+    }
+  </script>
+</body>
+</html>
