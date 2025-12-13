@@ -18,7 +18,7 @@
     typeof window.NDTWebappsMenu?.populateMenus === 'function';
 
   function ensureStyles() {
-    const stylesheets = ['/css/webapps-unified.css', '/css/styles.css', '/css/webapp-theme.css'];
+    const stylesheets = ['/css/webapps-unified.css', '/css/styles.css'];
     const head = document.head;
     const existing = Array.from(head.querySelectorAll('link[rel="stylesheet"]'));
 
