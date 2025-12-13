@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Voice Message Extractor</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <main class="page">
+        <header class="hero">
+            <div>
+                <p class="eyebrow">WhatsApp / Telegram</p>
+                <h1>Voice Message Extractor</h1>
+                <p class="lede">Upload chat export ZIPs to list voice notes, convert them to MP3/WAV, and download everything with metadata in one click.</p>
+            </div>
+            <div class="card controls">
+                <div class="field">
+                    <label for="archiveInput">Upload chat exports (.zip)</label>
+                    <input type="file" id="archiveInput" accept=".zip,.opus,.ogg" multiple />
+                    <p class="help">Drag in ZIPs of WhatsApp or Telegram exports. Raw .opus/.ogg files are also supported.</p>
+                </div>
+                <div class="field inline">
+                    <label for="formatSelect">Convert to</label>
+                    <select id="formatSelect">
+                        <option value="mp3">MP3</option>
+                        <option value="wav">WAV</option>
+                    </select>
+                </div>
+                <div class="actions">
+                    <button id="scanBtn" class="primary">Scan voice messages</button>
+                    <button id="downloadBtn" class="ghost">Download converted + CSV</button>
+                </div>
+                <p id="status" class="status"></p>
+                <ul id="warnings" class="warnings"></ul>
+            </div>
+        </header>
+
+        <section class="card">
+            <div class="section-header">
+                <div>
+                    <p class="eyebrow">Detected audio</p>
+                    <h2>Voice messages</h2>
+                </div>
+                <p id="resultCount" class="muted">No files yet</p>
+            </div>
+            <div class="table-wrapper">
+                <table id="resultsTable">
+                    <thead>
+                        <tr>
+                            <th>File name</th>
+                            <th>Path in archive</th>
+                            <th>Type</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
