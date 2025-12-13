@@ -489,15 +489,23 @@ textarea {
   width: 100%;
   padding: 12px;
   border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--panel-strong);
-  color: var(--text);
+  border: 1px solid rgba(109, 211, 255, 0.45);
+  background: linear-gradient(135deg, rgba(18, 34, 74, 0.92), rgba(10, 24, 52, 0.96));
+  color: #ffffff;
+  caret-color: #ffffff;
 }
 
 input:focus,
 select:focus,
 textarea:focus {
   outline: 2px solid var(--accent-strong);
+}
+
+input::placeholder,
+select::placeholder,
+textarea::placeholder {
+  color: #ffffff;
+  opacity: 1;
 }
 
 .checkbox {
@@ -630,11 +638,12 @@ textarea:focus {
 }
 
 .converter-card {
-  background: white;
-  border: 1px solid var(--border);
+  background: linear-gradient(135deg, rgba(18, 34, 74, 0.9), rgba(10, 24, 52, 0.94));
+  border: 1px solid rgba(109, 211, 255, 0.45);
   border-radius: 16px;
   padding: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow);
+  color: #ffffff;
 }
 
 .converter-card form {
@@ -644,9 +653,10 @@ textarea:focus {
 
 .converter-card input[type='file'] {
   padding: 12px;
-  border: 1px dashed var(--border);
+  border: 1px dashed rgba(109, 211, 255, 0.55);
   border-radius: 10px;
-  background: #f9fafb;
+  background: linear-gradient(135deg, rgba(18, 34, 74, 0.9), rgba(9, 21, 46, 0.94));
+  color: #ffffff;
 }
 
 .trust-points {
@@ -714,8 +724,9 @@ textarea:focus {
 }
 
 .drop-target {
-  border: 1px dashed var(--border);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed rgba(109, 211, 255, 0.55);
+  background: linear-gradient(135deg, rgba(18, 34, 74, 0.9), rgba(9, 21, 46, 0.94));
+  color: #ffffff;
 }
 
 .drop-target.is-dragover {
@@ -1068,9 +1079,10 @@ textarea:focus {
 .tool-input {
   width: 100%;
   border-radius: 12px;
-  border: 1px solid var(--border);
-  background: #0b1224;
-  color: var(--text);
+  background: linear-gradient(135deg, rgba(18, 34, 74, 0.92), rgba(9, 21, 46, 0.94));
+  border: 1px solid rgba(109, 211, 255, 0.45);
+  color: #ffffff;
+  caret-color: #ffffff;
   padding: 12px;
 }
 
