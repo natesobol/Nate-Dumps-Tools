@@ -14,6 +14,7 @@ import csvXmlRoutes from './apps/csv-xml-converter/src/routes/csv-xml.js';
 import powerpointRoutes from './apps/powerpoint-to-pdf/src/routes/powerpoint.js';
 import { attachSupabase } from './src/middleware/auth.js';
 import htmlCleanerRoutes from './src/routes/htmlCleaner.js';
+import multer from 'multer';
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const SQLiteStore = SQLiteStoreFactory(session);
+const upload = multer();
 
 app.set('view engine', 'ejs');
 app.set('views', [
@@ -123,6 +125,54 @@ app.use('/', excelRoutes);
 app.use('/', csvXmlRoutes);
 app.use('/', powerpointRoutes);
 
+// JSON combiner API for the /json-combiner webapp
+app.post('/api/combine', upload.array('files'), (req, res) => {
+  const files = req.files || [];
+
+  if (!files.length) {
+    return res.status(400).json({ error: 'No files were uploaded.' });
+  }
+
+  const parsedNodes = [];
+  const parseErrors = [];
+
+  for (const file of files) {
+    if (!file.buffer?.length) {
+      parseErrors.push({ file: file.originalname, message: 'File was empty.' });
+      continue;
+    }
+
+    try {
+      const content = file.buffer.toString('utf8');
+      const jsonNode = JSON.parse(content);
+      parsedNodes.push(jsonNode);
+    } catch (error) {
+      parseErrors.push({
+        file: file.originalname,
+        message: error instanceof Error ? error.message : 'Invalid JSON payload.'
+      });
+    }
+  }
+
+  if (!parsedNodes.length) {
+    return res.status(400).json({ error: 'Unable to parse any JSON payloads.', details: parseErrors });
+  }
+
+  const combined = combineNodes(parsedNodes);
+  const combinedType = Array.isArray(combined)
+    ? 'array'
+    : combined && typeof combined === 'object'
+      ? 'object'
+      : 'mixed';
+
+  res.json({ combinedType, combined, parseErrors });
+});
+
+// Return JSON for unknown API endpoints so the front-end can surface useful errors
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: 'API endpoint not found', path: req.originalUrl });
+});
+
 app.use((req, res) => {
   res.status(404).render('404', { title: 'Not found' });
 });
@@ -131,3 +181,43 @@ const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`Server listening on http://localhost:${port}`);
 });
+
+function combineNodes(nodes) {
+  const allArrays = nodes.every((node) => Array.isArray(node));
+  const allObjects = nodes.every((node) => node && typeof node === 'object' && !Array.isArray(node));
+
+  if (allArrays) {
+    return nodes.flatMap((node) => node);
+  }
+
+  if (allObjects) {
+    return nodes.reduce((acc, obj) => deepMerge(acc, obj), {});
+  }
+
+  return nodes.map((node) => cloneValue(node));
+}
+
+function deepMerge(target, source) {
+  for (const [key, value] of Object.entries(source)) {
+    if (Array.isArray(value)) {
+      target[key] = Array.isArray(target[key]) ? [...target[key], ...value] : cloneValue(value);
+    } else if (value && typeof value === 'object') {
+      target[key] = deepMerge(target[key] && typeof target[key] === 'object' ? target[key] : {}, value);
+    } else {
+      target[key] = value;
+    }
+  }
+  return target;
+}
+
+function cloneValue(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => cloneValue(item));
+  }
+
+  if (value && typeof value === 'object') {
+    return deepMerge({}, value);
+  }
+
+  return value;
+}
