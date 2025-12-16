@@ -25,6 +25,17 @@ const app = express();
 const SQLiteStore = SQLiteStoreFactory(session);
 const upload = multer();
 
+function createDebugPayload(error, req, fallbackMessage = 'Unexpected error') {
+  const errObj = error instanceof Error ? error : new Error(fallbackMessage);
+  return {
+    error: errObj.message,
+    stack: errObj.stack,
+    path: req?.originalUrl,
+    method: req?.method,
+    timestamp: new Date().toISOString()
+  };
+}
+
 app.set('view engine', 'ejs');
 app.set('views', [
   path.join(__dirname, 'views'),
@@ -164,59 +175,93 @@ unsupportedApiEndpoints.forEach((endpoint) => {
   // Avoid overriding any real handler that might be added later.
   app.all(endpoint, (req, res, next) => {
     if (res.headersSent) return next();
+    const debug = createDebugPayload(new Error('Endpoint not yet implemented'), req);
     res.status(501).json({
       error: 'This API endpoint is not yet implemented on the unified server.',
-      endpoint
+      endpoint,
+      debug
     });
   });
 });
 
 // JSON combiner API for the /json-combiner webapp
-app.post('/api/combine', upload.array('files'), (req, res) => {
-  const files = req.files || [];
+app.post('/api/combine', upload.array('files'), (req, res, next) => {
+  try {
+    const files = req.files || [];
 
-  if (!files.length) {
-    return res.status(400).json({ error: 'No files were uploaded.' });
-  }
-
-  const parsedNodes = [];
-  const parseErrors = [];
-
-  for (const file of files) {
-    if (!file.buffer?.length) {
-      parseErrors.push({ file: file.originalname, message: 'File was empty.' });
-      continue;
+    if (!files.length) {
+      return res.status(400).json({ error: 'No files were uploaded.', debug: createDebugPayload(null, req, 'No files were uploaded') });
     }
 
-    try {
-      const content = file.buffer.toString('utf8');
-      const jsonNode = JSON.parse(content);
-      parsedNodes.push(jsonNode);
-    } catch (error) {
-      parseErrors.push({
-        file: file.originalname,
-        message: error instanceof Error ? error.message : 'Invalid JSON payload.'
-      });
+    const parsedNodes = [];
+    const parseErrors = [];
+
+    for (const file of files) {
+      if (!file.buffer?.length) {
+        parseErrors.push({ file: file.originalname, message: 'File was empty.' });
+        continue;
+      }
+
+      try {
+        const content = file.buffer.toString('utf8');
+        const jsonNode = JSON.parse(content);
+        parsedNodes.push(jsonNode);
+      } catch (error) {
+        parseErrors.push({
+          file: file.originalname,
+          message: error instanceof Error ? error.message : 'Invalid JSON payload.',
+          stack: error instanceof Error ? error.stack : undefined
+        });
+      }
     }
+
+    if (!parsedNodes.length) {
+      return res.status(400).json({ error: 'Unable to parse any JSON payloads.', details: parseErrors, debug: createDebugPayload(null, req, 'All JSON payloads failed to parse') });
+    }
+
+    const combined = combineNodes(parsedNodes);
+    const combinedType = Array.isArray(combined)
+      ? 'array'
+      : combined && typeof combined === 'object'
+        ? 'object'
+        : 'mixed';
+
+    res.json({ combinedType, combined, parseErrors, debug: createDebugPayload(null, req, 'Combine request diagnostics') });
+  } catch (error) {
+    next(error);
   }
-
-  if (!parsedNodes.length) {
-    return res.status(400).json({ error: 'Unable to parse any JSON payloads.', details: parseErrors });
-  }
-
-  const combined = combineNodes(parsedNodes);
-  const combinedType = Array.isArray(combined)
-    ? 'array'
-    : combined && typeof combined === 'object'
-      ? 'object'
-      : 'mixed';
-
-  res.json({ combinedType, combined, parseErrors });
 });
 
 // Return JSON for unknown API endpoints so the front-end can surface useful errors
 app.use('/api', (req, res) => {
-  res.status(404).json({ error: 'API endpoint not found', path: req.originalUrl });
+  res.status(404).json({
+    error: 'API endpoint not found',
+    path: req.originalUrl,
+    debug: createDebugPayload(new Error('API endpoint not found'), req)
+  });
+});
+
+app.use((err, req, res, next) => {
+  console.error('Unhandled request error', {
+    path: req.originalUrl,
+    method: req.method,
+    message: err?.message,
+    stack: err?.stack
+  });
+
+  if (req.originalUrl.startsWith('/api')) {
+    return res.status(err.status || 500).json({
+      error: err.message || 'Internal server error',
+      stack: err.stack,
+      path: req.originalUrl,
+      method: req.method,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  res.status(500);
+  res.set('Content-Type', 'text/plain');
+  res.send(`An unexpected error occurred while processing your request.\n\n${err.stack || err.message || err}`);
 });
 
 app.use((req, res) => {
