@@ -35,6 +35,7 @@ app.set('views', [
 
 app.use(helmet());
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
@@ -124,6 +125,51 @@ app.use('/', htmlCleanerRoutes);
 app.use('/', excelRoutes);
 app.use('/', csvXmlRoutes);
 app.use('/', powerpointRoutes);
+
+// Stub APIs for tools that do not yet have a Node backend so the front-end
+// can surface clear JSON errors instead of HTML 404 pages.
+const unsupportedApiEndpoints = [
+  '/api/download-options',
+  '/api/extract-audio',
+  '/api/chapters',
+  '/api/rename',
+  '/api/extract',
+  '/api/extract-lists',
+  '/api/extract-colors',
+  '/api/extract-currency-sentences',
+  '/api/extract-highlighted-rows',
+  '/api/scan',
+  '/api/replace',
+  '/api/clean',
+  '/api/json-to-excel',
+  '/api/compare',
+  '/api/list-item-extractor',
+  '/api/merge',
+  '/api/filter',
+  '/api/fetch-episodes',
+  '/api/export',
+  '/api/extract-questions',
+  '/api/analyze',
+  '/api/extract-sentences',
+  '/api/convert',
+  '/api/events',
+  '/api/export-ics',
+  '/api/playlist/download',
+  '/api/playlist/info',
+  '/api/download',
+  '/api/streams'
+];
+
+unsupportedApiEndpoints.forEach((endpoint) => {
+  // Avoid overriding any real handler that might be added later.
+  app.all(endpoint, (req, res, next) => {
+    if (res.headersSent) return next();
+    res.status(501).json({
+      error: 'This API endpoint is not yet implemented on the unified server.',
+      endpoint
+    });
+  });
+});
 
 // JSON combiner API for the /json-combiner webapp
 app.post('/api/combine', upload.array('files'), (req, res) => {
